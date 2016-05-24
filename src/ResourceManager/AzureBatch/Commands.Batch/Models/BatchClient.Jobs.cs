@@ -114,6 +114,11 @@ namespace Microsoft.Azure.Commands.Batch.Models
                 job.Constraints = parameters.Constraints.omObject;
             }
 
+            if (parameters.UsesTaskDependencies != null)
+            {
+                job.UsesTaskDependencies = parameters.UsesTaskDependencies;
+            }
+
             if (parameters.JobManagerTask != null)
             {
                 Utils.Utils.JobManagerTaskSyncCollections(parameters.JobManagerTask);
@@ -242,6 +247,22 @@ namespace Microsoft.Azure.Commands.Batch.Models
 
             JobOperations jobOperations = parameters.Context.BatchOMClient.JobOperations;
             jobOperations.TerminateJob(jobId, parameters.TerminateReason, parameters.AdditionalBehaviors);
+        }
+
+        /// <summary>
+        /// Gets lifetime summary statistics for all of the jobs in the specified account.
+        /// </summary>
+        /// <param name="context">The account to use.</param>
+        /// <param name="additionalBehaviors">Additional client behaviors to perform.</param>
+        public PSJobStatistics GetAllJobsLifetimeStatistics(BatchAccountContext context, IEnumerable<BatchClientBehavior> additionalBehaviors = null)
+        {
+            WriteVerbose(Resources.GetAllJobsLifetimeStatistics);
+
+            JobOperations jobOperations = context.BatchOMClient.JobOperations;
+            JobStatistics jobStatistics = jobOperations.GetAllJobsLifetimeStatistics(additionalBehaviors);
+            PSJobStatistics psJobStatistics = new PSJobStatistics(jobStatistics);
+
+            return psJobStatistics;
         }
     }
 }
