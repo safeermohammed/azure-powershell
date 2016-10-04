@@ -20,7 +20,7 @@ using Microsoft.Azure.Management.OperationalInsights.Models;
 
 namespace Microsoft.Azure.Commands.OperationalInsights
 {
-    [Cmdlet(VerbsCommon.New, Constants.ComputerGroup)]
+    [Cmdlet(VerbsCommon.New, Constants.ComputerGroup, SupportsShouldProcess = true)]
     public class NewAzureOperationalInsightsComputerGroupCommand : OperationalInsightsBaseCmdlet
     {
         [Parameter(Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true,
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.Commands.OperationalInsights
         [Parameter(Position = 6, Mandatory = false, ValueFromPipelineByPropertyName = true,
         HelpMessage = "The saved search version.")]
         [ValidateNotNullOrEmpty]
-        public int Version { get; set; }
+        public long Version { get; set; }
 
         [Parameter(Mandatory = false, HelpMessage = "Don't ask for confirmation.")]
         public SwitchParameter Force { get; set; }
@@ -72,11 +72,6 @@ namespace Microsoft.Azure.Commands.OperationalInsights
                 Version = this.Version,
                 Tags = new List<Tag>() { new Tag() { Name = "Group", Value = "Computer" } }
             };
-
-            if (!SearchCommandHelper.IsListOfComputers(this.Query))
-            {
-                throw new PSArgumentException("Query is not a list of computers. Please use aggregations such as: distinct Computer or measure count() by Computer.");
-            }
 
             WriteObject(OperationalInsightsClient.CreateOrUpdateSavedSearch(ResourceGroupName, WorkspaceName, SavedSearchId, properties, Force, ConfirmAction), true);
         }

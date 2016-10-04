@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,8 +29,8 @@ namespace Microsoft.Azure.Commands.Batch
 
         [Alias("Tags")]
         [Parameter(Mandatory = true, Position = 1, ValueFromPipelineByPropertyName = true,
-            HelpMessage = "An array of hashtables which represents the tags to set on the account.")]
-        public Hashtable[] Tag { get; set; }
+            HelpMessage = "A hashtable which represents the tags to set on the account.")]
+        public Hashtable Tag { get; set; }
 
         [Parameter(ValueFromPipelineByPropertyName = true)]
         public string ResourceGroupName { get; set; }
