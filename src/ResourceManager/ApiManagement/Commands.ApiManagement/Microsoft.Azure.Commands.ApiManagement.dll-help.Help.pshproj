@@ -533,10 +533,10 @@ Update-AzureRmApiManagementDeployments</Cmd>
         <ReturnTypeDescription />
       </GeneralHelp>
       <ParamSets>
-        <CommandParameterSetInfo2 Name="__AllParameterSets" Params="ResourceGroupName Name Location Organization AdminEmail Sku Capacity Tags Verbose Debug ErrorAction WarningAction InformationAction ErrorVariable WarningVariable InformationVariable OutVariable OutBuffer PipelineVariable" />
+        <CommandParameterSetInfo2 Name="__AllParameterSets" Params="ResourceGroupName Name Location Organization AdminEmail Sku Capacity VpnType VirtualNetwork Tags AdditionalRegions Verbose Debug ErrorAction WarningAction InformationAction ErrorVariable WarningVariable InformationVariable OutVariable OutBuffer PipelineVariable" />
       </ParamSets>
       <Syntax>
-        <string>New-AzureRmApiManagement -ResourceGroupName &lt;String&gt; -Name &lt;String&gt; -Location &lt;String&gt; -Organization &lt;String&gt; -AdminEmail &lt;String&gt; [-Sku &lt;Nullable`1[PsApiManagementSku]&gt;] [-Capacity &lt;Nullable`1[Int32]&gt;] [-Tags &lt;Dictionary`2[String]&gt;] [-InformationAction &lt;ActionPreference&gt;] [-InformationVariable &lt;String&gt;]</string>
+        <string>New-AzureRmApiManagement -ResourceGroupName &lt;String&gt; -Name &lt;String&gt; -Location &lt;String&gt; -Organization &lt;String&gt; -AdminEmail &lt;String&gt; [-Sku &lt;Nullable`1[PsApiManagementSku]&gt; {Developer | Standard | Premium} ] [-Capacity &lt;Nullable`1[Int32]&gt;] [-VpnType &lt;PsApiManagementVpnType&gt; {None | External | Internal} ] [-VirtualNetwork &lt;PsApiManagementVirtualNetwork&gt;] [-Tags &lt;Dictionary`2[String]&gt;] [-AdditionalRegions &lt;PsApiManagementRegion[]&gt;] [-InformationAction &lt;ActionPreference&gt;] [-InformationVariable &lt;String&gt;]</string>
       </Syntax>
       <Parameters>
         <ParameterDescription type="String" varLen="false" required="true" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="true" isPos="false" pos="named" globbing="false">
@@ -584,6 +584,8 @@ Update-AzureRmApiManagementDeployments</Cmd>
           <Attributes>
             <string>System.Management.Automation.ParameterAttribute</string>
             <string>System.Management.Automation.ValidateNotNullOrEmptyAttribute</string>
+            <string>System.Management.Automation.ValidateLengthAttribute</string>
+            <string>System.Management.Automation.ValidatePatternAttribute</string>
           </Attributes>
           <Aliases />
           <Description>The originating e-mail address for all e-mail notifications sent from the API Management system.</Description>
@@ -593,6 +595,8 @@ Update-AzureRmApiManagementDeployments</Cmd>
           <Name>Sku</Name>
           <Attributes>
             <string>System.Management.Automation.ParameterAttribute</string>
+            <string>System.Management.Automation.ValidateSetAttribute</string>
+            <string>System.Management.Automation.PSDefaultValueAttribute</string>
           </Attributes>
           <Aliases />
           <Description>The tier of the Azure API Management service. Valid values are Developer, Standard and Premium . Default value is Developer</Description>
@@ -602,6 +606,8 @@ Update-AzureRmApiManagementDeployments</Cmd>
           <Name>Capacity</Name>
           <Attributes>
             <string>System.Management.Automation.ParameterAttribute</string>
+            <string>System.Management.Automation.ValidateRangeAttribute</string>
+            <string>System.Management.Automation.PSDefaultValueAttribute</string>
           </Attributes>
           <Aliases />
           <Description>Sku capacity of the Azure API Management service. Default value is 1.</Description>
@@ -614,6 +620,38 @@ Update-AzureRmApiManagementDeployments</Cmd>
           </Attributes>
           <Aliases />
           <Description>Tags dictionary.</Description>
+          <DefaultValue />
+        </ParameterDescription>
+        <ParameterDescription type="PsApiManagementVpnType" varLen="false" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="false" isPos="false" pos="named" globbing="false">
+          <Name>VpnType</Name>
+          <Attributes>
+            <string>System.Management.Automation.ParameterAttribute</string>
+            <string>System.Management.Automation.ValidateSetAttribute</string>
+            <string>System.Management.Automation.PSDefaultValueAttribute</string>
+          </Attributes>
+          <Aliases />
+          <Description>Virtual Network Type of the ApiManagement Deployment. Valid Values are 
+- "None" (Default Value. ApiManagement is not part of any Virtual Network")
+- "External" (ApiManagement Deployment is setup inside a Virtual Network having an Internet Facing Endpoint)
+- "Internal" (ApiManagement Deployment is setup inside a Virtual Network having an Intranet Facing Endpoint)</Description>
+          <DefaultValue />
+        </ParameterDescription>
+        <ParameterDescription type="PsApiManagementVirtualNetwork" varLen="false" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="true" isPos="false" pos="named" globbing="false">
+          <Name>VirtualNetwork</Name>
+          <Attributes>
+            <string>System.Management.Automation.ParameterAttribute</string>
+          </Attributes>
+          <Aliases />
+          <Description>Virtual Network Configuration of master Azure API Management deployment region.</Description>
+          <DefaultValue />
+        </ParameterDescription>
+        <ParameterDescription type="PsApiManagementRegion[]" varLen="true" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="true" isPos="false" pos="named" globbing="false">
+          <Name>AdditionalRegions</Name>
+          <Attributes>
+            <string>System.Management.Automation.ParameterAttribute</string>
+          </Attributes>
+          <Aliases />
+          <Description>Additional deployment regions of Azure API Management.</Description>
           <DefaultValue />
         </ParameterDescription>
         <ParameterDescription type="ActionPreference" varLen="false" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="false" isPos="false" pos="named" globbing="false">
@@ -645,14 +683,38 @@ Update-AzureRmApiManagementDeployments</Cmd>
       <Examples>
         <Example>
           <Name>Example 1</Name>
-          <Cmd>PS C:\&gt; New-AzureRmApiManagement –ResourceGroupName ContosoGroup –Name ContosoApi –Location “Central US” –Organization Contoso –AdminEmail admin@contoso.com</Cmd>
+          <Cmd>New-AzureRmApiManagement –ResourceGroupName ContosoGroup –Name ContosoApi –Location "Central US" –Organization Contoso –AdminEmail admin@contoso.com</Cmd>
           <Description>Create new ‘Developer’ tier API Management service</Description>
           <Output />
         </Example>
         <Example>
           <Name>Example 2</Name>
-          <Cmd>PS C:\&gt; New-AzureRmApiManagement –ResourceGroupName ContosoGroup –Name ContosoApi –Location “Central US” –Organization Contoso –AdminEmail admin@contoso.com –Sku Standard –Capacity 3</Cmd>
+          <Cmd>New-AzureRmApiManagement –ResourceGroupName ContosoGroup –Name ContosoApi –Location "Central US" –Organization Contoso –AdminEmail admin@contoso.com –Sku Standard –Capacity 3</Cmd>
           <Description>Create new ‘Standard’ tier API Management service with 3 units</Description>
+          <Output />
+        </Example>
+        <Example>
+          <Name>Example 3</Name>
+          <Cmd>$apimRegion = New-AzureRmApiManagementRegion -Location "Central US" 
+
+$additionalRegions = @($apimRegion)
+
+New-AzureRmApiManagement -ResourceGroupName ContosoGroup -Location "West US" -Name ContosoApi -Organization Contoso -AdminEmail admin@contoso.com -AdditionalRegions $additionalRegions -Sku "Premium"</Cmd>
+          <Description>Creates a 'Premium' Tier ApiManagement service with Master Region in 'West US' and Additional Region in 'Central US'.</Description>
+          <Output />
+        </Example>
+        <Example>
+          <Name>Example 4</Name>
+          <Cmd>$apimRegionVirtualNetwork = New-AzureRmApiManagementVirtualNetwork –Location "Central US" –SubnetResourceId "/subscriptions/a8ff56dc-3bc7-4174-a1e8-3726ab15d0e2/resourceGroups/ContosoGroup/providers/Microsoft.Network/virtualNetworks/centralusvirtualNetwork/subnets/backendSubnet"
+
+$apimRegion = New-AzureRmApiManagementRegion -Location "Central US" -VirtualNetwork $apimRegionVirtualNetwork 
+
+$additionalRegions = @($apimRegion)
+
+$virtualNetwork = New-AzureRmApiManagementVirtualNetwork –Location "West US" –SubnetResourceId "/subscriptions/a8ff56dc-3bc7-4174-b1e8-3726ab15d0e2/resourceGroups/ContosoGroup/providers/Microsoft.Network/virtualNetworks/westUsVirtualNetwork/subnets/backendSubnet"
+
+New-AzureRmApiManagement -ResourceGroupName ContosoGroup -Location "West US" -Name ContosoApi -Organization Contoso -AdminEmail admin@contoso.com -AdditionalRegions $additionalRegions -VirtualNetwork $virtualNetwork -VpnType "External" -Sku "Premium"</Cmd>
+          <Description>Creates a Developer Tier ApiManagement service in an Azure Virtual Network Subnet having an External Facing Gateway Endpoint with Master Region in West US and Additional Region in Central US.</Description>
           <Output />
         </Example>
       </Examples>
@@ -775,7 +837,7 @@ Update-AzureRmApiManagementDeployments</Cmd>
             <string>System.Management.Automation.ValidateNotNullOrEmptyAttribute</string>
           </Attributes>
           <Aliases />
-          <Description>Virtual Network Subnet Resource Id</Description>
+          <Description>The full resource ID of a subnet in a virtual network to deploy the ApiManagement Service in. Example format:/subscriptions/{subid}/resourceGroups/{resourceGroupName}/Microsoft.{Network|ClassicNetwork}/VirtualNetworks/vnet1/subnets/subnet1.</Description>
           <DefaultValue />
         </ParameterDescription>
         <ParameterDescription type="ActionPreference" varLen="false" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="false" isPos="false" pos="named" globbing="false">
@@ -912,8 +974,8 @@ Update-AzureRmApiManagementDeployment –ResourceGroupName ContosoGroup –Name 
         <ParameterDescription type="SwitchParameter" varLen="false" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="false" isPos="false" pos="named" globbing="false">
           <Name>WhatIf</Name>
           <Attributes>
-            <string>System.Management.Automation.AliasAttribute</string>
             <string>System.Management.Automation.ParameterAttribute</string>
+            <string>System.Management.Automation.AliasAttribute</string>
           </Attributes>
           <Aliases>
             <string>wi</string>
@@ -924,8 +986,8 @@ Update-AzureRmApiManagementDeployment –ResourceGroupName ContosoGroup –Name 
         <ParameterDescription type="SwitchParameter" varLen="false" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="false" isPos="false" pos="named" globbing="false">
           <Name>Confirm</Name>
           <Attributes>
-            <string>System.Management.Automation.AliasAttribute</string>
             <string>System.Management.Automation.ParameterAttribute</string>
+            <string>System.Management.Automation.AliasAttribute</string>
           </Attributes>
           <Aliases>
             <string>cf</string>
@@ -1418,13 +1480,13 @@ Set-AzureApiHostnames -Name ContosoApi -ResourceGroupName Contoso –PortalHostn
       </Parameters>
       <Examples>
         <Example>
-          <Name>Example 1</Name>
+          <Name>Example 1: Update a deployment of an ApiManagement instance</Name>
           <Cmd>PS C:\&gt; Update-AzureRmApiManagementDeployment -ResourceGroupName Contoso -Name ContosoApi –Sku “Standard” –Capacity 3</Cmd>
           <Description>Command to update deployment of an ApiManagement to 3 unit ‘Standard’.</Description>
           <Output />
         </Example>
         <Example>
-          <Name>Example 2</Name>
+          <Name>Example 2: Get an ApiManagement instance and rescale it</Name>
           <Cmd>$apiManagement = Get-AzureRmApiManagement –ResourceGroupName Contoso –Name ContosoApi
 $apiManagement.Sku = “Premium”
 $apiManagement.Capacity = 5
@@ -1432,6 +1494,39 @@ $apiManagement.AddRegion(“Central US”, “Premium”, 3)
 Update-AzureRmApiManagementDeployment –ApiManagement $apiManagement
 </Cmd>
           <Description>Script to get an ApiManagement, scale to 5 ‘Premium’ units and add additional 3 unit ‘Premium’ region.</Description>
+          <Output />
+        </Example>
+        <Example>
+          <Name>Example 3: Move API Management instance inside a Virtual Network</Name>
+          <Cmd>PS C:\&gt;# Create a Virtual Network Object
+PS C:\&gt;$virtualNetwork = New-AzureRmApiManagementVirtualNetwork -Location "North Central US" -SubnetResourceId
+"/subscriptions/20010444-2b48-4245-a95c-090db6312d5f/resourceGroups/ContosoGroup/providers/Microsoft.Network/virtualNe
+tworks/contosoVnet/subnets/default"
+
+PS C:\&gt;# Get the service
+PS C:\&gt;$service = Get-AzureRmApiManagement -ResourceGroupName "ContosoGroup" -Name "contosoapim"
+
+PS C:\&gt;$service.VirtualNetwork = $virtualNetwork
+PS C:\&gt;$service.VpnType = "External"
+
+PS C:\&gt;# Update the Deployment with Virtual Network
+PS C:\&gt;Update-AzureRmApiManagementDeployment -ApiManagement $service
+</Cmd>
+          <Description>This example moves an existing API Management deployment inside a Virtual Network configures external *VpnType*</Description>
+          <Output />
+        </Example>
+        <Example>
+          <Name>Example 4: Update deployment (external VNET)</Name>
+          <Cmd> PS C:\&gt; $virtualNetwork = New-AzureRmApiManagementVirtualNetwork -Location "East US" -SubnetResourceId "/subscriptions/a8ff56dc-3bc7-4174-a1e8-3726ab15d0e2/resourceGroups/Api-Default-West-US/providers/Microsoft.ClassicNetwork/virtualNetworks/dfVirtualNetwork/subnets/backendSubnet"
+  PS C:\&gt; Update-AzureRmApiManagementDeployment -ResourceGroupName "ContosoGroup" -Name "ContosoApi" -VirtualNetwork $virtualNetwork -VpnType "External"</Cmd>
+          <Description>This command updates an existing API Management deployment and joins to an external *VpnType*.</Description>
+          <Output />
+        </Example>
+        <Example>
+          <Name>Example 5: Update deployment (internal VNET)</Name>
+          <Cmd> PS C:\&gt; $virtualNetwork = New-AzureRmApiManagementVirtualNetwork -Location "East US" -SubnetResourceId "/subscriptions/a8ff56dc-3bc7-4174-a1e8-3726ab15d0e2/resourceGroups/Api-Default-West-US/providers/Microsoft.ClassicNetwork/virtualNetworks/dfVirtualNetwork/subnets/backendSubnet"
+  PS C:\&gt; Update-AzureRmApiManagementDeployment -ResourceGroupName "ContosoGroup" -Name "ContosoApi" -VirtualNetwork $virtualNetwork -VpnType "Internal"</Cmd>
+          <Description>This command updates an existing API Management deployment and joins to an internal VpnType.</Description>
           <Output />
         </Example>
       </Examples>
@@ -1533,6 +1628,110 @@ Update-AzureRmApiManagementDeployment –ApiManagement $apiManagement
         </ParameterDescription>
       </Parameters>
       <Examples />
+      <RelatedLinks />
+      <SupportInformation ad="false" rsat="false" ps2="false" ps3="false" ps4="false" ps5="false" wxp="false" wv="false" w7="false" w8="false" w81="false" w2k3s="false" w2k3e="false" w2k3d="false" w2k8s="false" w2k8e="false" w2k8d="false" w2k8r2s="false" w2k8r2e="false" w2k8r2d="false" w2k12s="false" w2k12d="false" w2k12r2s="false" w2k12r2d="false" />
+      <Publish>false</Publish>
+    </CmdletObject>
+    <CmdletObject verb="New" noun="AzureRmApiManagementRegion">
+      <Name>New-AzureRmApiManagementRegion</Name>
+      <GeneralHelp>
+        <Synopsis>Creates an instance of PsApiManagementRegion.</Synopsis>
+        <Description>Helper command to create an instance of PsApiManagementRegion. This command is to be used with New-AzureRmApiManagement command.</Description>
+        <Notes />
+        <InputType />
+        <InputUrl />
+        <InputTypeDescription />
+        <ReturnType />
+        <ReturnUrl />
+        <ReturnTypeDescription />
+      </GeneralHelp>
+      <ParamSets>
+        <CommandParameterSetInfo2 Name="__AllParameterSets" Params="Location Capacity VirtualNetwork Verbose Debug ErrorAction WarningAction InformationAction ErrorVariable WarningVariable InformationVariable OutVariable OutBuffer PipelineVariable" />
+      </ParamSets>
+      <Syntax>
+        <string>New-AzureRmApiManagementRegion -Location &lt;String&gt; [-Capacity &lt;Nullable`1[Int32]&gt;] [-VirtualNetwork &lt;PsApiManagementVirtualNetwork&gt;] [-InformationAction &lt;ActionPreference&gt;] [-InformationVariable &lt;String&gt;]</string>
+      </Syntax>
+      <Parameters>
+        <ParameterDescription type="String" varLen="false" required="true" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="false" isPos="false" pos="named" globbing="false">
+          <Name>Location</Name>
+          <Attributes>
+            <string>System.Management.Automation.ParameterAttribute</string>
+            <string>System.Management.Automation.ValidateNotNullOrEmptyAttribute</string>
+          </Attributes>
+          <Aliases />
+          <Description>Location of the additional deployment region.</Description>
+          <DefaultValue />
+        </ParameterDescription>
+        <ParameterDescription type="Nullable`1[Int32]" varLen="true" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="false" isPos="false" pos="named" globbing="false">
+          <Name>Capacity</Name>
+          <Attributes>
+            <string>System.Management.Automation.ParameterAttribute</string>
+          </Attributes>
+          <Aliases />
+          <Description>Sku capacity of the Azure API Management service additional region. Default value is 1.</Description>
+          <DefaultValue />
+        </ParameterDescription>
+        <ParameterDescription type="PsApiManagementVirtualNetwork" varLen="false" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="true" isPos="false" pos="named" globbing="false">
+          <Name>VirtualNetwork</Name>
+          <Attributes>
+            <string>System.Management.Automation.ParameterAttribute</string>
+          </Attributes>
+          <Aliases />
+          <Description>Virtual Network Configuration of Azure API Management deployment region. Default value is $null.</Description>
+          <DefaultValue />
+        </ParameterDescription>
+        <ParameterDescription type="ActionPreference" varLen="false" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="false" isPos="false" pos="named" globbing="false">
+          <Name>InformationAction</Name>
+          <Attributes>
+            <string>System.Management.Automation.ParameterAttribute</string>
+            <string>System.Management.Automation.AliasAttribute</string>
+          </Attributes>
+          <Aliases>
+            <string>infa</string>
+          </Aliases>
+          <Description />
+          <DefaultValue />
+        </ParameterDescription>
+        <ParameterDescription type="String" varLen="false" required="false" dynamic="false" pipeRemaining="false" pipe="false" pipeProp="false" isPos="false" pos="named" globbing="false">
+          <Name>InformationVariable</Name>
+          <Attributes>
+            <string>System.Management.Automation.ParameterAttribute</string>
+            <string>System.Management.Automation.AliasAttribute</string>
+            <string>System.Management.Automation.Internal.CommonParameters+ValidateVariableName</string>
+          </Attributes>
+          <Aliases>
+            <string>iv</string>
+          </Aliases>
+          <Description />
+          <DefaultValue />
+        </ParameterDescription>
+      </Parameters>
+      <Examples>
+        <Example>
+          <Name>Example 1</Name>
+          <Cmd>$apimRegion = New-AzureRmApiManagementRegion -Location "Central US" 
+
+$additionalRegions = @($apimRegion)
+
+New-AzureRmApiManagement -ResourceGroupName ContosoGroup -Location "West US" -Name ContosoApi -Organization Contoso -AdminEmail admin@contoso.com -AdditionalRegions $additionalRegions -Sku "Premium"</Cmd>
+          <Description />
+          <Output />
+        </Example>
+        <Example>
+          <Name>Example 2</Name>
+          <Cmd>$apimRegionVirtualNetwork = New-AzureRmApiManagementVirtualNetwork –Location "Central US" –SubnetResourceId "/subscriptions/a8ff56dc-3bc7-4174-a1e8-3726ab15d0e2/resourceGroups/ContosoGroup/providers/Microsoft.Network/virtualNetworks/centralusvirtualNetwork/subnets/backendSubnet"
+
+$apimRegion = New-AzureRmApiManagementRegion -Location "Central US" -VirtualNetwork $apimRegionVirtualNetwork 
+
+$additionalRegions = @($apimRegion)
+
+$virtualNetwork = New-AzureRmApiManagementVirtualNetwork –Location "West US" –SubnetResourceId "/subscriptions/a8ff56dc-3bc2-4174-a1e8-3726ab15d0e2/resourceGroups/ContosoGroup/providers/Microsoft.Network/virtualNetworks/westUsVirtualNetwork/subnets/backendSubnet"
+
+New-AzureRmApiManagement -ResourceGroupName ContosoGroup -Location "West US" -Name ContosoApi -Organization Contoso -AdminEmail admin@contoso.com -AdditionalRegions $additionalRegions -VirtualNetwork $virtualNetwork -VpnType "External" -Sku "Premium"</Cmd>
+          <Description>Creates an ApiManagement service of External VpnType in West US Region, with an Additional Region in Central US.</Description>
+          <Output />
+        </Example>
+      </Examples>
       <RelatedLinks />
       <SupportInformation ad="false" rsat="false" ps2="false" ps3="false" ps4="false" ps5="false" wxp="false" wv="false" w7="false" w8="false" w81="false" w2k3s="false" w2k3e="false" w2k3d="false" w2k8s="false" w2k8e="false" w2k8d="false" w2k8r2s="false" w2k8r2e="false" w2k8r2d="false" w2k12s="false" w2k12d="false" w2k12r2s="false" w2k12r2d="false" />
       <Publish>false</Publish>

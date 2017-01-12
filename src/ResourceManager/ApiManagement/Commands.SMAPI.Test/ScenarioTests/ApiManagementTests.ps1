@@ -208,26 +208,38 @@ Param($resourceGroupName, $serviceName)
     $context = New-AzureRmApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $serviceName
 
     $swaggerPath = "./Resources/SwaggerPetStoreV2.json"
-    $path = "swaggerapi"
-    $swaggerApiId = getAssetName
+	$swaggerUrl = "http://petstore.swagger.io/v2/swagger.json"
+    $path1 = "swaggerapifromFile"
+	$path2 = "swaggerapifromUrl"
+    $swaggerApiId1 = getAssetName
+	$swaggerApiId2 = getAssetName
 
     try
     {
         # import api from file
-        $api = Import-AzureRmApiManagementApi -Context $context -ApiId $swaggerApiId -SpecificationPath $swaggerPath -SpecificationFormat Swagger -Path $path
+        $api = Import-AzureRmApiManagementApi -Context $context -ApiId $swaggerApiId1 -SpecificationPath $swaggerPath -SpecificationFormat Swagger -Path $path1
 
-        Assert-AreEqual $swaggerApiId $api.ApiId
-        Assert-AreEqual $path $api.Path
+        Assert-AreEqual $swaggerApiId1 $api.ApiId
+        Assert-AreEqual $path1 $api.Path
 
         # export api to pipeline
-        $result = Export-AzureRmApiManagementApi -Context $context -ApiId $swaggerApiId -SpecificationFormat Swagger		
+        $result = Export-AzureRmApiManagementApi -Context $context -ApiId $swaggerApiId1 -SpecificationFormat Swagger		
 		Assert-NotNull $result
 		Assert-True {$result -like '*"title": "Swagger Petstore Extensive"*'}
+
+		 # import api from Url
+        $api = Import-AzureRmApiManagementApi -Context $context -ApiId $swaggerApiId2 -SpecificationUrl $swaggerUrl -SpecificationFormat Swagger -Path $path2
+
+        Assert-AreEqual $swaggerApiId2 $api.ApiId
+        Assert-AreEqual $path2 $api.Path
     }
     finally
     {
         # remove created api
-        $removed = Remove-AzureRmApiManagementApi -Context $context -ApiId $swaggerApiId -PassThru 
+        $removed = Remove-AzureRmApiManagementApi -Context $context -ApiId $swaggerApiId1 -PassThru 
+        Assert-True {$removed}
+
+		$removed = Remove-AzureRmApiManagementApi -Context $context -ApiId $swaggerApiId2 -PassThru 
         Assert-True {$removed}
     }
 }
@@ -235,7 +247,7 @@ Param($resourceGroupName, $serviceName)
 
 <#
 .SYNOPSIS
-Tests API import/export for Wsdl Type Api.
+Tests API import from Wsdl type and export Api.
 #>
 function Api-ImportExportWsdlTest
 {
@@ -243,29 +255,86 @@ Param($resourceGroupName, $serviceName)
 
     $context = New-AzureRmApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $serviceName
 
-    $wsdlPath = "./Resources/Weather.wsdl"
-    $path = "soapapi"
-    $wsdlApiId = getAssetName
-	$wsdlServiceName = "Weather" # from file Weather.wsdl
-	$wsdlEndpointName = "WeatherSoap" # from file Weather.wsdl
+    $wsdlPath1 = "./Resources/Weather.wsdl"
+	$wsdlUrl = "http://www.webservicex.net/stockquote.asmx?WSDL"
+    $path1 = "soapapifromFile"
+	$path2 = "soapapifromUrl"
+    $wsdlApiId1 = getAssetName
+	$wsdlApiId2 = getAssetName
+	$wsdlServiceName1 = "Weather" # from file Weather.wsdl
+	$wsdlEndpointName1 = "WeatherSoap" # from file Weather.wsdl
+	$wsdlServiceName2 = "StockQuote" # from Url StockQuote
+	$wsdlEndpointName2 = "StockQuoteSoap" # from Url StockQuote
 	
     try
     {
         # import api from file
-        $api = Import-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId -SpecificationPath $wsdlPath -SpecificationFormat Wsdl -Path $path -WsdlServiceName $wsdlServiceName -WsdlEndpointName $wsdlEndpointName
+        $api = Import-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId1 -SpecificationPath $wsdlPath1 -SpecificationFormat Wsdl -Path $path1 -WsdlServiceName $wsdlServiceName1 -WsdlEndpointName $wsdlEndpointName1
 
-        Assert-AreEqual $wsdlApiId $api.ApiId
-        Assert-AreEqual $path $api.Path
+        Assert-AreEqual $wsdlApiId1 $api.ApiId
+        Assert-AreEqual $path1 $api.Path
 
         # export api to pipeline
-        $result = Export-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId -SpecificationFormat Wsdl		
+        $result = Export-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId1 -SpecificationFormat Wsdl		
+		Assert-NotNull $result
+		Assert-True {$result -like '*<wsdl:service name="Weather"*'}
+
+		 # import api from Url
+        $api = Import-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId2 -SpecificationUrl $wsdlUrl -SpecificationFormat Wsdl -Path $path2 -WsdlServiceName $wsdlServiceName2 -WsdlEndpointName $wsdlEndpointName2
+
+        Assert-AreEqual $wsdlApiId2 $api.ApiId
+        Assert-AreEqual $path2 $api.Path
+
+		 # export api to pipeline
+        $result = Export-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId2 -SpecificationFormat Wsdl		
+		Assert-NotNull $result
+		Assert-True {$result -like '*<wsdl:service name="StockQuote"*'}
+    }
+    finally
+    {
+        # remove created api
+        $removed = Remove-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId1 -PassThru 
+        Assert-True {$removed}
+
+		# remove created api
+        $removed = Remove-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId2 -PassThru 
+        Assert-True {$removed}
+    }
+}
+
+<#
+.SYNOPSIS
+Tests API import from Wsdl and create a Rest Api
+#>
+function Api-ImportWsdlToCreateSoapToRestApi
+{
+Param($resourceGroupName, $serviceName)
+
+    $context = New-AzureRmApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $serviceName
+
+	$wsdlPath1 = "./Resources/Weather.wsdl"
+	$path1 = "soapToRestApi"
+	$wsdlApiId1 = getAssetName	
+	$wsdlServiceName1 = "Weather" # from file Weather.wsdl
+	$wsdlEndpointName1 = "WeatherSoap" # from file Weather.wsdl
+	
+    try
+    {		 
+		 # import api from Url
+        $api = Import-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId1 -SpecificationPath $wsdlPath1 -SpecificationFormat Wsdl -Path $path1 -WsdlServiceName $wsdlServiceName1 -WsdlEndpointName $wsdlEndpointName1 -ApiType Soap
+
+        Assert-AreEqual $wsdlApiId1 $api.ApiId
+        Assert-AreEqual $path1 $api.Path
+
+		 # export api to pipeline
+        $result = Export-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId1 -SpecificationFormat Wsdl
 		Assert-NotNull $result
 		Assert-True {$result -like '*<wsdl:service name="Weather"*'}
     }
     finally
     {
-        # remove created api
-        $removed = Remove-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId -PassThru 
+		# remove created api
+        $removed = Remove-AzureRmApiManagementApi -Context $context -ApiId $wsdlApiId1 -PassThru 
         Assert-True {$removed}
     }
 }
@@ -1845,5 +1914,85 @@ Param($resourceGroupName, $serviceName)
     finally
     {
 		Set-AzureRmApiManagementTenantAccess -Context $context -Enabled $false -PassThru
+    }
+}
+
+<#
+.SYNOPSIS
+Tests CRUD operations of Identity Provider Configuration.
+#>
+function IdentityProvider-CrudTest
+{
+Param($resourceGroupName, $serviceName)
+
+    $context = New-AzureRmApiManagementContext -ResourceGroupName $resourceGroupName -ServiceName $serviceName
+	
+    # create facebook identity provider configuration with default parameters
+    $identityProviderName = 'Facebook'
+    try
+    {   
+		$clientId = getAssetName
+		$clientSecret = getAssetName
+
+        $identityProvider = New-AzureRmApiManagementIdentityProvider -Context $context -Type $identityProviderName -ClientId $clientId -ClientSecret $clientSecret
+
+        Assert-NotNull $identityProvider
+        Assert-AreEqual $identityProviderName $identityProvider.Type
+        Assert-AreEqual $clientId $identityProvider.ClientId		
+        Assert-AreEqual $clientSecret $identityProvider.ClientSecret
+
+        # get identity provider using Name
+		$identityProvider = $null
+		$identityProvider = Get-AzureRmApiManagementIdentityProvider -Context $context -Type $identityProviderName
+		
+		Assert-NotNull $identityProvider
+		Assert-AreEqual $identityProviderName $identityProvider.Type
+					
+		#get all Identity Providers
+		$identityProviders = Get-AzureRmApiManagementIdentityProvider -Context $context
+		
+		Assert-NotNull $identityProviders
+		Assert-AreEqual 1 $identityProviders.Count		        
+
+		#update the provider with Secret
+		$clientSecret = getAssetName
+        $identityProvider = Set-AzureRmApiManagementIdentityProvider -Context $context -Type $identityProviderName -ClientSecret $clientSecret -PassThru
+
+        Assert-AreEqual $identityProviderName $identityProvider.Type
+        Assert-AreEqual $clientSecret $identityProvider.ClientSecret
+		Assert-AreEqual $clientId $identityProvider.ClientId
+        
+        #remove identity provider configuration
+        $removed = Remove-AzureRmApiManagementIdentityProvider -Context $context -Type $identityProviderName -PassThru
+		Assert-True {$removed}
+        
+		$identityProvider = $null
+        try
+        {
+            # check it was removed
+            $identityProvider = Get-AzureRmApiManagementIdentityProvider -Context $context -Type $identityProviderName
+        }
+        catch
+        {
+        }
+		
+		Assert-Null $identityProvider
+    }
+    finally
+    {
+        $removed = Remove-AzureRmApiManagementIdentityProvider -Context $context -Type $identityProviderName -PassThru 
+		Assert-True {$removed}
+        
+		$identityProvider = $null
+        try
+        {
+            # check it was removed
+            $identityProvider =  Get-AzureRmApiManagementIdentityProvider -Context $context -Type $identityProviderName
+        }
+        catch
+        {
+        }
+		
+		Assert-Null $identityProvider
     }
 }

@@ -46,7 +46,7 @@ namespace Microsoft.Azure.Commands.Batch.Test
         /// <summary>
         /// Builds an AccountResource object using the specified parameters
         /// </summary>
-        public static AccountResource CreateAccountResource(string accountName, string resourceGroupName, Hashtable tags = null, string storageId = null)
+        public static BatchAccount CreateAccountResource(string accountName, string resourceGroupName, Hashtable tags = null, string storageId = null)
         {
             string tenantUrlEnding = "batch-test.windows-int.net";
             string endpoint = string.Format("{0}.{1}", accountName, tenantUrlEnding);
@@ -55,16 +55,16 @@ namespace Microsoft.Azure.Commands.Batch.Test
 
             string id = string.Format("id/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Batch/batchAccounts/abc", subscription, resourceGroup);
 
-            AccountResource resource = new AccountResource(
+            BatchAccount resource = new BatchAccount(
                 coreQuota: DefaultQuotaCount,
                 poolQuota: DefaultQuotaCount,
                 activeJobAndJobScheduleQuota: DefaultQuotaCount,
+                accountEndpoint: endpoint,
                 id: id,
                 type: "type")
             {
                 Location = "location",
-                AccountEndpoint = endpoint,
-                ProvisioningState = AccountProvisioningState.Succeeded,
+                ProvisioningState = ProvisioningState.Succeeded,
                 AutoStorage = new AutoStorageProperties() { StorageAccountId = storageId }
             };
 
@@ -81,7 +81,7 @@ namespace Microsoft.Azure.Commands.Batch.Test
         /// </summary>
         public static BatchAccountContext CreateBatchContextWithKeys()
         {
-            AccountResource resource = CreateAccountResource("account", "resourceGroup");
+            BatchAccount resource = CreateAccountResource("account", "resourceGroup");
             BatchAccountContext context = BatchAccountContext.ConvertAccountResourceToNewAccountContext(resource);
             string dummyKey = "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
             SetProperty(context, "PrimaryAccountKey", dummyKey);
@@ -610,6 +610,27 @@ namespace Microsoft.Azure.Commands.Batch.Test
             {
                 ProxyModels.CloudJob job = new ProxyModels.CloudJob();
                 job.Id = id;
+                jobs.Add(job);
+            }
+
+            response.Body = new MockPagedEnumerable<ProxyModels.CloudJob>(jobs);
+
+            return response;
+        }
+
+        /// <summary>
+        /// Builds a JobListFromJobScheduleResponse object
+        /// </summary>
+        public static AzureOperationResponse<IPage<ProxyModels.CloudJob>, ProxyModels.JobListFromJobScheduleHeaders> CreateJobListFromJobScheduleResponse(IEnumerable<string> jobIds)
+        {
+            var response = new AzureOperationResponse<IPage<ProxyModels.CloudJob>, ProxyModels.JobListFromJobScheduleHeaders>();
+            response.Response = new HttpResponseMessage(HttpStatusCode.OK);
+
+            List<ProxyModels.CloudJob> jobs = new List<ProxyModels.CloudJob>();
+
+            foreach (string id in jobIds)
+            {
+                ProxyModels.CloudJob job = new ProxyModels.CloudJob(id: id);
                 jobs.Add(job);
             }
 

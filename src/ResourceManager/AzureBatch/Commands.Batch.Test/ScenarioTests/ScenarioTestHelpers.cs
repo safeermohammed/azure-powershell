@@ -69,9 +69,9 @@ namespace Microsoft.Azure.Commands.Batch.Test.ScenarioTests
         public static BatchAccountContext CreateTestAccountAndResourceGroup(BatchController controller, string resourceGroupName, string accountName, string location)
         {
             controller.ResourceManagementClient.ResourceGroups.CreateOrUpdate(resourceGroupName, new ResourceGroup() { Location = location });
-            AccountResource createResponse = controller.BatchManagementClient.Account.Create(resourceGroupName, accountName, new BatchAccountCreateParameters() { Location = location });
+            BatchAccount createResponse = controller.BatchManagementClient.BatchAccount.Create(resourceGroupName, accountName, new BatchAccountCreateParameters() { Location = location });
             BatchAccountContext context = BatchAccountContext.ConvertAccountResourceToNewAccountContext(createResponse);
-            BatchAccountListKeyResult response = controller.BatchManagementClient.Account.ListKeys(resourceGroupName, accountName);
+            BatchAccountKeys response = controller.BatchManagementClient.BatchAccount.GetKeys(resourceGroupName, accountName);
             context.PrimaryAccountKey = response.Primary;
             context.SecondaryAccountKey = response.Secondary;
             return context;
@@ -82,7 +82,7 @@ namespace Microsoft.Azure.Commands.Batch.Test.ScenarioTests
         /// </summary>
         public static void CleanupTestAccount(BatchController controller, string resourceGroupName, string accountName)
         {
-            controller.BatchManagementClient.Account.Delete(resourceGroupName, accountName);
+            controller.BatchManagementClient.BatchAccount.Delete(resourceGroupName, accountName);
             controller.ResourceManagementClient.ResourceGroups.Delete(resourceGroupName);
         }
 
@@ -235,51 +235,6 @@ namespace Microsoft.Azure.Commands.Batch.Test.ScenarioTests
             }
 
             CreateTestPool(controller, context, MpiPoolId, targetDedicated);
-        }
-
-
-        public static void EnableAutoScale(BatchController controller, BatchAccountContext context, string poolId)
-        {
-            BatchClient client = new BatchClient(controller.BatchManagementClient, controller.ResourceManagementClient);
-
-            string formula = "$TargetDedicated=2";
-            EnableAutoScaleParameters parameters = new EnableAutoScaleParameters(context, poolId, null)
-            {
-                AutoScaleFormula = formula
-            };
-            client.EnableAutoScale(parameters);
-        }
-
-        public static void DisableAutoScale(BatchController controller, BatchAccountContext context, string poolId)
-        {
-            BatchClient client = new BatchClient(controller.BatchManagementClient, controller.ResourceManagementClient);
-
-            PoolOperationParameters parameters = new PoolOperationParameters(context, poolId, null);
-            client.DisableAutoScale(parameters);
-        }
-
-        public static string WaitForOSVersionChange(BatchController controller, BatchAccountContext context, string poolId)
-        {
-            BatchClient client = new BatchClient(controller.BatchManagementClient, controller.ResourceManagementClient);
-
-            ListPoolOptions options = new ListPoolOptions(context)
-            {
-                PoolId = poolId
-            };
-
-            DateTime timeout = DateTime.Now.AddMinutes(5);
-            PSCloudPool pool = client.ListPools(options).First();
-            while (pool.CloudServiceConfiguration.CurrentOSVersion != pool.CloudServiceConfiguration.TargetOSVersion)
-            {
-                if (DateTime.Now > timeout)
-                {
-                    throw new TimeoutException("Timed out waiting for active state pool");
-                }
-                Sleep(5000);
-                pool = client.ListPools(options).First();
-            }
-
-            return pool.CloudServiceConfiguration.TargetOSVersion;
         }
 
         public static void ResizePool(BatchController controller, BatchAccountContext context, string poolId, int targetDedicated)
@@ -611,13 +566,13 @@ namespace Microsoft.Azure.Commands.Batch.Test.ScenarioTests
         /// <summary>
         /// Uploads an application package to Storage
         /// </summary>
-        public static AddApplicationPackageResult CreateApplicationPackage(BatchController controller, BatchAccountContext context, string applicationId, string version, string filePath)
+        public static ApplicationPackage CreateApplicationPackage(BatchController controller, BatchAccountContext context, string applicationId, string version, string filePath)
         {
-            AddApplicationPackageResult applicationPackage = null;
+            ApplicationPackage applicationPackage = null;
 
             if (HttpMockServer.Mode == HttpRecorderMode.Record)
             {
-                applicationPackage = controller.BatchManagementClient.Application.AddApplicationPackage(
+                applicationPackage = controller.BatchManagementClient.ApplicationPackage.Create(
                     context.ResourceGroupName,
                     context.AccountName,
                     applicationId,
