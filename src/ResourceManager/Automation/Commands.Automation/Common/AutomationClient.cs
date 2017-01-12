@@ -1704,10 +1704,23 @@ namespace Microsoft.Azure.Commands.Automation.Common
             IDictionary parameters)
         {
             parameters = parameters ?? new Dictionary<string, string>();
-            IEnumerable<KeyValuePair<string, RunbookParameter>> runbookParameters =
-                this.ListRunbookParameters(resourceGroupName, automationAccountName, runbookName);
-            var filteredParameters = new Dictionary<string, string>();
+            IEnumerable<KeyValuePair<string, RunbookParameter>> runbookParameters;
+            
+            try
+            {
+                runbookParameters = this.ListRunbookParameters(resourceGroupName, automationAccountName, runbookName);
+            }
+            catch (ResourceCommonException ex)
+            {
+                if (ex.Message == Resources.RunbookNotFound)
+                {
+                    // if the runbook does not exists, just return the processed parameters. This case happens if the runbook is global in user scope
+                    return parameters.Cast<DictionaryEntry>().ToDictionary(k => k.Key.ToString(), k => (PowerShellJsonConverter.Serialize(k.Value)));
+                }
+                throw;
+            }
 
+            var filteredParameters = new Dictionary<string, string>();
             foreach (var runbookParameter in runbookParameters)
             {
                 if (parameters.Contains(runbookParameter.Key))

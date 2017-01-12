@@ -145,7 +145,8 @@ namespace Microsoft.Azure.Commands.Automation.Common
             string runbookName,
             bool isEnabled,
             DateTimeOffset expiryTime,
-            IDictionary parameters);
+            IDictionary parameters,
+            string runOn);
 
         Model.Webhook GetWebhook(string resourceGroupName, string automationAccountName, string name);
 

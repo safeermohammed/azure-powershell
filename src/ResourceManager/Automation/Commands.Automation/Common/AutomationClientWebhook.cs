@@ -35,7 +35,8 @@ namespace Microsoft.Azure.Commands.Automation.Common
             string runbookName,
             bool isEnabled,
             DateTimeOffset expiryTime,
-            IDictionary runbookParameters)
+            IDictionary runbookParameters,
+            string runOn)
         {
             Requires.Argument("ResourceGroupName", resourceGroupName).NotNull();
             Requires.Argument("AutomationAccountName", automationAccountName).NotNull();
@@ -46,6 +47,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 {
                     IsEnabled = isEnabled,
                     ExpiryTime = expiryTime,
+                    RunOn = runOn,
                     Runbook = rbAssociationProperty,
                     Uri =
                                                            this.automationManagementClient

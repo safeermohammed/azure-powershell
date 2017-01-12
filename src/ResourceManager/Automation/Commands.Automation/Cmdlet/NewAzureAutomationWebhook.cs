@@ -67,6 +67,13 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
             HelpMessage = "The Runbook parameters name/value.")]
         public IDictionary Parameters { get; set; }
 
+        /// <summary>
+        /// Gets or sets the optional hybrid agent friendly name upon which the runbook of webhook should be executed.
+        /// </summary>
+        [Alias("HybridWorker")]
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The name of the hybrid runbook worker group.")]
+        public string RunOn { get; set; }
+
         [Parameter(Mandatory = false, HelpMessage = "Skip warning message about one-time viewable webhook URL")]
         public SwitchParameter Force { get; set; }
 
@@ -90,7 +97,8 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                         this.RunbookName,
                         this.IsEnabled,
                         this.ExpiryTime,
-                        this.Parameters)));
+                        this.Parameters,
+                        this.RunOn)));
 
         }
     }
