@@ -59,13 +59,13 @@ namespace Microsoft.Azure.Commands.Automation.Model
                 this.Tags.Add(kvp.Key, kvp.Value);
             }
 
-            if (automationAccount.Properties == null) return;
+            if (automationAccount == null) return;
 
-            this.Plan = automationAccount.Properties.Sku != null ? automationAccount.Properties.Sku.Name : null;
-            this.CreationTime = automationAccount.Properties.CreationTime.ToLocalTime();
-            this.LastModifiedTime = automationAccount.Properties.LastModifiedTime.ToLocalTime();
-            this.State = automationAccount.Properties.State;
-            this.LastModifiedBy = automationAccount.Properties.LastModifiedBy;
+            this.Plan = automationAccount.Sku != null ? automationAccount.Sku.Name : null;
+            this.CreationTime = automationAccount.CreationTime.ToLocalTime();
+            this.LastModifiedTime = automationAccount.LastModifiedTime.ToLocalTime();
+            this.State = automationAccount.State;
+            this.LastModifiedBy = automationAccount.LastModifiedBy;
         }
 
         /// <summary>

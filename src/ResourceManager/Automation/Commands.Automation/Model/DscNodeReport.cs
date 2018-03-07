@@ -76,7 +76,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the last modified time.
         /// </summary>
-        public DateTimeOffset LastModifiedTime { get; set; }
+        public DateTimeOffset? LastModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the end time.

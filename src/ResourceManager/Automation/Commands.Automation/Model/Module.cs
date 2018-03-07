@@ -41,15 +41,15 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.AutomationAccountName = automationAccountName;
             this.Name = module.Name;
 
-            if (module.Properties == null) return;
+            if (module == null) return;
 
-            this.CreationTime = module.Properties.CreationTime.ToLocalTime();
-            this.LastModifiedTime = module.Properties.LastModifiedTime.ToLocalTime();
-            this.IsGlobal = module.Properties.IsGlobal;
-            this.Version = module.Properties.Version;
-            this.ProvisioningState = module.Properties.ProvisioningState.ToString();
-            this.ActivityCount = module.Properties.ActivityCount;
-            this.SizeInBytes = module.Properties.SizeInBytes;
+            this.CreationTime = module.CreationTime.ToLocalTime();
+            this.LastModifiedTime = module.LastModifiedTime.ToLocalTime();
+            this.IsGlobal = module.IsGlobal;
+            this.Version = module.Version;
+            this.ProvisioningState = module.ProvisioningState.ToString();
+            this.ActivityCount = module.ActivityCount;
+            this.SizeInBytes = module.SizeInBytes;
         }
 
         /// <summary>
@@ -97,12 +97,12 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the CreationTime.
         /// </summary>
-        public DateTimeOffset CreationTime { get; set; }
+        public DateTimeOffset? CreationTime { get; set; }
 
         /// <summary>
         /// Gets or sets the LastPublishTime.
         /// </summary>
-        public DateTimeOffset LastModifiedTime { get; set; }
+        public DateTimeOffset? LastModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the ProvisioningState.

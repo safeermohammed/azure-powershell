@@ -49,12 +49,12 @@ namespace Microsoft.Azure.Commands.Automation.Model
             ResourceGroupName = resourceGroupName;
             AutomationAccountName = accountName;
 
-            if (automationJob != null && automationJob.Properties == null) return;
+            if (automationJob != null && automationJob == null) return;
 
             if (automationJob != null)
             {
-                JobId = automationJob.Properties.JobId;
-                JobStatus = automationJob.Properties.Status;
+                JobId = automationJob.JobId;
+                JobStatus = automationJob.Status;
                 Job = new Job(resourceGroupName, accountName, automationJob);
             }
 
@@ -97,13 +97,13 @@ namespace Microsoft.Azure.Commands.Automation.Model
             {
                 if (automationJob != null)
                 {
-                    JobId = automationJob.Properties.JobId;
-                    JobStatus = automationJob.Properties.Status;
+                    JobId = automationJob.JobId;
+                    JobStatus = automationJob.Status;
                     Job = new Job(resourceGroupName, accountName, automationJob);
                 }
                 else
                 {
-                    JobScheduleId = automationJobSchedule.Properties.Id;
+                    JobScheduleId = automationJobSchedule.Id;
                     JobStatus = Scheduled;
                     JobSchedule = new JobSchedule(resourceGroupName, accountName, automationJobSchedule);
                 }
@@ -175,12 +175,12 @@ namespace Microsoft.Azure.Commands.Automation.Model
             AutomationAccountName = accountName;
             NodeConfigurationName = nodeConfiguraionName;
 
-            if (automationJob != null && automationJob.Properties == null) return;
+            if (automationJob != null && automationJob == null) return;
 
             if (automationJob != null)
             {
-                JobId = automationJob.Properties.JobId;
-                JobStatus = automationJob.Properties.Status;
+                JobId = automationJob.JobId;
+                JobStatus = automationJob.Status;
                 Job = new Job(resourceGroupName, accountName, automationJob);
             }
 
@@ -229,13 +229,13 @@ namespace Microsoft.Azure.Commands.Automation.Model
             {
                 if (automationJob != null)
                 {
-                    JobId = automationJob.Properties.JobId;
-                    JobStatus = automationJob.Properties.Status;
+                    JobId = automationJob.JobId;
+                    JobStatus = automationJob.Status;
                     Job = new Job(resourceGroupName, accountName, automationJob);
                 }
                 else
                 {
-                    JobScheduleId = automationJobSchedule.Properties.Id;
+                    JobScheduleId = automationJobSchedule.Id;
                     JobSchedule = new JobSchedule(resourceGroupName, accountName, automationJobSchedule);
                 }
             }

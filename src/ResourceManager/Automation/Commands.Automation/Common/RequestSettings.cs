@@ -16,16 +16,17 @@ using Microsoft.Azure.Commands.Automation.Common;
 using Microsoft.Azure.Management.Automation;
 using System;
 using System.Diagnostics.Eventing;
+using AutomationManagement = Microsoft.Azure.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Automation
 {
     public class RequestSettings : IDisposable
     {
-        private readonly AutomationManagementClient client;
+        private readonly AutomationManagement.AutomationClient client;
 
-        public RequestSettings(IAutomationManagementClient automationClient)
+        public RequestSettings(AutomationManagement.IAutomationClient automationClient)
         {
-            client = ((AutomationManagementClient)automationClient);
+            client = ((AutomationManagement.AutomationClient)automationClient);
             client.HttpClient.DefaultRequestHeaders.Remove(Constants.ClientRequestIdHeaderName);
             client.HttpClient.DefaultRequestHeaders.Add(Constants.ClientRequestIdHeaderName, Guid.NewGuid().ToString());
 

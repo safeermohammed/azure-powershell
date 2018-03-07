@@ -45,22 +45,22 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.ResourceGroupName = resourceGroupName;
             this.AutomationAccountName = accountName;
 
-            if (job.Properties == null) return;
+            if (job == null) return;
 
-            this.JobId = job.Properties.JobId;
-            this.CreationTime = job.Properties.CreationTime.ToLocalTime();
-            this.LastModifiedTime = job.Properties.LastModifiedTime.ToLocalTime();
-            this.StartTime = job.Properties.StartTime.HasValue ? job.Properties.StartTime.Value.ToLocalTime() : (DateTimeOffset?)null;
-            this.Status = job.Properties.Status;
-            this.StatusDetails = job.Properties.StatusDetails;
-            this.RunbookName = job.Properties.Runbook.Name;
-            this.Exception = job.Properties.Exception;
-            this.EndTime = job.Properties.EndTime.HasValue ? job.Properties.EndTime.Value.ToLocalTime() : (DateTimeOffset?)null;
-            this.LastStatusModifiedTime = job.Properties.LastStatusModifiedTime;
-            this.HybridWorker = job.Properties.RunOn;
-            this.StartedBy = job.Properties.StartedBy;
+            this.JobId = job.JobId;
+            this.CreationTime = job.CreationTime.ToLocalTime();
+            this.LastModifiedTime = job.LastModifiedTime.ToLocalTime();
+            this.StartTime = job.StartTime.HasValue ? job.StartTime.Value.ToLocalTime() : (DateTimeOffset?)null;
+            this.Status = job.Status;
+            this.StatusDetails = job.StatusDetails;
+            this.RunbookName = job.Runbook.Name;
+            this.Exception = job.Exception;
+            this.EndTime = job.EndTime.HasValue ? job.EndTime.Value.ToLocalTime() : (DateTimeOffset?)null;
+            this.LastStatusModifiedTime = job.LastStatusModifiedTime;
+            this.HybridWorker = job.RunOn;
+            this.StartedBy = job.StartedBy;
             this.JobParameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in job.Properties.Parameters)
+            foreach (var kvp in job.Parameters)
             {
                 if (0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture, CompareOptions.IgnoreCase) &&
                     0 != String.Compare(kvp.Key, Constants.JobRunOnParameterName, CultureInfo.InvariantCulture, CompareOptions.IgnoreCase))

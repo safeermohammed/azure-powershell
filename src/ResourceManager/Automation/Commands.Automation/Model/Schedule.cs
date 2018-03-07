@@ -47,18 +47,18 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.ResourceGroupName = resourceGroupName;
             this.AutomationAccountName = automationAccountName;
             this.Name = schedule.Name;
-            this.Description = schedule.Properties.Description;
-            this.StartTime = AdjustOffset(schedule.Properties.StartTime, schedule.Properties.StartTimeOffsetMinutes);
-            this.ExpiryTime = AdjustOffset(schedule.Properties.ExpiryTime, schedule.Properties.ExpiryTimeOffsetMinutes);
-            this.CreationTime = schedule.Properties.CreationTime.ToLocalTime();
-            this.LastModifiedTime = schedule.Properties.LastModifiedTime.ToLocalTime();
-            this.IsEnabled = schedule.Properties.IsEnabled;
-            this.NextRun = AdjustOffset(schedule.Properties.NextRun, schedule.Properties.NextRunOffsetMinutes);
-            this.Interval = schedule.Properties.Interval ?? this.Interval;
-            this.Frequency = (ScheduleFrequency)Enum.Parse(typeof(ScheduleFrequency), schedule.Properties.Frequency, true);
+            this.Description = schedule.Description;
+            this.StartTime = AdjustOffset(schedule.StartTime, schedule.StartTimeOffsetMinutes);
+            this.ExpiryTime = AdjustOffset(schedule.ExpiryTime, schedule.ExpiryTimeOffsetMinutes);
+            this.CreationTime = schedule.CreationTime.ToLocalTime();
+            this.LastModifiedTime = schedule.LastModifiedTime.ToLocalTime();
+            this.IsEnabled = schedule.IsEnabled;
+            this.NextRun = AdjustOffset(schedule.NextRun, schedule.NextRunOffsetMinutes);
+            this.Interval = schedule.Interval ?? this.Interval;
+            this.Frequency = (ScheduleFrequency)Enum.Parse(typeof(ScheduleFrequency), schedule.Frequency, true);
             this.WeeklyScheduleOptions = this.CreateWeeklyScheduleOptions(schedule);
             this.MonthlyScheduleOptions = this.CreateMonthlyScheduleOptions(schedule);
-            this.TimeZone = schedule.Properties.TimeZone;
+            this.TimeZone = schedule.TimeZone;
         }
 
         #region Public Properties
@@ -226,11 +226,11 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// </returns>
         private WeeklyScheduleOptions CreateWeeklyScheduleOptions(Microsoft.Azure.Management.Automation.Models.Schedule schedule)
         {
-            return schedule.Properties.AdvancedSchedule == null
+            return schedule.AdvancedSchedule == null
                 ? null
                 : new WeeklyScheduleOptions()
                 {
-                    DaysOfWeek = schedule.Properties.AdvancedSchedule.WeekDays
+                    DaysOfWeek = schedule.AdvancedSchedule.WeekDays
                 };
         }
 
@@ -246,18 +246,18 @@ namespace Microsoft.Azure.Commands.Automation.Model
         private MonthlyScheduleOptions CreateMonthlyScheduleOptions(
             Microsoft.Azure.Management.Automation.Models.Schedule schedule)
         {
-            return schedule.Properties.AdvancedSchedule == null
-                || (schedule.Properties.AdvancedSchedule.MonthDays == null && schedule.Properties.AdvancedSchedule.MonthlyOccurrences == null)
+            return schedule.AdvancedSchedule == null
+                || (schedule.AdvancedSchedule.MonthDays == null && schedule.AdvancedSchedule.MonthlyOccurrences == null)
                 ? null
                 : new MonthlyScheduleOptions()
                 {
-                    DaysOfMonth = this.GetDaysOfMonth(schedule.Properties.AdvancedSchedule.MonthDays),
-                    DayOfWeek = this.IsMonthlyOccurrenceNull(schedule.Properties.AdvancedSchedule)
+                    DaysOfMonth = this.GetDaysOfMonth(schedule.AdvancedSchedule.MonthDays),
+                    DayOfWeek = this.IsMonthlyOccurrenceNull(schedule.AdvancedSchedule)
                         ? null
                         : new DayOfWeek()
                         {
-                            Day = schedule.Properties.AdvancedSchedule.MonthlyOccurrences.First().Day,
-                            Occurrence = this.GetDayOfWeekOccurrence(schedule.Properties.AdvancedSchedule.MonthlyOccurrences.First().Occurrence)
+                            Day = schedule.AdvancedSchedule.MonthlyOccurrences.First().Day,
+                            Occurrence = this.GetDayOfWeekOccurrence(schedule.AdvancedSchedule.MonthlyOccurrences.First().Occurrence)
                         }
                 };
         }
