@@ -14,7 +14,6 @@
 
 using Microsoft.Azure.Commands.Automation.Model;
 using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
-using Microsoft.Azure.Commands.Common.Authentication.Models;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,7 +22,7 @@ using System.Security;
 
 namespace Microsoft.Azure.Commands.Automation.Common
 {
-    public interface IAutomationClient
+    public interface IAutomationPSClient
     {
         IAzureSubscription Subscription { get; }
 
