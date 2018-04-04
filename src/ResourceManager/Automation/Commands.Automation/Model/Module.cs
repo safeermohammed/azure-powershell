@@ -45,11 +45,11 @@ namespace Microsoft.Azure.Commands.Automation.Model
 
             this.CreationTime = module.CreationTime.ToLocalTime();
             this.LastModifiedTime = module.LastModifiedTime.ToLocalTime();
-            this.IsGlobal = module.IsGlobal;
+            this.IsGlobal = module.IsGlobal.HasValue ? module.IsGlobal.Value : false;
             this.Version = module.Version;
             this.ProvisioningState = module.ProvisioningState.ToString();
-            this.ActivityCount = module.ActivityCount;
-            this.SizeInBytes = module.SizeInBytes;
+            this.ActivityCount = module.ActivityCount.HasValue ? module.ActivityCount.Value : 0;
+            this.SizeInBytes = module.SizeInBytes.HasValue ? module.SizeInBytes.Value : 0;
         }
 
         /// <summary>

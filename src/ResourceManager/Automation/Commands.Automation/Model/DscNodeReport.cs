@@ -43,7 +43,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.EndTime = dscNodeReport.EndTime;
             this.LastModifiedTime = dscNodeReport.LastModifiedTime;
             this.ReportType = dscNodeReport.Type;
-            this.Id = dscNodeReport.ReportId.ToString("D");
+            this.Id = dscNodeReport.ReportId;
             this.NodeId = nodeId;
             this.Status = dscNodeReport.Status;
             this.RefreshMode = dscNodeReport.RefreshMode;

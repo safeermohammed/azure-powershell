@@ -47,7 +47,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             if (automationJobSchedule != null && automationJobSchedule == null) return;
             if (automationJobSchedule == null) return;
 
-            JobScheduleId = automationJobSchedule.Id;
+            JobScheduleId = Guid.Parse(automationJobSchedule.Id);
             JobSchedule = new JobSchedule(resourceGroupName, accountName, automationJobSchedule);
         }
 

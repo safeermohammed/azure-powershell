@@ -47,7 +47,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             RunbookWorker = new List<HybridRunbookWorker>();
             foreach (var worker in hybridRunbookWorkerGroup.HybridRunbookWorkers)
             {
-                var hbworker = new HybridRunbookWorker(worker.IpAddress, worker.Name, worker.RegistrationDateTime);                
+                var hbworker = new HybridRunbookWorker(worker.Ip, worker.Name, worker.RegistrationTime);                
                 this.RunbookWorker.Add(hbworker);
             }
         }

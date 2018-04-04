@@ -49,7 +49,28 @@ namespace Microsoft.Azure.Commands.Automation.Model
             ResourceGroupName = resourceGroupName;
             AutomationAccountName = accountName;
 
-            if (automationJob != null && automationJob == null) return;
+            if (automationJob == null) return;
+
+            if (automationJob != null)
+            {
+                JobId = automationJob.JobId;
+                JobStatus = automationJob.Status;
+                Job = new Job(resourceGroupName, accountName, automationJob);
+            }
+
+            NodeConfigurationName = nodeConfiguraionName;
+        }
+
+        public NodeConfigurationDeployment(string resourceGroupName, string accountName,
+           string nodeConfiguraionName, Management.Automation.Models.JobCollectionItem automationJob = null)
+        {
+            Requires.Argument("accountName", accountName).NotNull();
+            Requires.Argument("resourceGroupName", resourceGroupName).NotNull();
+
+            ResourceGroupName = resourceGroupName;
+            AutomationAccountName = accountName;
+
+            if (automationJob == null) return;
 
             if (automationJob != null)
             {
@@ -103,7 +124,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
                 }
                 else
                 {
-                    JobScheduleId = automationJobSchedule.Id;
+                    JobScheduleId = Guid.Parse(automationJobSchedule.Id);
                     JobStatus = Scheduled;
                     JobSchedule = new JobSchedule(resourceGroupName, accountName, automationJobSchedule);
                 }
@@ -235,7 +256,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
                 }
                 else
                 {
-                    JobScheduleId = automationJobSchedule.Id;
+                    JobScheduleId = Guid.Parse(automationJobSchedule.Id);
                     JobSchedule = new JobSchedule(resourceGroupName, accountName, automationJobSchedule);
                 }
             }

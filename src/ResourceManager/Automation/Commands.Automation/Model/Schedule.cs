@@ -93,7 +93,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the schedule interval.
         /// </summary>
-        public byte? Interval { get; set; }
+        public int? Interval { get; set; }
 
         /// <summary>
         /// Gets or sets the schedule frequency.

@@ -83,6 +83,26 @@ namespace Microsoft.Azure.Commands.Automation.Model
             }
         }
 
+        public Job(string resourceGroupName, string accountName, Azure.Management.Automation.Models.JobCollectionItem job)
+        {
+            Requires.Argument("job", job).NotNull();
+            Requires.Argument("accountName", accountName).NotNull();
+
+            this.ResourceGroupName = resourceGroupName;
+            this.AutomationAccountName = accountName;
+
+            if (job == null) return;
+
+            this.JobId = job.JobId;
+            this.CreationTime = job.CreationTime.ToLocalTime();
+            this.LastModifiedTime = job.LastModifiedTime.ToLocalTime();
+            this.StartTime = job.StartTime.HasValue ? job.StartTime.Value.ToLocalTime() : (DateTimeOffset?)null;
+            this.Status = job.Status;
+            this.RunbookName = job.Runbook.Name;
+            this.EndTime = job.EndTime.HasValue ? job.EndTime.Value.ToLocalTime() : (DateTimeOffset?)null;
+            this.JobParameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Job"/> class.
         /// </summary>
