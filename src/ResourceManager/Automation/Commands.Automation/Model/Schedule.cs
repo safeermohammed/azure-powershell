@@ -52,7 +52,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.ExpiryTime = AdjustOffset(schedule.ExpiryTime, schedule.ExpiryTimeOffsetMinutes);
             this.CreationTime = schedule.CreationTime.ToLocalTime();
             this.LastModifiedTime = schedule.LastModifiedTime.ToLocalTime();
-            this.IsEnabled = schedule.IsEnabled;
+            this.IsEnabled = schedule.IsEnabled ?? false;
             this.NextRun = AdjustOffset(schedule.NextRun, schedule.NextRunOffsetMinutes);
             this.Interval = schedule.Interval ?? this.Interval;
             this.Frequency = (ScheduleFrequency)Enum.Parse(typeof(ScheduleFrequency), schedule.Frequency, true);
@@ -78,7 +78,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the expiry time.
         /// </summary>
-        public DateTimeOffset ExpiryTime { get; set; }
+        public DateTimeOffset? ExpiryTime { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether is enabled.

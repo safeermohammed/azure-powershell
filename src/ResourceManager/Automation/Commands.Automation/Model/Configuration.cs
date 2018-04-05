@@ -53,7 +53,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.CreationTime = configuration.CreationTime.ToLocalTime();
             this.LastModifiedTime = configuration.LastModifiedTime.ToLocalTime();
             this.Description = configuration.Description;
-            this.LogVerbose = configuration.LogVerbose;
+            this.LogVerbose = configuration.LogVerbose ?? false;
             this.State = configuration.State;
             this.Location = configuration.Location;
 

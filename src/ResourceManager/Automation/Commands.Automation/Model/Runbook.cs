@@ -55,10 +55,10 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.LastModifiedTime = runbook.LastModifiedTime.ToLocalTime();
             this.Description = runbook.Description;
 
-            this.LogVerbose = runbook.LogVerbose;
-            this.LogProgress = runbook.LogProgress;
+            this.LogVerbose = runbook.LogVerbose ?? false;
+            this.LogProgress = runbook.LogProgress ?? false;
             this.State = runbook.State;
-            this.JobCount = runbook.JobCount;
+            this.JobCount = runbook.JobCount ?? 0;
             this.RunbookType = runbook.RunbookType;
             this.LastModifiedBy = runbook.LastModifiedBy;
             this.Tags = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
