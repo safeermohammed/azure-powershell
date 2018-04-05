@@ -46,7 +46,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.CreationTime = variable.CreationTime.ToLocalTime();
             this.LastModifiedTime = variable.LastModifiedTime.ToLocalTime();
 
-            if (variable.Value == null || variable.IsEncrypted)
+            if (variable.Value == null || (variable.IsEncrypted.HasValue && variable.IsEncrypted.Value))
             {
                 this.Value = null;
             }
@@ -56,7 +56,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             }
 
             this.Description = variable.Description;
-            this.Encrypted = variable.IsEncrypted;
+            this.Encrypted = variable.IsEncrypted ?? false;
             this.AutomationAccountName = automationAccoutName;
         }
 

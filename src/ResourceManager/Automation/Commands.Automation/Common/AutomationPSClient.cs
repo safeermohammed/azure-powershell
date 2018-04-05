@@ -317,7 +317,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                Name = schedule.Name,
                StartTime = schedule.StartTime.DateTime,
-               ExpiryTime = schedule.ExpiryTime.DateTime,
+               ExpiryTime = schedule.ExpiryTime,
                Description = schedule.Description,
                Interval = schedule.Interval,
                Frequency = schedule.Frequency.ToString(),
@@ -1110,7 +1110,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 return this.CreateCertificateInternal(resourceGroupName, automationAccountName, name, path, password,
                     createOrUpdateDescription,
-                    createOrUpdateIsExportable.Value);
+                    createOrUpdateIsExportable);
             }
 
             var cuparam = new CertificateUpdateParameters()

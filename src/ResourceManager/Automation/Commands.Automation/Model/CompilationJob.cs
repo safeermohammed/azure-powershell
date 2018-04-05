@@ -128,7 +128,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the last status modified time of the job."
         /// </summary>
-        public DateTimeOffset LastStatusModifiedTime { get; set; }
+        public DateTimeOffset? LastStatusModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the parameters of the job.

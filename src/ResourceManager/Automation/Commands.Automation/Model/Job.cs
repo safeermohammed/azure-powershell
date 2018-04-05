@@ -49,7 +49,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
 
             this.JobId = job.JobId;
             this.CreationTime = job.CreationTime.ToLocalTime();
-            this.LastModifiedTime = job.LastModifiedTime.ToLocalTime();
+            this.LastModifiedTime = job.LastModifiedTime.HasValue ? job.LastModifiedTime.Value.ToLocalTime() : (DateTimeOffset?)null;
             this.StartTime = job.StartTime.HasValue ? job.StartTime.Value.ToLocalTime() : (DateTimeOffset?)null;
             this.Status = job.Status;
             this.StatusDetails = job.StatusDetails;
@@ -95,7 +95,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
 
             this.JobId = job.JobId;
             this.CreationTime = job.CreationTime.ToLocalTime();
-            this.LastModifiedTime = job.LastModifiedTime.ToLocalTime();
+            this.LastModifiedTime = job.LastModifiedTime.HasValue ? job.LastModifiedTime.Value.ToLocalTime() : (DateTimeOffset?)null;
             this.StartTime = job.StartTime.HasValue ? job.StartTime.Value.ToLocalTime() : (DateTimeOffset?)null;
             this.Status = job.Status;
             this.RunbookName = job.Runbook.Name;
@@ -158,12 +158,12 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the last modified time of the job.
         /// </summary>
-        public DateTimeOffset LastModifiedTime { get; set; }
+        public DateTimeOffset? LastModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the last status modified time of the job."
         /// </summary>
-        public DateTimeOffset LastStatusModifiedTime { get; set; }
+        public DateTimeOffset? LastStatusModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the parameters of the job.

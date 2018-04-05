@@ -43,7 +43,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.LastSeen = node.LastSeen.ToLocalTime();
             this.RegistrationTime = node.RegistrationTime.ToLocalTime();
             this.Status = node.Status;
-            this.NodeConfigurationName = node.NodeConfiguration.Name;
+            this.NodeConfigurationName = node.DscNodeName;
         }
 
         /// <summary>
