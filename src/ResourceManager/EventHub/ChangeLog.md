@@ -18,7 +18,15 @@
         - Additional information about change #1
 -->
 ## Current Release
+* Updated to the latest version of the Azure ClientRuntime
 
+## Version 0.6.2
+* Fix issue with Default Resource Group in CloudShell
+
+## Version 0.6.1
+* Fix bug in Get-AzureRmEventHubGeoDRConfiguration help
+
+## Version 0.6.0
 * Added below new commands for Geo Disaster Recovery operations. 
 	-Creating a new Alias(Disaster Recovery configuration): 
 		- New-AzureRmEventHubGeoDRConfiguration [-ResourceGroupName] <String> [-Namespace] <String> [-Name] <String> [-PartnerNamespace] <String> [-WhatIf] [-Confirm]
