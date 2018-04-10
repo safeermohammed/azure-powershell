@@ -59,7 +59,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.ConfigurationName = job.Configuration.Name;
             this.Exception = job.Exception;
             this.EndTime = job.EndTime.HasValue ? job.EndTime.Value.ToLocalTime() : (DateTimeOffset?)null;
-            this.LastStatusModifiedTime = job.LastStatusModifiedTime;
+            this.LastStatusModifiedTime = job.LastStatusModifiedTime.HasValue ? job.LastStatusModifiedTime.Value : DateTimeOffset.MinValue;
             this.JobParameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
             foreach (var kvp in job.Parameters.Where(kvp => 0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture,
                 CompareOptions.IgnoreCase)))
@@ -93,7 +93,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the tags.
         /// </summary>
-        public DateTimeOffset? CreationTime { get; set; }
+        public DateTimeOffset CreationTime { get; set; }
 
         /// <summary>
         /// Gets or sets the status of the job.
@@ -123,12 +123,12 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the last modified time of the job.
         /// </summary>
-        public DateTimeOffset? LastModifiedTime { get; set; }
+        public DateTimeOffset LastModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the last status modified time of the job."
         /// </summary>
-        public DateTimeOffset? LastStatusModifiedTime { get; set; }
+        public DateTimeOffset LastStatusModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the parameters of the job.

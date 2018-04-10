@@ -97,12 +97,12 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the CreationTime.
         /// </summary>
-        public DateTimeOffset? CreationTime { get; set; }
+        public DateTimeOffset CreationTime { get; set; }
 
         /// <summary>
         /// Gets or sets the LastPublishTime.
         /// </summary>
-        public DateTimeOffset? LastModifiedTime { get; set; }
+        public DateTimeOffset LastModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the ProvisioningState.

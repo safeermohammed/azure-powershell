@@ -49,14 +49,14 @@ namespace Microsoft.Azure.Commands.Automation.Model
 
             this.JobId = job.JobId;
             this.CreationTime = job.CreationTime.ToLocalTime();
-            this.LastModifiedTime = job.LastModifiedTime.HasValue ? job.LastModifiedTime.Value.ToLocalTime() : (DateTimeOffset?)null;
+            this.LastModifiedTime = job.LastModifiedTime.HasValue ? job.LastModifiedTime.Value.ToLocalTime() : new DateTimeOffset();
             this.StartTime = job.StartTime.HasValue ? job.StartTime.Value.ToLocalTime() : (DateTimeOffset?)null;
             this.Status = job.Status;
             this.StatusDetails = job.StatusDetails;
             this.RunbookName = job.Runbook.Name;
             this.Exception = job.Exception;
             this.EndTime = job.EndTime.HasValue ? job.EndTime.Value.ToLocalTime() : (DateTimeOffset?)null;
-            this.LastStatusModifiedTime = job.LastStatusModifiedTime;
+            this.LastStatusModifiedTime = job.LastStatusModifiedTime.HasValue ? job.LastStatusModifiedTime.Value.ToLocalTime() : DateTimeOffset.MinValue;
             this.HybridWorker = job.RunOn;
             this.StartedBy = job.StartedBy;
             this.JobParameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
@@ -95,7 +95,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
 
             this.JobId = job.JobId;
             this.CreationTime = job.CreationTime.ToLocalTime();
-            this.LastModifiedTime = job.LastModifiedTime.HasValue ? job.LastModifiedTime.Value.ToLocalTime() : (DateTimeOffset?)null;
+            this.LastModifiedTime = job.LastModifiedTime.HasValue ? job.LastModifiedTime.Value.ToLocalTime() : DateTimeOffset.MinValue;
             this.StartTime = job.StartTime.HasValue ? job.StartTime.Value.ToLocalTime() : (DateTimeOffset?)null;
             this.Status = job.Status;
             this.RunbookName = job.Runbook.Name;
@@ -158,12 +158,12 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// <summary>
         /// Gets or sets the last modified time of the job.
         /// </summary>
-        public DateTimeOffset? LastModifiedTime { get; set; }
+        public DateTimeOffset LastModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the last status modified time of the job."
         /// </summary>
-        public DateTimeOffset? LastStatusModifiedTime { get; set; }
+        public DateTimeOffset LastStatusModifiedTime { get; set; }
 
         /// <summary>
         /// Gets or sets the parameters of the job.
