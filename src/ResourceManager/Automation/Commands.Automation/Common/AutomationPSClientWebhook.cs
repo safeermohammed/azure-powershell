@@ -87,9 +87,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
                     return new Model.Webhook(resourceGroupName, automationAccountName, webhook);
                 }
-                catch (CloudException cloudException)
+                catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         throw new ResourceNotFoundException(
                             typeof(Webhook),
@@ -190,9 +190,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 {
                     this.automationManagementClient.Webhook.Delete(resourceGroupName, automationAccountName, name);
                 }
-                catch (CloudException cloudException)
+                catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                     {
                         throw new ResourceNotFoundException(
                             typeof(Webhook),

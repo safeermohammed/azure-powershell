@@ -60,25 +60,29 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.HybridWorker = job.RunOn;
             this.StartedBy = job.StartedBy;
             this.JobParameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in job.Parameters)
+
+            if (job.Parameters != null)
             {
-                if (0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture, CompareOptions.IgnoreCase) &&
-                    0 != String.Compare(kvp.Key, Constants.JobRunOnParameterName, CultureInfo.InvariantCulture, CompareOptions.IgnoreCase))
+                foreach (var kvp in job.Parameters)
                 {
-                    object paramValue;
-                    try
+                    if (0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture, CompareOptions.IgnoreCase) &&
+                        0 != String.Compare(kvp.Key, Constants.JobRunOnParameterName, CultureInfo.InvariantCulture, CompareOptions.IgnoreCase))
                     {
-                        paramValue = ((object)PowerShellJsonConverter.Deserialize(kvp.Value));
-                    }
-                    catch (CmdletInvocationException exception)
-                    {
-                        if (!exception.Message.Contains("Invalid JSON primitive"))
-                            throw;
+                        object paramValue;
+                        try
+                        {
+                            paramValue = ((object)PowerShellJsonConverter.Deserialize(kvp.Value));
+                        }
+                        catch (CmdletInvocationException exception)
+                        {
+                            if (!exception.Message.Contains("Invalid JSON primitive"))
+                                throw;
 
-                        paramValue = kvp.Value;
-                    }
-                    this.JobParameters.Add(kvp.Key, paramValue);
+                            paramValue = kvp.Value;
+                        }
+                        this.JobParameters.Add(kvp.Key, paramValue);
 
+                    }
                 }
             }
         }

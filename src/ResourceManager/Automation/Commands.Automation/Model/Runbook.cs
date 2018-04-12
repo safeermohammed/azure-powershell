@@ -62,15 +62,21 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.RunbookType = runbook.RunbookType;
             this.LastModifiedBy = runbook.LastModifiedBy;
             this.Tags = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in runbook.Tags)
+            if (runbook.Tags != null)
             {
-                this.Tags.Add(kvp.Key, kvp.Value);
+                foreach (var kvp in runbook.Tags)
+                {
+                    this.Tags.Add(kvp.Key, kvp.Value);
+                }
             }
 
             this.Parameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in runbook.Parameters)
+            if (runbook.Parameters != null)
             {
-                this.Parameters.Add(kvp.Key, (object)kvp.Value);
+                foreach (var kvp in runbook.Parameters)
+                {
+                    this.Parameters.Add(kvp.Key, (object)kvp.Value);
+                }
             }
         }
 

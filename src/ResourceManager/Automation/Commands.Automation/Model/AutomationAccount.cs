@@ -54,13 +54,14 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.Location = automationAccount.Location;
 
             this.Tags = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in automationAccount.Tags)
+            if (automationAccount.Tags != null)
             {
-                this.Tags.Add(kvp.Key, kvp.Value);
+                foreach (var kvp in automationAccount.Tags)
+                {
+                    this.Tags.Add(kvp.Key, kvp.Value);
+                }
             }
-
-            if (automationAccount == null) return;
-
+            
             this.Plan = automationAccount.Sku != null ? automationAccount.Sku.Name : null;
             this.CreationTime = automationAccount.CreationTime.ToLocalTime();
             this.LastModifiedTime = automationAccount.LastModifiedTime.ToLocalTime();

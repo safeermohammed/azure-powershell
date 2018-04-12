@@ -58,15 +58,23 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.Location = configuration.Location;
 
             this.Tags = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in configuration.Tags)
+
+            if (configuration.Tags != null)
             {
-                this.Tags.Add(kvp.Key, kvp.Value);
+                foreach (var kvp in configuration.Tags)
+                {
+                    this.Tags.Add(kvp.Key, kvp.Value);
+                }
             }
 
             this.Parameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in configuration.Parameters)
+
+            if (configuration.Parameters != null)
             {
-                this.Parameters.Add(kvp.Key, (object)kvp.Value);
+                foreach (var kvp in configuration.Parameters)
+                {
+                    this.Parameters.Add(kvp.Key, (object)kvp.Value);
+                }
             }
         }
 

@@ -47,10 +47,13 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.ScheduleName = jobSchedule.Schedule.Name;
             this.Parameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
             this.HybridWorker = jobSchedule.RunOn;
-            foreach (var kvp in jobSchedule.Parameters.Where(kvp => 0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture,
-                CompareOptions.IgnoreCase)))
+            if (jobSchedule.Parameters != null)
             {
-                this.Parameters.Add(kvp.Key, (object)PowerShellJsonConverter.Deserialize(kvp.Value));
+                foreach (var kvp in jobSchedule.Parameters.Where(kvp => 0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture,
+                    CompareOptions.IgnoreCase)))
+                {
+                    this.Parameters.Add(kvp.Key, (object)PowerShellJsonConverter.Deserialize(kvp.Value));
+                }
             }
         }
 

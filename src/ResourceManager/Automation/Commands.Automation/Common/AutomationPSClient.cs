@@ -110,9 +110,22 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("ResourceGroupName", resourceGroupName).NotNull();
             Requires.Argument("AutomationAccountName", automationAccountName).NotNull();
 
-            var account = this.automationManagementClient.AutomationAccount.Get(resourceGroupName, automationAccountName);
+            try
+            {
+                var account = this.automationManagementClient.AutomationAccount.Get(resourceGroupName, automationAccountName);
+                return new Model.AutomationAccount(resourceGroupName, account);
+            }
+            catch (ErrorResponseException cloudException)
+            {
+                if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw new ResourceNotFoundException(typeof(AutomationAccount),
+                        string.Format(CultureInfo.CurrentCulture, Resources.AutomationAccountNotFound,
+                            automationAccountName));
+                }
 
-            return new Model.AutomationAccount(resourceGroupName, account);
+                throw;
+            }
         }
 
         public AutomationAccount CreateAutomationAccount(string resourceGroupName, string automationAccountName,
@@ -187,7 +200,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     resourceGroupName,
                     automationAccountName);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
@@ -232,7 +245,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     this.automationManagementClient.Module.Get(resourceGroupName, automationAccountName, name);
                 return new Module(resourceGroupName, automationAccountName, module);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -295,7 +308,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 this.automationManagementClient.Module.Delete(resourceGroupName, automationAccountName, name);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
@@ -340,7 +353,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 this.automationManagementClient.Schedule.Delete(resourceGroupName, automationAccountName, scheduleName);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
@@ -518,7 +531,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     this.automationManagementClient.Runbook.Delete(resourceGroupName, automationAccountName, runbookName);
                 }
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
@@ -722,7 +735,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 this.automationManagementClient.Variable.Delete(resourceGroupName, automationAccountName, variableName);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
@@ -778,7 +791,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 throw new ResourceNotFoundException(typeof(Variable),
                     string.Format(CultureInfo.CurrentCulture, Resources.VariableNotFound, name));
             }
-            catch (CloudException)
+            catch (ErrorResponseException)
             {
                 throw new ResourceNotFoundException(typeof(Variable),
                     string.Format(CultureInfo.CurrentCulture, Resources.VariableNotFound, name));
@@ -880,7 +893,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 this.automationManagementClient.Credential.Delete(resourceGroupName, automationAccountName, name);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -1160,7 +1173,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 this.automationManagementClient.Certificate.Delete(resourceGroupName, automationAccountName, name);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
@@ -1285,7 +1298,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 this.automationManagementClient.Connection.Delete(resourceGroupName, automationAccountName, name);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
@@ -1347,7 +1360,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     automationAccountName,
                     jobScheduleId);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -1467,7 +1480,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     automationAccountName,
                     jobScheduleId);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -1517,7 +1530,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 this.automationManagementClient.ConnectionType.Delete(resourceGroupName, automationAccountName, name);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
@@ -1557,7 +1570,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 runbook = this.automationManagementClient.Runbook.Get(resourceGroupName, automationAccountName, runbookName);
             }
-            catch (CloudException e)
+            catch (ErrorResponseException e)
             {
                 if (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -1578,7 +1591,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 hybridRunbookWorkerGroup = this.automationManagementClient.HybridRunbookWorkerGroup.Get(resourceGroupName, automationAccountName, HybridRunbookWorkerGroupName);
             }
-            catch (CloudException e)
+            catch (ErrorResponseException e)
             {
                 if (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -1600,7 +1613,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 certificate =
                     this.automationManagementClient.Certificate.Get(resourceGroupName, automationAccountName, certificateName);
             }
-            catch (CloudException e)
+            catch (ErrorResponseException e)
             {
                 if (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -1617,7 +1630,17 @@ namespace Microsoft.Azure.Commands.Automation.Common
         private IEnumerable<KeyValuePair<string, RunbookParameter>> ListRunbookParameters(string resourceGroupName, string automationAccountName,
             string runbookName)
         {
-            Runbook runbook = this.GetRunbook(resourceGroupName, automationAccountName, runbookName);
+            Runbook runbook = null;
+            try
+            {
+                runbook = this.GetRunbook(resourceGroupName, automationAccountName, runbookName);
+            }
+            catch(ResourceCommonException)
+            {
+                // Ignore if runbook does not exists in the account. This is to start global runbooks by name
+                return new Dictionary<string, RunbookParameter>();
+            }
+
             if (0 == String.Compare(runbook.State, RunbookState.New, CultureInfo.InvariantCulture,
                 CompareOptions.IgnoreCase))
             {
@@ -1722,7 +1745,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     automationAccountName,
                     scheduleName);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException cloudException)
             {
                 if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -1791,7 +1814,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 connection =
                     this.automationManagementClient.Connection.Get(resourceGroupName, automationAccountName, connectionName);
             }
-            catch (CloudException e)
+            catch (ErrorResponseException e)
             {
                 if (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {

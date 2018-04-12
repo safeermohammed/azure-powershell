@@ -136,9 +136,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
                     return new DirectoryInfo(configurationName + FileExtension);
                 }
-                catch (CloudException cloudException)
+                catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         throw new ResourceNotFoundException(typeof(ConfigurationContent),
                             string.Format(CultureInfo.CurrentCulture, Resources.ConfigurationContentNotFound, configurationName));
@@ -254,7 +254,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                                                 automationAccountName,
                                                 configurationName);
             }
-            catch (CloudException e)
+            catch (ErrorResponseException e)
             {
                 if (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -320,9 +320,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 {
                     this.automationManagementClient.DscConfiguration.Delete(resourceGroupName, automationAccountName, name);
                 }
-                catch (CloudException cloudException)
+                catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                     {
                         throw new ResourceNotFoundException(
                             typeof(Model.DscConfiguration),
@@ -530,9 +530,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
                     return new Model.DscNode(resourceGroupName, automationAccountName, node);
                 }
-                catch (CloudException cloudException)
+                catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         throw new ResourceNotFoundException(typeof(DscNode), string.Format(CultureInfo.CurrentCulture, Resources.NodeNotFound, nodeId));
                     }
@@ -747,11 +747,11 @@ namespace Microsoft.Azure.Commands.Automation.Common
                             automationAccountName,
                             nodeId.ToString());
                 }
-                catch (CloudException cloudException)
+                catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
-                        throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.NodeNotFound), cloudException);
+                        throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.NodeNotFound), ErrorResponseException);
                     }
 
                     throw;
@@ -790,9 +790,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
                         nodeId.ToString());
                 }
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException ErrorResponseException)
             {
-                if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
                     throw new ResourceNotFoundException(typeof(DscNode),
                         string.Format(CultureInfo.CurrentCulture, Resources.DscNodeNotFound, nodeId.ToString()));
@@ -890,9 +890,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
                     return new Model.CompilationJob(resourceGroupName, automationAccountName, job);
                 }
-                catch (CloudException cloudException)
+                catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         throw new ResourceNotFoundException(typeof(DscCompilationJob),
                             string.Format(CultureInfo.CurrentCulture, Resources.CompilationJobNotFound, Id));
@@ -1120,9 +1120,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
                     return null;
                 }
-                catch (CloudException cloudException)
+                catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         throw new ResourceNotFoundException(typeof(NodeConfiguration), string.Format(CultureInfo.CurrentCulture, Resources.NodeConfigurationNotFound, nodeConfigurationName));
                     }
@@ -1315,9 +1315,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
                         }
                     }
                 }
-                catch (CloudException cloudException)
+                catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         throw new ResourceNotFoundException(
                             typeof(Model.NodeConfiguration),
@@ -1441,9 +1441,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     resourceGroupName,
                     automationAccountName,
                     jobScheduleId);
-                } catch (CloudException cloudException)
+                } catch (ErrorResponseException ErrorResponseException)
                 {
-                    if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    if (ErrorResponseException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         throw new ResourceNotFoundException(typeof(JobSchedule),
                             string.Format(CultureInfo.CurrentCulture, Resources.JobScheduleWithIdNotFound, jobScheduleId));

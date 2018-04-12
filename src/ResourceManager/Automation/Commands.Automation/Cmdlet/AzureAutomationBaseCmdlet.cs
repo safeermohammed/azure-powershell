@@ -12,10 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Hyak.Common;
 using Microsoft.Azure.Commands.Automation.Common;
 using Microsoft.Azure.Commands.Automation.DataContract;
-using Microsoft.Azure.Commands.Automation.Properties;
+using Microsoft.Azure.Management.Automation.Models;
 using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System;
 using System.Collections.Generic;
@@ -83,14 +82,14 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                 Requires.Argument("AutomationAccountName", this.AutomationAccountName).NotNull();
                 this.AutomationProcessRecord();
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException ErrorResponseException)
             {
-                if (string.IsNullOrEmpty(cloudException.Error.Code) && string.IsNullOrEmpty(cloudException.Error.Message))
+                if (string.IsNullOrEmpty(ErrorResponseException.Body.Code) && string.IsNullOrEmpty(ErrorResponseException.Body.Message))
                 {
-                    string message = this.ParseErrorMessage(cloudException.Response.Content);
+                    string message = this.ParseErrorMessage(ErrorResponseException.Response.Content);
                     if (!string.IsNullOrEmpty(message))
                     {
-                        throw new CloudException(message, cloudException);
+                        throw new ErrorResponseException(message, ErrorResponseException);
                     }
                 }
 
@@ -140,8 +139,8 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
             {
                 using (var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(XDocument.Load(new StringReader(errorMessage)).Root.Value)))
                 {
-                    var serializer = new DataContractJsonSerializer(typeof(ErrorResponse));
-                    var errorResponse = (ErrorResponse)serializer.ReadObject(memoryStream);
+                    var serializer = new DataContractJsonSerializer(typeof(ErrorResponseException));
+                    var errorResponse = (ErrorResponseException)serializer.ReadObject(memoryStream);
 
                     if (!string.IsNullOrWhiteSpace(errorResponse.Message))
                     {

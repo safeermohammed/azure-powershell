@@ -61,10 +61,14 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.EndTime = job.EndTime.HasValue ? job.EndTime.Value.ToLocalTime() : (DateTimeOffset?)null;
             this.LastStatusModifiedTime = job.LastStatusModifiedTime.HasValue ? job.LastStatusModifiedTime.Value : DateTimeOffset.MinValue;
             this.JobParameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in job.Parameters.Where(kvp => 0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture,
-                CompareOptions.IgnoreCase)))
+
+            if (job.Parameters != null)
             {
-                this.JobParameters.Add(kvp.Key, (object)(kvp.Value));
+                foreach (var kvp in job.Parameters.Where(kvp => 0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture,
+                CompareOptions.IgnoreCase)))
+                {
+                    this.JobParameters.Add(kvp.Key, (object)(kvp.Value));
+                }
             }
         }
 
