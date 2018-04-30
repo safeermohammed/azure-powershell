@@ -1251,7 +1251,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     this.CreateConfiguration(resourceGroupName, automationAccountName, configurationName, nodeName);
                 }
 
-                var nodeConfigurationCreateParameters = new DscNodeConfigurationCreateOrUpdateParametersProperties()
+                var nodeConfigurationCreateParameters = new  DscNodeConfigurationCreateOrUpdateParameters()
                 {
                     Name = nodeConfigurationName,
                     Source = new Microsoft.Azure.Management.Automation.Models.ContentSource()

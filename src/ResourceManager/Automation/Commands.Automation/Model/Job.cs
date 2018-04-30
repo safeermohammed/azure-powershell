@@ -105,6 +105,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.RunbookName = job.Runbook.Name;
             this.EndTime = job.EndTime.HasValue ? job.EndTime.Value.ToLocalTime() : (DateTimeOffset?)null;
             this.JobParameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
+            this.HybridWorker = job.RunOn;
         }
 
         /// <summary>

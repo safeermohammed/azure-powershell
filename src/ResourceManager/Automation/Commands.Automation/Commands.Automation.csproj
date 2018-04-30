@@ -96,6 +96,7 @@
     <Compile Include="Cmdlet\RemoveAzureAutomationCertificate.cs" />
     <Compile Include="Cmdlet\RemoveAzureAutomationConnectionType.cs" />
     <Compile Include="Cmdlet\RemoveAzureAutomationConnection.cs" />
+    <Compile Include="Cmdlet\RemoveAzureAutomationHybridWorkerGroup.cs" />
     <Compile Include="Cmdlet\RemoveAzureAutomationCredential.cs" />
     <Compile Include="Cmdlet\RemoveAzureAutomationDscNodeConfiguration.cs" />
     <Compile Include="Cmdlet\RemoveAzureAutomationModule.cs" />

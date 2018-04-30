@@ -1344,6 +1344,24 @@ namespace Microsoft.Azure.Commands.Automation.Common
             
         }
 
+        public void DeleteHybridRunbookWorkerGroup(string resourceGroupName, string automationAccountName, string name)
+        {
+            try
+            {
+                this.automationManagementClient.HybridRunbookWorkerGroup.Delete(resourceGroupName, automationAccountName, name);
+            }
+            catch (ErrorResponseException cloudException)
+            {
+                if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw new ResourceNotFoundException(typeof(Credential),
+                        string.Format(CultureInfo.CurrentCulture, Resources.HybridRunbookWorkerGroupNotFound, name));
+                }
+
+                throw;
+            }
+        }
+
         #endregion
 
         #region JobSchedule
