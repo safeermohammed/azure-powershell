@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Automation.Model;
+using Microsoft.Azure.Commands.Automation.Model.UpdateManagement;
 using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using System;
 using System.Collections;
@@ -326,6 +327,44 @@ namespace Microsoft.Azure.Commands.Automation.Common
         #region ConnectionType
 
         void DeleteConnectionType(string resourceGroupName, string automationAccountName, string name);
+
+        #endregion
+
+        #region Update Management
+
+        #region Software Update Configuration
+        SoftwareUpdateConfiguration CreateSoftwareUpdateConfiguration(string resourceGroupName, string automationAccountName, SoftwareUpdateConfiguration configuration);
+
+        SoftwareUpdateConfiguration GetSoftwareUpdateConfigurationByName(string resourceGroupName, string automationAccountName, string name);
+
+        IEnumerable<SoftwareUpdateConfiguration> ListSoftwareUpdateConfigurations(string resourceGroupName, string automationAccountName, string azureVirtualMachineId = null);
+
+        void DeleteSoftwareUpdateConfiguration(string resourceGroupName, string automationAccountName, string name);
+
+        #endregion
+
+        #region Software Update Configuration Run
+        SoftwareUpdateRun GetSoftwareUpdateRunById(string resourceGroupName, string automationAccountName, Guid Id);
+
+        IEnumerable<SoftwareUpdateRun> ListSoftwareUpdateRuns(
+            string resourceGroupName, 
+            string automationAccountName, 
+            string softwareUpdateConfigurationName = null, 
+            OperatingSystemType? operatingSystem = null,
+            DateTimeOffset? startTime = null, 
+            SoftwareUpdateRunStatus? status = null);
+        #endregion
+
+        #region Software Update Configuration Machine Run
+        SoftwareUpdateMachineRun GetSoftwareUpdateMachineRunById(string resourceGroupName, string automationAccountName, Guid Id);
+
+        IEnumerable<SoftwareUpdateMachineRun> ListSoftwareUpdateMachineRuns(
+            string resourceGroupName,
+            string automationAccountName,
+            Guid? softwareUpdateRunId = null,
+            string targetComputer = null,
+            SoftwareUpdateMachineRunStatus? status = null);
+        #endregion
 
         #endregion
     }

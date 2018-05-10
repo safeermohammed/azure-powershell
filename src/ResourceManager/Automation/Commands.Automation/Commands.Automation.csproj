@@ -130,8 +130,14 @@
     <Compile Include="Cmdlet\GetAzureAutomationAccount.cs" />
     <Compile Include="Cmdlet\SetAzureAutomationDscNode.cs" />
     <Compile Include="Cmdlet\UnregisterAzureAutomationScheduledRunbook.cs" />
+    <Compile Include="Cmdlet\UpdateManagement\GetAzureAutomationSoftwareUpdateConfiguration.cs" />
+    <Compile Include="Cmdlet\UpdateManagement\GetAzureAutomationSoftwareUpdateMachineRun.cs" />
+    <Compile Include="Cmdlet\UpdateManagement\GetAzureAutomationSoftwareUpdateRun.cs" />
+    <Compile Include="Cmdlet\UpdateManagement\NewAzureAutomationSoftwareUpdateConfiguration.cs" />
+    <Compile Include="Cmdlet\UpdateManagement\RemoveAzureAutomationSoftwareUpdateConfiguration.cs" />
     <Compile Include="Common\AutomationPSClient.cs" />
     <Compile Include="Common\AutomationPSClientDSC.cs" />
+    <Compile Include="Common\AutomationPSClientSoftwareUpdateConfiguration.cs" />
     <Compile Include="Common\AutomationPSClientWebhook.cs" />
     <Compile Include="Common\AutomationCmdletParameterSet.cs" />
     <Compile Include="Common\AzureAutomationOperationException.cs" />
@@ -177,6 +183,20 @@
     <Compile Include="Model\Runbook.cs" />
     <Compile Include="Model\Schedule.cs" />
     <Compile Include="Model\ScheduleFrequency.cs" />
+    <Compile Include="Model\UpdateManagement\BaseArmProperties.cs" />
+    <Compile Include="Model\UpdateManagement\ComputerType.cs" />
+    <Compile Include="Model\UpdateManagement\ErrorInfo.cs" />
+    <Compile Include="Model\UpdateManagement\LinuxConfiguration.cs" />
+    <Compile Include="Model\UpdateManagement\LinuxPackageClasses.cs" />
+    <Compile Include="Model\UpdateManagement\OperatingSystemType.cs" />
+    <Compile Include="Model\UpdateManagement\SoftwareUpdateMachineRun.cs" />
+    <Compile Include="Model\UpdateManagement\SoftwareUpdateConfiguration.cs" />
+    <Compile Include="Model\UpdateManagement\SoftwareUpdateMachineRunStatus.cs" />
+    <Compile Include="Model\UpdateManagement\SoftwareUpdateRun.cs" />
+    <Compile Include="Model\UpdateManagement\SoftwareUpdateRunStatus.cs" />
+    <Compile Include="Model\UpdateManagement\UpdateConfiguration.cs" />
+    <Compile Include="Model\UpdateManagement\WindowsConfiguration.cs" />
+    <Compile Include="Model\UpdateManagement\WindowsUpdateClasses.cs" />
     <Compile Include="Model\Variable.cs" />
     <Compile Include="Model\Webhook.cs" />
     <Compile Include="Model\WeeklyScheduleOptions.cs" />
@@ -194,9 +214,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="MSSharedLibKey.snk" />
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="packages.config" />
     <None Include="StartupScripts\*.ps1">
       <!-- <CopyToOutputDirectory>Always</CopyToOutputDirectory> -->
     </None>

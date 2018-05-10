@@ -12,6 +12,8 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System;
+using System.Linq;
 using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.Azure.Management.Automation;
 using Microsoft.Azure.Test;
@@ -38,6 +40,8 @@ namespace Microsoft.Azure.Commands.Automation.Test
 
         protected void RunPowerShellTest(params string[] scripts)
         {
+            const string RootNamespace = "ScenarioTests";
+
             using (UndoContext context = UndoContext.Current)
             {
                 context.Start(TestUtilities.GetCallingClass(2), TestUtilities.GetCurrentMethodName(2));
@@ -46,8 +50,13 @@ namespace Microsoft.Azure.Commands.Automation.Test
 
                 helper.SetupEnvironment(AzureModule.AzureResourceManager);
 
+
+                var psModuleFile = this.GetType().FullName.Contains(RootNamespace) ?
+                    this.GetType().FullName.Split(new[] { RootNamespace }, StringSplitOptions.RemoveEmptyEntries).Last().Replace(".", "\\") :
+                    $"\\{this.GetType().Name}";
+
                 helper.SetupModules(AzureModule.AzureResourceManager,
-                    "ScenarioTests\\" + this.GetType().Name + ".ps1",
+                    $"{RootNamespace}{psModuleFile}.ps1",
                     helper.RMProfileModule,
                     helper.GetRMModulePath(@"AzureRM.Automation.psd1"));
 
