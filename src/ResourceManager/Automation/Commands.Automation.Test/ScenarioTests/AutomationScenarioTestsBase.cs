@@ -55,9 +55,9 @@ namespace Microsoft.Azure.Commands.Automation.Test
             }
         }
 
-        protected AutomationManagementClient GetAutomationManagementClient()
+        protected AutomationClient GetAutomationManagementClient()
         {
-            return TestBase.GetServiceClient<AutomationManagementClient>(new CSMTestEnvironmentFactory());
+            return TestBase.GetServiceClient<AutomationClient>(new CSMTestEnvironmentFactory());
         }
     }
 }
