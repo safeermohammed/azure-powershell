@@ -1,20 +1,51 @@
-function Test-SoftwareUpdateConfiguration {
-
-	$rg = "mo-resources-eus"
-	$aa = "mo-aaa-eus2"
-
-	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
-                                       -AutomationAccountName $aa `
-                                       -Name mo-onetime-01 `
-                                       -Description test-OneTime `
-                                       -OneTime `
-                                       -StartTime ([DateTime]::Now).AddMinutes(10) `
-                                       -ForUpdate
-
-    $azureVMIdsW = @(
+$rg = "mo-resources-eus"
+$aa = "mo-aaa-eus2"
+$azureVMIdsW = @(
         "/subscriptions/422b6c61-95b0-4213-b3be-7282315df71d/resourceGroups/mo-compute/providers/Microsoft.Compute/virtualMachines/mo-vm-w-01",
         "/subscriptions/422b6c61-95b0-4213-b3be-7282315df71d/resourceGroups/mo-compute/providers/Microsoft.Compute/virtualMachines/mo-vm-w-02"
     )
+
+$azureVMIdsL = @(
+        "/subscriptions/422b6c61-95b0-4213-b3be-7282315df71d/resourceGroups/mo-compute/providers/Microsoft.Compute/virtualMachines/mo-vm-l-01",
+        "/subscriptions/422b6c61-95b0-4213-b3be-7282315df71d/resourceGroups/mo-compute/providers/Microsoft.Compute/virtualMachines/mo-vm-l-02"
+    )
+
+$nonAzurecomputers = @("server-01", "server-02")
+
+<#
+WaitForProvisioningState
+#>
+function WaitForProvisioningState() {
+    param([string] $Name, [string] $ExpectedState)
+    $state = ""
+    $timeoutInSeconds = 60
+    $retries = $timeoutInSeconds / 5
+    while($state -ne $ExpectedState -and $retries -gt 0) {
+        $suc = Get-AzureRmAutomationSoftwareUpdateConfiguration -ResourceGroupName $rg `
+                                                                -AutomationAccountName $aa `
+                                                                -Name $Name
+        $state = $suc.ProvisioningState
+        Write-Output "SoftwareUpdateConfiguration Provisioning state: $state"
+        sleep -Seconds 5
+        $retries = $retries - 1
+    } 
+
+    Assert-True {$retries -gt 0} "Timout waiting for provisioning state to reach '$ExpectedState'"
+}
+
+<#
+Test-CreateWindowsOneTimeSoftwareUpdateConfigurationWithDefaults
+#>
+function Test-CreateWindowsOneTimeSoftwareUpdateConfigurationWithDefaults {
+    $name = "mo-onetime-01"
+    $startTime = ([DateTime]::Now).AddMinutes(10)
+	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
+                                       -AutomationAccountName $aa `
+                                       -Name $name `
+                                       -Description test-OneTime `
+                                       -OneTime `
+                                       -StartTime $startTime `
+                                       -ForUpdate
 
     $suc = New-AzureRmAutomationSoftwareUpdateConfiguration  -ResourceGroupName $rg `
                                                              -AutomationAccountName $aa `
@@ -24,4 +55,280 @@ function Test-SoftwareUpdateConfiguration {
                                                              -Duration (New-TimeSpan -Hours 2)
 
     Assert-NotNull $suc "New-AzureRmAutomationSoftwareUpdateConfiguration returned null"
+    Assert-AreEqual $suc.Name $name "Name of created software update configuration didn't match given name"
+
+    WaitForProvisioningState $name "Succeeded"
+}
+
+<#
+Test-CreateLinuxOneTimeSoftwareUpdateConfigurationWithDefaults
+#>
+function Test-CreateLinuxOneTimeSoftwareUpdateConfigurationWithDefaults {
+    $name = "mo-onetime-02"
+    $startTime = ([DateTime]::Now).AddMinutes(10)
+	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
+                                       -AutomationAccountName $aa `
+                                       -Name $name `
+                                       -Description test-OneTime `
+                                       -OneTime `
+                                       -StartTime $startTime `
+                                       -ForUpdate
+
+    $suc = New-AzureRmAutomationSoftwareUpdateConfiguration  -ResourceGroupName $rg `
+                                                             -AutomationAccountName $aa `
+                                                             -Schedule $s `
+                                                             -Linux `
+                                                             -AzureVMResourceIds $azureVMIdsL `
+                                                             -Duration (New-TimeSpan -Hours 2)
+
+    Assert-NotNull $suc "New-AzureRmAutomationSoftwareUpdateConfiguration returned null"
+    Assert-AreEqual $suc.Name $name "Name of created software update configuration didn't match given name"
+
+    WaitForProvisioningState $name "Succeeded"
+}
+
+<#
+Test-CreateWindowsOneTimeSoftwareUpdateConfigurationWithAllOption
+#>
+function Test-CreateWindowsOneTimeSoftwareUpdateConfigurationWithAllOption {
+    $name = "mo-onetime-03"
+    $startTime = ([DateTime]::Now).AddMinutes(10)
+	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
+                                       -AutomationAccountName $aa `
+                                       -Name $name `
+                                       -Description test-OneTime `
+                                       -OneTime `
+                                       -StartTime $startTime `
+                                       -ForUpdate
+
+    $suc = New-AzureRmAutomationSoftwareUpdateConfiguration  -ResourceGroupName $rg `
+                                                             -AutomationAccountName $aa `
+                                                             -Schedule $s `
+                                                             -Windows `
+                                                             -AzureVMResourceIds $azureVMIdsL `
+                                                             -NonAzureComputers $nonAzurecomputers `
+                                                             -Duration (New-TimeSpan -Hours 2) `
+                                                             -IncludedUpdateClassifications Security,UpdateRollup `
+                                                             -ExcludedKbNumbers KB01,KB02 `
+                                                             -IncludedKbNumbers KB100
+
+    Assert-NotNull $suc "New-AzureRmAutomationSoftwareUpdateConfiguration returned null"
+    Assert-AreEqual $suc.Name $name "Name of created software update configuration didn't match given name"
+
+    WaitForProvisioningState $name "Failed"
+}
+
+<#
+Test-CreateLinuxOneTimeSoftwareUpdateConfigurationWithAllOption
+#>
+function Test-CreateLinuxOneTimeSoftwareUpdateConfigurationWithAllOption {
+    $name = "mo-onetime-04"
+    $startTime = ([DateTime]::Now).AddMinutes(10)
+	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
+                                       -AutomationAccountName $aa `
+                                       -Name $name `
+                                       -Description test-OneTime `
+                                       -OneTime `
+                                       -StartTime $startTime `
+                                       -ForUpdate
+
+    $suc = New-AzureRmAutomationSoftwareUpdateConfiguration  -ResourceGroupName $rg `
+                                                             -AutomationAccountName $aa `
+                                                             -Schedule $s `
+                                                             -Linux `
+                                                             -AzureVMResourceIds $azureVMIdsL `
+                                                             -NonAzureComputers $nonAzurecomputers `
+                                                             -Duration (New-TimeSpan -Hours 2) `
+                                                             -IncludedPackageClassifications Security,Critical `
+                                                             -ExcludedPackageNameMasks Mask01,Mask02 `
+                                                             -IncludedPackageNameMasks Mask100
+
+    Assert-NotNull $suc "New-AzureRmAutomationSoftwareUpdateConfiguration returned null"
+    Assert-AreEqual $suc.Name $name "Name of created software update configuration didn't match given name"
+
+    WaitForProvisioningState $name "Failed"
+}
+
+<#
+Test-CreateLinuxOneTimeSoftwareUpdateConfigurationNonAzureOnly
+#>
+function Test-CreateLinuxOneTimeSoftwareUpdateConfigurationNonAzureOnly {
+    $name = "mo-onetime-05"
+    $startTime = ([DateTime]::Now).AddMinutes(10)
+	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
+                                       -AutomationAccountName $aa `
+                                       -Name $name `
+                                       -Description test-OneTime `
+                                       -OneTime `
+                                       -StartTime $startTime `
+                                       -ForUpdate
+
+    $suc = New-AzureRmAutomationSoftwareUpdateConfiguration  -ResourceGroupName $rg `
+                                                             -AutomationAccountName $aa `
+                                                             -Schedule $s `
+                                                             -Linux `
+                                                             -NonAzureComputers $nonAzurecomputers `
+                                                             -Duration (New-TimeSpan -Hours 2) `
+                                                             -IncludedPackageClassifications Security,Critical `
+                                                             -ExcludedPackageNameMasks Mask01,Mask02 `
+                                                             -IncludedPackageNameMasks Mask100
+
+    Assert-NotNull $suc "New-AzureRmAutomationSoftwareUpdateConfiguration returned null"
+    Assert-AreEqual $suc.Name $name "Name of created software update configuration didn't match given name"
+
+    WaitForProvisioningState $name "Failed"
+}
+
+<#
+Test-CreateLinuxOneTimeSoftwareUpdateConfigurationNoTargets
+#>
+function Test-CreateLinuxOneTimeSoftwareUpdateConfigurationNoTargets {
+    $name = "mo-onetime-05"
+    $startTime = ([DateTime]::Now).AddMinutes(10)
+	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
+                                       -AutomationAccountName $aa `
+                                       -Name $name `
+                                       -Description test-OneTime `
+                                       -OneTime `
+                                       -StartTime $startTime `
+                                       -ForUpdate
+
+    Assert-Throws {
+        $suc = New-AzureRmAutomationSoftwareUpdateConfiguration  -ResourceGroupName $rg `
+                                                             -AutomationAccountName $aa `
+                                                             -Schedule $s `
+                                                             -Linux `
+                                                             -Duration (New-TimeSpan -Hours 2) `
+                                                             -IncludedPackageClassifications Security,Critical `
+                                                             -ExcludedPackageNameMasks Mask01,Mask02 `
+                                                             -IncludedPackageNameMasks Mask100 `
+                                                             -PassThru -ErrorAction Stop
+    }
+}
+
+
+<#
+Test-GetAllSoftwareUpdateConfigurations
+#>
+function Test-GetAllSoftwareUpdateConfigurations {
+    $sucs = Get-AzureRmAutomationSoftwareUpdateConfiguration -ResourceGroupName $rg `
+                                                              -AutomationAccountName $aa
+    Assert-AreEqual $sucs.Count 7 "Get all software update configuration didn't retrieve the expected number of items"
+}
+
+
+<#
+Test-GetSoftwareUpdateConfigurationsForVM
+#>
+function Test-GetSoftwareUpdateConfigurationsForVM {
+    $sucs = Get-AzureRmAutomationSoftwareUpdateConfiguration -ResourceGroupName $rg `
+                                                              -AutomationAccountName $aa `
+                                                              -AzureVMResourceId $azureVMIdsW[0]
+    Assert-AreEqual $sucs.Count 2 "Get software update configurations for VM didn't return expected number of items"
+}
+
+
+<#
+Test-DeleteSoftwareUpdateConfiguration
+#>
+function Test-DeleteSoftwareUpdateConfiguration {
+    $name = "mo-delete-it"
+    $startTime = ([DateTime]::Now).AddMinutes(10)
+	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
+                                       -AutomationAccountName $aa `
+                                       -Name $name `
+                                       -Description test-OneTime `
+                                       -OneTime `
+                                       -StartTime $startTime `
+                                       -ForUpdate
+
+    New-AzureRmAutomationSoftwareUpdateConfiguration  -ResourceGroupName $rg `
+                                                      -AutomationAccountName $aa `
+                                                      -Schedule $s `
+                                                      -Windows `
+                                                      -AzureVMResourceIds $azureVMIdsW `
+                                                      -Duration (New-TimeSpan -Hours 2)
+    WaitForProvisioningState $name "Succeeded"
+    Remove-AzureRmAutomationSoftwareUpdateConfiguration   -ResourceGroupName $rg `
+                                                          -AutomationAccountName $aa `
+                                                          -Name $name
+    sleep -Seconds 5
+    $suc = Get-AzureRmAutomationSoftwareUpdateConfiguration   -ResourceGroupName $rg `
+                                                              -AutomationAccountName $aa `
+                                                              -Name $name
+    Assert-AreEqual $suc $null "Failed to delete software update configuration"
+}
+
+<#
+Test-GetAllSoftwareUpdateRuns
+#>
+function Test-GetAllSoftwareUpdateRuns {
+    $runs = Get-AzureRmAutomationSoftwareUpdateRun  -ResourceGroupName $rg `
+                                                    -AutomationAccountName $aa
+    
+    Assert-AreEqual $runs.Count 10 "Get software update configurations runs didn't return expected number of items"
+}
+
+
+<#
+Test-GetAllSoftwareUpdateRunsWithFilters
+#>
+function Test-GetAllSoftwareUpdateRunsWithFilters {
+    $runs = Get-AzureRmAutomationSoftwareUpdateRun  -ResourceGroupName $rg `
+                                                    -AutomationAccountName $aa `
+                                                    -OperatingSystem Windows `
+                                                    -StartTime ([DateTime]::Parse("2018-05-22T16:40:00")) `
+                                                    -Status Succeeded
+
+    Assert-AreEqual $runs.Count 2 "Get software update configurations runs with filters didn't return expected number of items"
+}
+
+<#
+Test-GetAllSoftwareUpdateRunsWithFiltersNoResults
+#>
+function Test-GetAllSoftwareUpdateRunsWithFiltersNoResults {
+    $runs = Get-AzureRmAutomationSoftwareUpdateRun  -ResourceGroupName $rg `
+                                                    -AutomationAccountName $aa `
+                                                    -OperatingSystem Windows `
+                                                    -StartTime ([DateTime]::Parse("2018-05-22T16:40:00.0000000-07:00")) `
+                                                    -Status Failed
+
+    Assert-AreEqual $runs.Count 0 "Get software update configurations runs with filters and no results didn't return expected number of items"
+}
+
+
+<#
+Test-GetAllSoftwareUpdateMachineRuns
+#>
+function Test-GetAllSoftwareUpdateMachineRuns {
+    $runs = Get-AzureRmAutomationSoftwareUpdateMachineRun  -ResourceGroupName $rg `
+                                                           -AutomationAccountName $aa
+    
+    Assert-AreEqual $runs.Count 18 "Get software update configurations machine runs didn't return expected number of items"
+}
+
+<#
+Test-GetAllSoftwareUpdateMachineRunsWithFilters
+#>
+function Test-GetAllSoftwareUpdateMachineRunsWithFilters {
+    $runs = Get-AzureRmAutomationSoftwareUpdateMachineRun  -ResourceGroupName $rg `
+                                                           -AutomationAccountName $aa `
+                                                           -SoftwareUpdateRunId b4ec6c22-92bf-4f8a-b2d9-20d8446e618a `
+                                                           -Status Succeeded `
+                                                           -TargetComputer $azureVMIdsW[0]
+
+    Assert-AreEqual $runs.Count 1 "Get software update configurations machine runs with filters didn't return expected number of items"
+}
+
+<#
+Test-GetAllSoftwareUpdateMachineRunsWithFiltersNoResults
+#>
+function Test-GetAllSoftwareUpdateMachineRunsWithFiltersNoResults {
+    $runs = Get-AzureRmAutomationSoftwareUpdateMachineRun  -ResourceGroupName $rg `
+                                                           -AutomationAccountName $aa `
+                                                           -SoftwareUpdateRunId b4ec6c22-92bf-4f8a-b2d9-20d8446e618a `
+                                                           -Status Succeeded `
+                                                           -TargetComputer foo
+
+    Assert-AreEqual $runs.Count 0 "Get software update configurations machine runs with filters and no results didn't return expected number of items"
 }

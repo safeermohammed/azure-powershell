@@ -19,6 +19,10 @@ using Microsoft.Azure.Management.Automation;
 using Microsoft.Azure.Test;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
+using Microsoft.Azure.Test.HttpRecorder;
+using System.Reflection;
+using Microsoft.Rest;
+using System.Net.Http;
 
 namespace Microsoft.Azure.Commands.Automation.Test
 {
@@ -66,7 +70,52 @@ namespace Microsoft.Azure.Commands.Automation.Test
 
         protected AutomationClient GetAutomationManagementClient()
         {
-            return TestBase.GetServiceClient<AutomationClient>(new CSMTestEnvironmentFactory());
+            AutomationClient client;
+            TestEnvironment currentEnvironment = new CSMTestEnvironmentFactory().GetTestEnvironment();
+            var credentials = currentEnvironment.AuthorizationContext.TokenCredentials[TokenAudience.Management];
+
+            HttpMockServer server;
+
+            try
+            {
+                server = HttpMockServer.CreateInstance();
+            }
+            catch (ApplicationException)
+            {
+                // mock server has never been initialized, we will need to initialize it.
+                HttpMockServer.Initialize("TestEnvironment", "InitialCreation");
+                server = HttpMockServer.CreateInstance();
+            }
+
+            if (currentEnvironment.UsesCustomUri())
+            {
+                ConstructorInfo constructor = typeof(AutomationClient).GetConstructor(new Type[] { typeof(Uri), typeof(ServiceClientCredentials), typeof(DelegatingHandler[]) });
+                client = constructor.Invoke(new object[] { currentEnvironment.BaseUri, credentials, new DelegatingHandler[] { server } }) as AutomationClient;
+            }
+            else
+            {
+                ConstructorInfo constructor = typeof(AutomationClient).GetConstructor(new Type[] { typeof(ServiceClientCredentials) });
+                client = constructor.Invoke(new object[] { credentials }) as AutomationClient;
+            }
+
+            PropertyInfo subId = typeof(AutomationClient).GetProperty("SubscriptionId", typeof(string));
+            if (subId != null)
+            {
+                subId.SetValue(client, currentEnvironment.SubscriptionId);
+            }
+
+            if (HttpMockServer.Mode == HttpRecorderMode.Playback)
+            {
+                PropertyInfo initialTimeout = typeof(AutomationClient).GetProperty("LongRunningOperationInitialTimeout", typeof(int));
+                PropertyInfo retryTimeout = typeof(AutomationClient).GetProperty("LongRunningOperationRetryTimeout", typeof(int));
+                if (initialTimeout != null && retryTimeout != null)
+                {
+                    initialTimeout.SetValue(client, 0);
+                    retryTimeout.SetValue(client, 0);
+                }
+            }
+
+            return client;
         }
     }
 }

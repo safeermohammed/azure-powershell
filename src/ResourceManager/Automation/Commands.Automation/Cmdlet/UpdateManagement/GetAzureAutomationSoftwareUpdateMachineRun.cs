@@ -37,10 +37,12 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         [ValidateNotNull]
         public SoftwareUpdateRun SoftwareUpdateRun { get; set; }
 
+        [Parameter(ParameterSetName = AutomationCmdletParameterSets.ByAll, Position = 2, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Status of the machine run.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySucr, Position = 3, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Status of the machine run.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySucrId, Position = 3, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Status of the machine run.")]
-        public SoftwareUpdateMachineRunStatus Status { get; set; }
+        public SoftwareUpdateMachineRunStatus? Status { get; set; }
 
+        [Parameter(ParameterSetName = AutomationCmdletParameterSets.ByAll, Position = 2, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "target computer for the machine run. Can be either a non-azure computer name or an azure VM resource id.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySucr, Position = 4, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "target computer for the machine run. Can be either a non-azure computer name or an azure VM resource id.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySucrId, Position = 4, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "target computer for the machine run. Can be either a non-azure computer name or an azure VM resource id.")]
         public string TargetComputer { get; set; }
@@ -53,23 +55,34 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
             {
                 case AutomationCmdletParameterSets.ById:
                     result = new SoftwareUpdateMachineRun[] {
-                        this.AutomationClient.GetSoftwareUpdateMachineRunById(this.ResourceGroupName, this.AutomationAccountName, this.Id)
+                        this.AutomationClient.GetSoftwareUpdateMachineRunById(
+                                                        this.ResourceGroupName, 
+                                                        this.AutomationAccountName, 
+                                                        this.Id)
                     };
                     break;
                 case AutomationCmdletParameterSets.BySucr:
                     result = this.AutomationClient.ListSoftwareUpdateMachineRuns(
                                                         this.ResourceGroupName,
                                                         this.AutomationAccountName,
-                                                        this.SoftwareUpdateRun.RunId, this.TargetComputer, this.Status);
+                                                        this.SoftwareUpdateRun.RunId, 
+                                                        this.TargetComputer, 
+                                                        this.Status);
                     break;
                 case AutomationCmdletParameterSets.BySucrId:
                     result = this.AutomationClient.ListSoftwareUpdateMachineRuns(
                                                         this.ResourceGroupName,
                                                         this.AutomationAccountName,
-                                                        this.SoftwareUpdateRunId, this.TargetComputer, this.Status);
+                                                        this.SoftwareUpdateRunId, 
+                                                        this.TargetComputer,
+                                                        this.Status);
                     break;
                 default:
-                    result = this.AutomationClient.ListSoftwareUpdateMachineRuns(this.ResourceGroupName, this.AutomationAccountName);
+                    result = this.AutomationClient.ListSoftwareUpdateMachineRuns(
+                                                        this.ResourceGroupName,
+                                                        this.AutomationAccountName,
+                                                        null, this.TargetComputer,
+                                                        this.Status);
                     break;
             }
 

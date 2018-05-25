@@ -68,7 +68,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 };
 
                 var suc = this.automationManagementClient.SoftwareUpdateConfigurations.Create(resourceGroupName, automationAccountName, configuration.Name, sucParameters);
-                return suc != null ? new SoftwareUpdateConfiguration(resourceGroupName, automationAccountName, suc) : null;
+                return new SoftwareUpdateConfiguration(resourceGroupName, automationAccountName, suc);
             }
         }
 
@@ -81,7 +81,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             using (var request = new RequestSettings(this.automationManagementClient))
             {
                 var suc = this.automationManagementClient.SoftwareUpdateConfigurations.GetByName(resourceGroupName, automationAccountName, name);
-                return new SoftwareUpdateConfiguration(resourceGroupName, automationAccountName, suc);
+                return suc == null ? null : new SoftwareUpdateConfiguration(resourceGroupName, automationAccountName, suc);
             }
         }
 
@@ -154,7 +154,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     softwareUpdateConfigurationName,
                     operatingSystem.ToString(),
                     status.ToString(),
-                    startTime.HasValue ? startTime.Value.DateTime : (DateTime?)null);
+                    startTime.HasValue ? startTime.Value.DateTime.ToUniversalTime() : (DateTime?)null);
                 return sucrs.Value.Select(sucr =>  new SoftwareUpdateRun(resourceGroupName, automationAccountName, sucr));
             }
         }

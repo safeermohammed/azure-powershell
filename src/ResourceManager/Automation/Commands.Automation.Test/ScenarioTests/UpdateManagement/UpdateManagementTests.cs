@@ -25,12 +25,124 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.ScenarioTests
             ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
         }
 
-        [Fact(Skip = "Placeholder, Implementation TBD")]
+        [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait(Category.Service, Category.Automation)]
-        public void CreateOneTimeSoftwareUpdateConfiguration()
+        public void CreateWindowsOneTimeSUCWithDefaults()
         {
-            RunPowerShellTest("Test-SoftwareUpdateConfiguration");
+            RunPowerShellTest("Test-CreateWindowsOneTimeSoftwareUpdateConfigurationWithDefaults");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void CreateLinuxOneTimeSUCWithDefaults()
+        {
+            RunPowerShellTest("Test-CreateLinuxOneTimeSoftwareUpdateConfigurationWithDefaults");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void CreateWindowsOneTimeSUCWithAllOption()
+        {
+            RunPowerShellTest("Test-CreateWindowsOneTimeSoftwareUpdateConfigurationWithAllOption");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void CreateLinuxOneTimeSUCWithAllOption()
+        {
+            RunPowerShellTest("Test-CreateLinuxOneTimeSoftwareUpdateConfigurationWithAllOption");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void CreateLinuxOneTimeSUCNonAzureOnly()
+        {
+            RunPowerShellTest("Test-CreateLinuxOneTimeSoftwareUpdateConfigurationNonAzureOnly");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void CreateLinuxOneTimeSUCNoTarget()
+        {
+            RunPowerShellTest("Test-CreateLinuxOneTimeSoftwareUpdateConfigurationNoTargets");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void GetAllSUCs()
+        {
+            RunPowerShellTest("Test-GetAllSoftwareUpdateConfigurations");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void GetAllSUCsForVM()
+        {
+            RunPowerShellTest("Test-GetSoftwareUpdateConfigurationsForVM");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void DeleteSUC()
+        {
+            RunPowerShellTest("Test-DeleteSoftwareUpdateConfiguration");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void GetAllRuns()
+        {
+            RunPowerShellTest("Test-GetAllSoftwareUpdateRuns");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void GetAllRunsWithFilters()
+        {
+            RunPowerShellTest("Test-GetAllSoftwareUpdateRunsWithFilters");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void GetAllRunsWithFiltersNoResults()
+        {
+            RunPowerShellTest("Test-GetAllSoftwareUpdateRunsWithFiltersNoResults");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void GetAllMachineRuns()
+        {
+            RunPowerShellTest("Test-GetAllSoftwareUpdateMachineRuns");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void GetAllMachineRunsWithFilters()
+        {
+            RunPowerShellTest("Test-GetAllSoftwareUpdateMachineRunsWithFilters");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void GetAllMachineRunsWithFiltersNoResults()
+        {
+            RunPowerShellTest("Test-GetAllSoftwareUpdateMachineRunsWithFiltersNoResults");
         }
     }
 }

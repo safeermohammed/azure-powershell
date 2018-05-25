@@ -59,30 +59,31 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
             this.Description = suc.ScheduleInfo.Description;
             this.ErrorInfo = suc.Error == null ? null : new ErrorInfo
             {
-                Code = ErrorInfo.Code,
-                Message = ErrorInfo.Message
+                Code = suc.Error.Code,
+                Message = suc.Error.Message
             };
             this.LastModifiedBy = suc.LastModifiedBy;
             this.LastModifiedTime = suc.LastModifiedTime;
             this.Name = suc.Name;
             this.ProvisioningState = suc.ProvisioningState;
-            this.ScheduleConfiguration = new Schedule
+            var schedule = new Sdk.Schedule
             {
-                ResourceGroupName = resourceGroupName,
-                AutomationAccountName = automationAccountName,
                 CreationTime = suc.ScheduleInfo.CreationTime,
                 Description = suc.ScheduleInfo.Description,
-                ExpiryTime = suc.ScheduleInfo.ExpiryTime.HasValue ? suc.ScheduleInfo.ExpiryTime.Value : DateTimeOffset.MaxValue,
-                Frequency = (ScheduleFrequency)Enum.Parse(typeof(ScheduleFrequency), suc.ScheduleInfo.Frequency, true),
-                Interval = suc.ScheduleInfo.Interval.HasValue ? (byte)suc.ScheduleInfo.Interval.Value : (byte?)null,
-                IsEnabled = suc.ScheduleInfo.IsEnabled ?? false,
+                ExpiryTime = suc.ScheduleInfo.ExpiryTime,
+                ExpiryTimeOffsetMinutes = suc.ScheduleInfo.ExpiryTimeOffsetMinutes,
+                Frequency = suc.ScheduleInfo.Frequency,
+                Interval = suc.ScheduleInfo.Interval,
+                IsEnabled = suc.ScheduleInfo.IsEnabled,
                 LastModifiedTime = suc.ScheduleInfo.LastModifiedTime,
-                NextRun = suc.ScheduleInfo.NextRun,
+                AdvancedSchedule = suc.ScheduleInfo.AdvancedSchedule,
                 StartTime = suc.ScheduleInfo.StartTime,
                 TimeZone = suc.ScheduleInfo.TimeZone,
-                WeeklyScheduleOptions = Schedule.CreateWeeklyScheduleOptions(suc.ScheduleInfo.AdvancedSchedule),
-                MonthlyScheduleOptions = Schedule.CreateMonthlyScheduleOptions(suc.ScheduleInfo.AdvancedSchedule)
+                NextRun = suc.ScheduleInfo.NextRun,
+                NextRunOffsetMinutes = suc.ScheduleInfo.NextRunOffsetMinutes
             };
+
+            this.ScheduleConfiguration = new Schedule(resourceGroupName, automationAccountName, schedule);
         }
     }
 }

@@ -16,8 +16,7 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
 {
     public enum ComputerType
     {
-        AzureVirtualMachine,
-
-        NonAzureComputer
+        AzureVirtualMachines,
+        NonAzureComputerNames
     }
 }

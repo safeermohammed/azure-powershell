@@ -230,7 +230,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             return CreateWeeklyScheduleOptions(schedule.AdvancedSchedule);
         }
 
-        internal static WeeklyScheduleOptions CreateWeeklyScheduleOptions(Microsoft.Azure.Management.Automation.Models.AdvancedSchedule advSchedule)
+        private static WeeklyScheduleOptions CreateWeeklyScheduleOptions(Microsoft.Azure.Management.Automation.Models.AdvancedSchedule advSchedule)
         {
             return advSchedule == null
                 ? null
@@ -255,7 +255,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             return CreateMonthlyScheduleOptions(schedule.AdvancedSchedule);
         }
 
-        internal static MonthlyScheduleOptions CreateMonthlyScheduleOptions(
+        private static MonthlyScheduleOptions CreateMonthlyScheduleOptions(
             Microsoft.Azure.Management.Automation.Models.AdvancedSchedule advSchedule)
         {
             return advSchedule == null

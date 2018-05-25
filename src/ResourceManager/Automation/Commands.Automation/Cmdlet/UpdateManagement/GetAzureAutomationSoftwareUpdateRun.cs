@@ -37,14 +37,17 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         [ValidateNotNull]
         public SoftwareUpdateConfiguration SoftwareUpdateConfiguration { get; set; }
 
+        [Parameter(ParameterSetName = AutomationCmdletParameterSets.ByAll, Position = 3, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The operating system of the run.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySuc, Position = 3, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The operating system of the run.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySucName, Position = 3, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The operating system of the run.")]
-        public OperatingSystemType OperatingSystem { get; set; }
+        public OperatingSystemType? OperatingSystem { get; set; }
 
+        [Parameter(ParameterSetName = AutomationCmdletParameterSets.ByAll, Position = 3, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Status of the run.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySuc, Position = 4, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Status of the run.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySucName, Position = 4, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Status of the run.")]
-        public SoftwareUpdateRunStatus Status { get; set; }
+        public SoftwareUpdateRunStatus? Status { get; set; }
 
+        [Parameter(ParameterSetName = AutomationCmdletParameterSets.ByAll, Position = 3, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Minimum start time of the run.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySuc, Position = 5, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Minimum start time of the run.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.BySucName, Position = 5, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Minimum start time of the run.")]
         public DateTimeOffset StartTime { get; set; }
@@ -73,7 +76,10 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                                                         this.SoftwareUpdateConfigurationName, this.OperatingSystem, this.StartTime, this.Status);
                     break;
                 default:
-                    result = this.AutomationClient.ListSoftwareUpdateRuns(this.ResourceGroupName, this.AutomationAccountName);
+                    result = this.AutomationClient.ListSoftwareUpdateRuns(
+                                                        this.ResourceGroupName,
+                                                        this.AutomationAccountName,
+                                                        null, this.OperatingSystem, this.StartTime, this.Status);
                     break;
             }
 
