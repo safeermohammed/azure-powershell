@@ -70,6 +70,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         protected override void AutomationProcessRecord()
         {
             int pageCount = 0;
+            int maxPageCount = 100;
 
             IEnumerable<Microsoft.Azure.Commands.Automation.Model.Job> jobs = null;
 
@@ -89,7 +90,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                     jobs = this.AutomationClient.ListJobsByRunbookName(this.ResourceGroupName, this.AutomationAccountName, this.RunbookName, this.StartTime, this.EndTime, this.Status, ref nextLink);
                     this.WriteObject(jobs, true);
                     pageCount++;
-                    if (pageCount > 50)
+                    if (pageCount > maxPageCount)
                     {
                         break;
                     }
@@ -105,7 +106,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                     jobs = this.AutomationClient.ListJobs(this.ResourceGroupName, this.AutomationAccountName, this.StartTime, this.EndTime, this.Status, ref nextLink);
                     this.WriteObject(jobs, true);
                     pageCount++;
-                    if (pageCount > 50)
+                    if (pageCount > maxPageCount)
                     {
                         break;
                     }

@@ -93,7 +93,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                     }
                 }
 
-                throw;
+                throw new ErrorResponseException(ErrorResponseException.Body.Message, ErrorResponseException);
             }
         }
 

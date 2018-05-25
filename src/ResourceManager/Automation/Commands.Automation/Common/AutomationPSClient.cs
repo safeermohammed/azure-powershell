@@ -911,26 +911,11 @@ namespace Microsoft.Azure.Commands.Automation.Common
         public IEnumerable<JobStream> GetJobStream(string resourceGroupName, string automationAccountName, Guid jobId, DateTimeOffset? time,
             string streamType, ref string nextLink)
         {
-            string listParams = null;
-            /* todo: replace with filter
-            var listParams = new AutomationManagement.Models.JobStreamListParameter();
-
-            if (time.HasValue)
-            {
-                listParams.Time = this.FormatDateTime(time.Value);
-            }
-
-            if (streamType != null)
-            {
-                listParams.StreamType = streamType;
-            }
-
-            */
             Rest.Azure.IPage<AutomationManagement.Models.JobStream> response;
 
             if (string.IsNullOrEmpty(nextLink))
             {
-                response = this.automationManagementClient.JobStream.ListByJob(resourceGroupName, automationAccountName, jobId.ToString(), listParams);
+                response = this.automationManagementClient.JobStream.ListByJob(resourceGroupName, automationAccountName, jobId.ToString(), this.GetJobStreamFilterString(time, streamType));
             }
             else
             {
@@ -942,7 +927,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 response.Select(
                     stream => this.CreateJobStreamFromJobStreamModel(stream, resourceGroupName, automationAccountName, jobId));
         }
-
+        
         public JobStreamRecord GetJobStreamRecord(string resourceGroupName, string automationAccountName, Guid jobId, string jobStreamId)
         {
             var response = this.automationManagementClient.JobStream.Get(resourceGroupName, automationAccountName, jobId.ToString(), jobStreamId);
@@ -1006,23 +991,14 @@ namespace Microsoft.Azure.Commands.Automation.Common
         public IEnumerable<Job> ListJobsByRunbookName(string resourceGroupName, string automationAccountName, string runbookName,
             DateTimeOffset? startTime, DateTimeOffset? endTime, string jobStatus, ref string nextLink)
         {
-            Rest.Azure.IPage<AutomationManagement.Models.JobCollectionItem> response;
+            Rest.Azure.IPage<JobCollectionItem> response;
 
             if (string.IsNullOrEmpty(nextLink))
             {
                 response = this.automationManagementClient.Job.ListByAutomationAccount(
                     resourceGroupName,
                     automationAccountName,
-                    null
-                    /*
-                    new JobListParameters
-                    {
-                        StartTime = (startTime.HasValue) ? FormatDateTime(startTime.Value) : null,
-                        EndTime = (endTime.HasValue) ? FormatDateTime(endTime.Value) : null,
-                        RunbookName = runbookName,
-                        Status = jobStatus,
-                    }
-                    */);
+                    this.GetJobFilterString(runbookName, startTime, endTime, jobStatus));
             }
             else
             {
@@ -1032,7 +1008,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             nextLink = response.NextPageLink;
             return response.Select(c => new Job(resourceGroupName, automationAccountName, c));
         }
-
+                
         public IEnumerable<Job> ListJobs(string resourceGroupName, string automationAccountName, DateTimeOffset? startTime,
             DateTimeOffset? endTime, string jobStatus, ref string nextLink)
         {
@@ -1043,15 +1019,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 response = this.automationManagementClient.Job.ListByAutomationAccount(
                     resourceGroupName,
                     automationAccountName,
-                    null
-                    /*
-                    new JobListParameters
-                    {
-                        StartTime = (startTime.HasValue) ? FormatDateTime(startTime.Value) : null,
-                        EndTime = (endTime.HasValue) ? FormatDateTime(endTime.Value) : null,
-                        Status = jobStatus,
-                    }
-                    */);
+                    this.GetJobFilterString(null, startTime, endTime, jobStatus));
             }
             else
             {
@@ -1869,6 +1837,55 @@ namespace Microsoft.Azure.Commands.Automation.Common
             this.WriteFile(outputFilePath, content);
 
             return new DirectoryInfo(runbookName + fileExtension);
+        }
+
+        private string GetJobFilterString(string runbookName, DateTimeOffset? startTime, DateTimeOffset? endTime, string jobStatus)
+        {
+            string filter = null;
+            List<string> odataFilter = new List<string>();
+            if (startTime.HasValue)
+            {
+                odataFilter.Add("properties/startTime ge " + this.FormatDateTime(startTime.Value));
+            }
+            if (endTime.HasValue)
+            {
+                odataFilter.Add("properties/endTime le " + this.FormatDateTime(endTime.Value));
+            }
+            if (!string.IsNullOrWhiteSpace(jobStatus))
+            {
+                odataFilter.Add("properties/status eq '" + Uri.EscapeDataString(jobStatus) + "'");
+            }
+            if (!string.IsNullOrWhiteSpace(runbookName))
+            {
+                odataFilter.Add("properties/runbook/name eq '" + Uri.EscapeDataString(runbookName) + "'");
+            }
+            if (odataFilter.Count > 0)
+            {
+                filter = string.Join(" and ", odataFilter);
+            }
+
+            return filter;
+        }
+
+        private string GetJobStreamFilterString(DateTimeOffset? time, string streamType)
+        {
+            string filter = null;
+            List<string> odataFilter = new List<string>();
+            if (time.HasValue)
+            {
+                odataFilter.Add("properties/time ge " + this.FormatDateTime(time.Value));
+            }
+            if (!string.IsNullOrWhiteSpace(streamType))
+            {
+                odataFilter.Add("properties/streamType eq '" + Uri.EscapeDataString(streamType) + "'");
+            }
+
+            if (odataFilter.Count > 0)
+            {
+                filter = string.Join(" and ", odataFilter);
+            }
+
+            return filter;
         }
 
         private static bool IsGraphRunbook(string runbookType)
