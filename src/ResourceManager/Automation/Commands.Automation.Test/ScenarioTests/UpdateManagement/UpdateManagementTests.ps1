@@ -105,7 +105,7 @@ function Test-CreateWindowsOneTimeSoftwareUpdateConfigurationWithAllOption {
                                                              -AutomationAccountName $aa `
                                                              -Schedule $s `
                                                              -Windows `
-                                                             -AzureVMResourceIds $azureVMIdsL `
+                                                             -AzureVMResourceIds $azureVMIdsW `
                                                              -NonAzureComputers $nonAzurecomputers `
                                                              -Duration (New-TimeSpan -Hours 2) `
                                                              -IncludedUpdateClassifications Security,UpdateRollup `
@@ -266,7 +266,7 @@ function Test-GetAllSoftwareUpdateRuns {
     $runs = Get-AzureRmAutomationSoftwareUpdateRun  -ResourceGroupName $rg `
                                                     -AutomationAccountName $aa
     
-    Assert-AreEqual $runs.Count 10 "Get software update configurations runs didn't return expected number of items"
+    Assert-AreEqual $runs.Count 13 "Get software update configurations runs didn't return expected number of items"
 }
 
 

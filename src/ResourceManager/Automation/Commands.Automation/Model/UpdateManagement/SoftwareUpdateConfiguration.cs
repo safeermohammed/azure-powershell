@@ -110,11 +110,11 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
             };
         }
 
-        private static IList<T> StringToEnumList<T>(string includedPackageClassifications)
+        private static IList<T> StringToEnumList<T>(string classes)
         {
-            return includedPackageClassifications.Split(new[] { ',' })
+            return classes.Split(new[] { ',' })
                             .Select(p => p.Trim())
-                            .Select(p => (T)Enum.Parse(typeof(LinuxPackageClasses), p, true))
+                            .Select(p => (T)Enum.Parse(typeof(T), p, true))
                             .ToList();
         }
     }

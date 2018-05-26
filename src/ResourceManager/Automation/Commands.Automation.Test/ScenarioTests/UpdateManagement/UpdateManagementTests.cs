@@ -65,7 +65,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.ScenarioTests
             RunPowerShellTest("Test-CreateLinuxOneTimeSoftwareUpdateConfigurationNonAzureOnly");
         }
 
-        [Fact]
+        [Fact(Skip = "No recording generated")]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait(Category.Service, Category.Automation)]
         public void CreateLinuxOneTimeSUCNoTarget()
