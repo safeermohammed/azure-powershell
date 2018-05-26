@@ -254,6 +254,8 @@
     <None Include="ScenarioTests\UpdateManagement\UpdateManagementTests.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="SessionRecords\Microsoft.Azure.Commands.ResourceManager.Automation.Test.ScenarioTests.UpdateManagement.UpdateManagementTests\CreateLinuxWeeklySUC.json" />
+    <None Include="SessionRecords\Microsoft.Azure.Commands.ResourceManager.Automation.Test.ScenarioTests.UpdateManagement.UpdateManagementTests\CreateWindowsMonthlySUC.json" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

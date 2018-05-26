@@ -18,7 +18,7 @@ WaitForProvisioningState
 function WaitForProvisioningState() {
     param([string] $Name, [string] $ExpectedState)
     $state = ""
-    $timeoutInSeconds = 60
+    $timeoutInSeconds = 120
     $retries = $timeoutInSeconds / 5
     while($state -ne $ExpectedState -and $retries -gt 0) {
         $suc = Get-AzureRmAutomationSoftwareUpdateConfiguration -ResourceGroupName $rg `
@@ -331,4 +331,96 @@ function Test-GetAllSoftwareUpdateMachineRunsWithFiltersNoResults {
                                                            -TargetComputer foo
 
     Assert-AreEqual $runs.Count 0 "Get software update configurations machine runs with filters and no results didn't return expected number of items"
+}
+
+<#
+Test-CreateLinuxWeeklySoftwareUpdateConfigurationWithDefaults
+#>
+function Test-CreateLinuxWeeklySoftwareUpdateConfiguration() {
+    $name = "mo-weekly-01"
+    $startTime = ([DateTime]::Now).AddMinutes(10)
+    $duration = New-TimeSpan -Hours 2
+	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
+                                       -AutomationAccountName $aa `
+                                       -Name $name `
+                                       -Description test-OneTime `
+                                       -WeekInterval 1 `
+                                       -DaysOfWeek Friday `
+                                       -StartTime $startTime `
+                                       -ForUpdate
+
+    $suc = New-AzureRmAutomationSoftwareUpdateConfiguration  -ResourceGroupName $rg `
+                                                             -AutomationAccountName $aa `
+                                                             -Schedule $s `
+                                                             -Linux `
+                                                             -AzureVMResourceIds $azureVMIdsL `
+                                                             -Duration $duration `
+                                                             -IncludedPackageClassifications Other,Security `
+                                                             -ExcludedPackageNameMasks @("Mask-exc-01", "Mask-exc-02")
+
+
+    Assert-NotNull $suc "New-AzureRmAutomationSoftwareUpdateConfiguration returned null"
+    Assert-AreEqual $suc.Name $name "Name of created software update configuration didn't match given name"
+    Assert-NotNull $suc.UpdateConfiguration "UpdateConfiguration of the software update configuration object is null"
+    Assert-NotNull $suc.ScheduleConfiguration "ScheduleConfiguration of the software update configuration object is null"
+    Assert-AreEqual $suc.ProvisioningState "Provisioning" "software update configuration provisioning state was not expected"
+    Assert-AreEqual $suc.UpdateConfiguration.OperatingSystem "Linux" "UpdateConfiguration Operating system is not expected"
+    Assert-AreEqual $suc.UpdateConfiguration.Duration $duration "UpdateConfiguration Duration is not expected"
+    Assert-AreEqual $suc.UpdateConfiguration.AzureVirtualMachines.Count 2 "UpdateConfiguration created doesn't have the correct number of azure virtual machines"
+    Assert-AreEqual $suc.UpdateConfiguration.NonAzureComputers.Count 0 "UpdateConfiguration doesn't have correct value of NonAzureComputers"
+    Assert-NotNull $suc.UpdateConfiguration.Linux "Linux property of UpdateConfiguration is null"
+    Assert-AreEqual $suc.UpdateConfiguration.Linux.IncludedPackageClassifications.Count 2 "Invalid UpdateConfiguration.Linux.IncludedPackageClassifications.Count"
+    Assert-AreEqual $suc.UpdateConfiguration.Linux.IncludedPackageClassifications[0] Security "Invalid value of UpdateConfiguration.Linux.IncludedPackageClassifications[0]"
+    Assert-AreEqual $suc.UpdateConfiguration.Linux.IncludedPackageClassifications[1] Other "Invalid value of UpdateConfiguration.Linux.IncludedPackageClassifications[1]"
+    Assert-AreEqual $suc.UpdateConfiguration.Linux.ExcludedPackageNameMasks.Count 2
+    Assert-AreEqual $suc.UpdateConfiguration.Linux.ExcludedPackageNameMasks[0] "Mask-exc-01"
+    Assert-AreEqual $suc.UpdateConfiguration.Linux.ExcludedPackageNameMasks[1] "Mask-exc-02"
+
+    WaitForProvisioningState $name "Succeeded"
+}
+
+<#
+Test-CreateWindowsMonthlySoftwareUpdateConfiguration
+#>
+function Test-CreateWindowsMonthlySoftwareUpdateConfiguration() {
+    $name = "mo-monthly-01"
+    $startTime = ([DateTime]::Now).AddMinutes(10)
+    $duration = New-TimeSpan -Hours 2
+	$s = New-AzureRmAutomationSchedule -ResourceGroupName $rg `
+                                       -AutomationAccountName $aa `
+                                       -Name $name `
+                                       -Description test-OneTime `
+                                       -MonthInterval 1 `
+                                       -DaysOfMonth Two,Five `
+                                       -StartTime $startTime `
+                                       -ForUpdate
+
+    $suc = New-AzureRmAutomationSoftwareUpdateConfiguration  -ResourceGroupName $rg `
+                                                             -AutomationAccountName $aa `
+                                                             -Schedule $s `
+                                                             -Windows `
+                                                             -AzureVMResourceIds $azureVMIdsW `
+                                                             -Duration $duration `
+                                                             -IncludedUpdateClassifications Critical,Security `
+                                                             -ExcludedKbNumbers @("KB-01", "KB-02")
+
+
+    Assert-NotNull $suc "New-AzureRmAutomationSoftwareUpdateConfiguration returned null"
+    Assert-AreEqual $suc.Name $name "Name of created software update configuration didn't match given name"
+    Assert-NotNull $suc.UpdateConfiguration "UpdateConfiguration of the software update configuration object is null"
+    Assert-NotNull $suc.ScheduleConfiguration "ScheduleConfiguration of the software update configuration object is null"
+    Assert-AreEqual $suc.ProvisioningState "Provisioning" "software update configuration provisioning state was not expected"
+    Assert-AreEqual $suc.UpdateConfiguration.OperatingSystem "Windows" "UpdateConfiguration Operating system is not expected"
+    Assert-AreEqual $suc.UpdateConfiguration.Duration $duration "UpdateConfiguration Duration is not expected"
+    Assert-AreEqual $suc.UpdateConfiguration.AzureVirtualMachines.Count 2 "UpdateConfiguration created doesn't have the correct number of azure virtual machines"
+    Assert-AreEqual $suc.UpdateConfiguration.NonAzureComputers.Count 0 "UpdateConfiguration doesn't have correct value of NonAzureComputers"
+    Assert-NotNull $suc.UpdateConfiguration.Windows "Linux property of UpdateConfiguration is null"
+    Assert-AreEqual $suc.UpdateConfiguration.Windows.IncludedUpdateClassifications.Count 2 "Invalid UpdateConfiguration.Linux.IncludedPackageClassifications.Count"
+    Assert-AreEqual $suc.UpdateConfiguration.Windows.IncludedUpdateClassifications[0] Critical "Invalid value of UpdateConfiguration.Linux.IncludedPackageClassifications[0]"
+    Assert-AreEqual $suc.UpdateConfiguration.Windows.IncludedUpdateClassifications[1] Security "Invalid value of UpdateConfiguration.Linux.IncludedPackageClassifications[1]"
+    Assert-AreEqual $suc.UpdateConfiguration.Windows.ExcludedKbNumbers.Count 2
+    Assert-AreEqual $suc.UpdateConfiguration.Windows.ExcludedKbNumbers[0] "KB-01"
+    Assert-AreEqual $suc.UpdateConfiguration.Windows.ExcludedKbNumbers[1] "KB-02"
+
+    WaitForProvisioningState $name "Succeeded"
 }

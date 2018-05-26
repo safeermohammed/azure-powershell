@@ -144,5 +144,21 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.ScenarioTests
         {
             RunPowerShellTest("Test-GetAllSoftwareUpdateMachineRunsWithFiltersNoResults");
         }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void CreateLinuxWeeklySUC()
+        {
+            RunPowerShellTest("Test-CreateLinuxWeeklySoftwareUpdateConfiguration");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Service, Category.Automation)]
+        public void CreateWindowsMonthlySUC()
+        {
+            RunPowerShellTest("Test-CreateWindowsMonthlySoftwareUpdateConfiguration");
+        }
     }
 }

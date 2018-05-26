@@ -15,6 +15,8 @@
 namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using Sdk = Microsoft.Azure.Management.Automation.Models;
 
     public class SoftwareUpdateConfiguration : BaseArmProperties
@@ -84,6 +86,36 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
             };
 
             this.ScheduleConfiguration = new Schedule(resourceGroupName, automationAccountName, schedule);
+
+            this.UpdateConfiguration = new UpdateConfiguration
+            {
+                OperatingSystem = (OperatingSystemType)suc.UpdateConfiguration.OperatingSystem,
+                AzureVirtualMachines = suc.UpdateConfiguration.AzureVirtualMachines,
+                NonAzureComputers = suc.UpdateConfiguration.NonAzureComputerNames,
+                Duration = suc.UpdateConfiguration.Duration,
+                Linux = suc.UpdateConfiguration.OperatingSystem == Sdk.OperatingSystemType.Windows ? null :
+                    new LinuxConfiguration
+                    {
+                        IncludedPackageClassifications = StringToEnumList<LinuxPackageClasses>(suc.UpdateConfiguration.Linux.IncludedPackageClassifications),
+                        IncludedPackageNameMasks = suc.UpdateConfiguration.Linux.IncludedPackageNameMasks,
+                        ExcludedPackageNameMasks = suc.UpdateConfiguration.Linux.ExcludedPackageNameMasks
+                    },
+                Windows = suc.UpdateConfiguration.OperatingSystem == Sdk.OperatingSystemType.Linux ? null :
+                    new WindowsConfiguration
+                    {
+                        IncludedUpdateClassifications = StringToEnumList<WindowsUpdateClasses>(suc.UpdateConfiguration.Windows.IncludedUpdateClassifications),
+                        IncludedKbNumbers = suc.UpdateConfiguration.Windows.IncludedKbNumbers,
+                        ExcludedKbNumbers = suc.UpdateConfiguration.Windows.ExcludedKbNumbers
+                    }
+            };
+        }
+
+        private static IList<T> StringToEnumList<T>(string includedPackageClassifications)
+        {
+            return includedPackageClassifications.Split(new[] { ',' })
+                            .Select(p => p.Trim())
+                            .Select(p => (T)Enum.Parse(typeof(LinuxPackageClasses), p, true))
+                            .ToList();
         }
     }
 }
