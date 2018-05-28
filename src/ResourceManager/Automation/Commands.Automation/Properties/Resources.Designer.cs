@@ -790,6 +790,15 @@ namespace Microsoft.Azure.Commands.Automation.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Software update configuration has no target computers..
+        /// </summary>
+        internal static string SoftwareUpdateConfigurationHasNoTargetComputers {
+            get {
+                return ResourceManager.GetString("SoftwareUpdateConfigurationHasNoTargetComputers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Starting a node configuration deployment..
         /// </summary>
         internal static string StartAzureAutomationNodeConfigurationDescription {
