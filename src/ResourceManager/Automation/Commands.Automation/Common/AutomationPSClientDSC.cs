@@ -558,22 +558,10 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
                 if (string.IsNullOrEmpty(nextLink))
                 {
-                    if (!string.IsNullOrEmpty(status))
-                    {
-                        response = this.automationManagementClient.DscNode.ListByAutomationAccount(
+                    response = this.automationManagementClient.DscNode.ListByAutomationAccount(
                                     resourceGroupName,
                                     automationAccountName,
-                                    null
-                                    /* todo new DscNodeListParameters { Status = status, Name = nodeName } */);
-                    }
-                    else
-                    {
-                        response = this.automationManagementClient.DscNode.ListByAutomationAccount(
-                                    resourceGroupName,
-                                    automationAccountName,
-                                    null
-                                    /* new DscNodeListParameters { Name = nodeName } */);
-                    }
+                                    this.GetNodeListFilterString(status, nodeName));
                 }
                 else
                 {
@@ -603,26 +591,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
                 if (string.IsNullOrEmpty(nextLink))
                 {
-                    if (!string.IsNullOrEmpty(status))
-                    {
-                        response = this.automationManagementClient.DscNode.ListByAutomationAccount(
+                    response = this.automationManagementClient.DscNode.ListByAutomationAccount(
                                             resourceGroupName,
-                                            automationAccountName, null
-                                            //new DscNodeListParameters
-                                            //{
-                                            //    Status = status,
-                                            //    NodeConfigurationName = nodeConfigurationName
-                                            //}
-                                            );
-                    }
-                    else
-                    {
-                        response = this.automationManagementClient.DscNode.ListByAutomationAccount(
-                                            resourceGroupName,
-                                            automationAccountName, null
-                                            //new DscNodeListParameters { NodeConfigurationName = nodeConfigurationName }
-                                            );
-                    }
+                                            automationAccountName, this.GetNodeListFilterString(status, nodeConfigurationName));
                 }
                 else
                 {
@@ -697,21 +668,10 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 
                 if (string.IsNullOrEmpty(nextLink))
                 {
-                    if (!string.IsNullOrEmpty(status))
-                    {
-                        response = this.automationManagementClient.DscNode.ListByAutomationAccount(
+                    response = this.automationManagementClient.DscNode.ListByAutomationAccount(
                             resourceGroupName,
-                            automationAccountName,null
-                            //new DscNodeListParameters { Status = status }
-                            );
-                    }
-                    else
-                    {
-                        response = this.automationManagementClient.DscNode.ListByAutomationAccount(
-                                resourceGroupName,
-                                automationAccountName, null);
-                                //new DscNodeListParameters { });
-                    }
+                            automationAccountName,
+                            this.GetNodeListFilterString(status, null));
                 }
                 else
                 {
@@ -909,59 +869,10 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 Rest.Azure.IPage<AutomationManagement.Models.DscCompilationJob> response;
 
                 if(string.IsNullOrEmpty(nextLink))
-                { 
-                    if (startTime.HasValue && endTime.HasValue)
-                    {
-                        response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
+                {
+                    response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
                                         resourceGroupName,
-                                        automationAccountName, null
-                                        //new AutomationManagement.Models.DscCompilationJobListParameters
-                                        //{
-                                        //    StartTime = FormatDateTime(startTime.Value),
-                                        //    EndTime = FormatDateTime(endTime.Value),
-                                        //    ConfigurationName = configurationName,
-                                        //    Status = jobStatus,
-                                        //}
-                                        );
-                    }
-                    else if (startTime.HasValue)
-                    {
-                        response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
-                                        resourceGroupName,
-                                        automationAccountName, null
-                                        //new AutomationManagement.Models.DscCompilationJobListParameters
-                                        //{
-                                        //    StartTime = FormatDateTime(startTime.Value),
-                                        //    ConfigurationName = configurationName,
-                                        //    Status = jobStatus
-                                        //}
-                                        );
-                    }
-                    else if (endTime.HasValue)
-                    {
-                        response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
-                                    resourceGroupName,
-                                    automationAccountName, null
-                                    //new AutomationManagement.Models.DscCompilationJobListParameters
-                                    //{
-                                    //    EndTime = FormatDateTime(endTime.Value),
-                                    //    ConfigurationName = configurationName,
-                                    //    Status = jobStatus,
-                                    //}
-                                    );
-                    }
-                    else
-                    {
-                        response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
-                                    resourceGroupName,
-                                    automationAccountName, null
-                                    //new AutomationManagement.Models.DscCompilationJobListParameters
-                                    //{
-                                    //    Status = jobStatus,
-                                    //    ConfigurationName = configurationName
-                                    //}
-                                    );
-                    }
+                                        automationAccountName, this.GetDscJobFilterString(configurationName, startTime, endTime, jobStatus));
                 }
                 else
                 {
@@ -982,50 +893,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
                 if (string.IsNullOrEmpty(nextLink))
                 {
-                    if (startTime.HasValue && endTime.HasValue)
-                    {
-                        response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
+                    response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
                                         resourceGroupName,
-                                        automationAccountName, null
-                                        //new AutomationManagement.Models.DscCompilationJobListParameters
-                                        //{
-                                        //    StartTime = FormatDateTime(startTime.Value),
-                                        //    EndTime = FormatDateTime(endTime.Value),
-                                        //    Status = jobStatus,
-                                        //}
-                                        );
-
-                    }
-                    else if (startTime.HasValue)
-                    {
-                        response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
-                                           resourceGroupName,
-                                           automationAccountName, null);
-                                           //new AutomationManagement.Models.DscCompilationJobListParameters
-                                           //{
-                                           //    StartTime = FormatDateTime(startTime.Value),
-                                           //    Status = jobStatus,
-                                           //});
-                    }
-                    else if (endTime.HasValue)
-                    {
-                        response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
-                                        resourceGroupName,
-                                        automationAccountName, null
-                                        //new AutomationManagement.Models.DscCompilationJobListParameters
-                                        //{
-                                        //    EndTime = FormatDateTime(endTime.Value),
-                                        //    Status = jobStatus,
-                                        //}
-                                        );
-                    }
-                    else
-                    {
-                        response = this.automationManagementClient.DscCompilationJob.ListByAutomationAccount(
-                                    resourceGroupName,
-                                    automationAccountName, null);
-                                    //new AutomationManagement.Models.DscCompilationJobListParameters { Status = jobStatus });
-                    }
+                                        automationAccountName, this.GetDscJobFilterString(null, startTime, endTime, jobStatus));
                 }
                 else
                 {
@@ -1062,24 +932,12 @@ namespace Microsoft.Azure.Commands.Automation.Common
         {
             using (var request = new RequestSettings(this.automationManagementClient))
             {
-                // TODO: Change the filters
-                // var listParams = new AutomationManagement.Models.JobStreamListParameters();
+                if (string.IsNullOrWhiteSpace(streamType))
+                {
+                    streamType = CompilationJobStreamType.Any.ToString();
+                }
 
-                //if (time.HasValue)
-                //{
-                //    listParams.Time = this.FormatDateTime(time.Value);
-                //}
-
-                //if (streamType != null)
-                //{
-                //    listParams.StreamType = streamType;
-                //}
-                //else
-                //{
-                //    listParams.StreamType = CompilationJobStreamType.Any.ToString();
-                //}
-
-                var jobStreams = this.automationManagementClient.JobStream.ListByJob(resourceGroupName, automationAccountName, jobId.ToString(), null);
+                var jobStreams = this.automationManagementClient.JobStream.ListByJob(resourceGroupName, automationAccountName, jobId.ToString(), this.GetDscJobStreamFilterString(time, streamType));
                 return jobStreams.Select(stream => this.CreateJobStreamFromJobStreamModel(stream, resourceGroupName, automationAccountName, jobId)).ToList();
             }
         }
@@ -1142,12 +1000,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     response = this.automationManagementClient.DscNodeConfiguration.ListByAutomationAccount(
                                        resourceGroupName,
                                        automationAccountName,
-                                       null
-                                       //new AutomationManagement.Models.DscNodeConfigurationListParameters
-                                       //{
-                                       //    ConfigurationName = configurationName
-                                       //}
-                                       );
+                                       this.GetNodeConfigurationListFilterString(configurationName));
                 }
                 else
                 {
@@ -1180,9 +1033,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 {
                     response = this.automationManagementClient.DscNodeConfiguration.ListByAutomationAccount(
                                         resourceGroupName,
-                                        automationAccountName, null
-                                        //new AutomationManagement.Models.DscNodeConfigurationListParameters()
-                                        );
+                                        automationAccountName);
                 }
                 else
                 {
@@ -1468,15 +1319,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 response = this.automationManagementClient.Job.ListByAutomationAccount(
                     resourceGroupName,
                     automationAccountName,
-                    null
-                    //new JobListParameters
-                    //{
-                    //    StartTime = (startTime.HasValue) ? FormatDateTime(startTime.Value) : null,
-                    //    EndTime = (endTime.HasValue) ? FormatDateTime(endTime.Value) : null,
-                    //    RunbookName = runbookName,
-                    //    Status = jobStatus,
-                    //}
-                    );
+                    this.GetDscJobFilterString(null, startTime, endTime, jobStatus));
             }
             else
             {
@@ -1597,58 +1440,11 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
                 if (string.IsNullOrEmpty(nextLink))
                 {
-                    if (startTime.HasValue && endTime.HasValue)
-                    {
-                        response = this.automationManagementClient.NodeReports.ListByNode(
+                    response = this.automationManagementClient.NodeReports.ListByNode(
                                         resourceGroupName,
                                         automationAccountName,
                                         nodeId.ToString(),
-                                        null
-                                        //new AutomationManagement.Models.DscNodeReportListParameters
-                                        //{
-                                        //    NodeId = nodeId,
-                                        //    StartTime = FormatDateTime(startTime.Value),
-                                        //    EndTime = FormatDateTime(endTime.Value)
-                                        //}
-                                        );
-                    }
-                    else if (startTime.HasValue)
-                    {
-                        response = this.automationManagementClient.NodeReports.ListByNode(
-                                         resourceGroupName,
-                                         automationAccountName, nodeId.ToString()
-                                         //new AutomationManagement.Models.DscNodeReportListParameters
-                                         //{
-                                         //    NodeId = nodeId,
-                                         //    StartTime = FormatDateTime(startTime.Value)
-                                         //}
-                                         );
-                    }
-                    else if (endTime.HasValue)
-                    {
-                        response = this.automationManagementClient.NodeReports.ListByNode(
-                            resourceGroupName,
-                            automationAccountName,
-                            nodeId.ToString()
-                            //new AutomationManagement.Models.DscNodeReportListParameters
-                            //{
-                            //    NodeId = nodeId,
-                            //    EndTime = FormatDateTime(endTime.Value)
-                            //}
-                            );
-                    }
-                    else
-                    {
-                        response = this.automationManagementClient.NodeReports.ListByNode(
-                            resourceGroupName,
-                            automationAccountName,
-                            nodeId.ToString()
-                            //new AutomationManagement.Models.DscNodeReportListParameters
-                            //{
-                            //    NodeId = nodeId
-                            //}
-                            );
-                    }
+                                        this.GetNodeReportListFilterString(nodeId, startTime, endTime));
                 }
                 else
                 {
@@ -1844,6 +1640,115 @@ namespace Microsoft.Azure.Commands.Automation.Common
             };
 
             return paramsForRunbook;
+        }
+
+        private string GetDscJobFilterString(string configurationName, DateTimeOffset? startTime, DateTimeOffset? endTime, string jobStatus)
+        {
+            string filter = null;
+            List<string> odataFilter = new List<string>();
+            if (startTime.HasValue)
+            {
+                odataFilter.Add("properties/startTime ge " + this.FormatDateTime(startTime.Value));
+            }
+            if (endTime.HasValue)
+            {
+                odataFilter.Add("properties/endTime le " + this.FormatDateTime(endTime.Value));
+            }
+            if (!string.IsNullOrWhiteSpace(jobStatus))
+            {
+                odataFilter.Add("properties/status eq '" + Uri.EscapeDataString(jobStatus) + "'");
+            }
+            if (!string.IsNullOrWhiteSpace(configurationName))
+            {
+                odataFilter.Add("properties/configuration/name eq '" + Uri.EscapeDataString(configurationName) + "'");
+            }
+            if (odataFilter.Count > 0)
+            {
+                filter = string.Join(" and ", odataFilter);
+            }
+
+            return filter;
+        }
+
+        private string GetDscJobStreamFilterString(DateTimeOffset? time, string streamType)
+        {
+            string filter = null;
+            List<string> odataFilter = new List<string>();
+            if (time.HasValue)
+            {
+                odataFilter.Add("properties/time ge " + this.FormatDateTime(time.Value));
+            }
+            if (!string.IsNullOrWhiteSpace(streamType))
+            {
+                odataFilter.Add("properties/streamType eq '" + Uri.EscapeDataString(streamType) + "'");
+            }
+
+            if (odataFilter.Count > 0)
+            {
+                filter = string.Join(" and ", odataFilter);
+            }
+
+            return filter;
+        }
+
+        private string GetNodeListFilterString(string status, string nodeName)
+        {
+            string filter = null;
+            List<string> odataFilter = new List<string>();
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                odataFilter.Add("properties/status eq '" + Uri.EscapeDataString(status) + "'");
+            }
+            if (!string.IsNullOrWhiteSpace(nodeName))
+            {
+                odataFilter.Add("properties/nodeName eq '" + Uri.EscapeDataString(nodeName) + "'");
+            }
+            if (odataFilter.Count > 0)
+            {
+                filter = string.Join(" and ", odataFilter);
+            }
+
+            return filter;
+        }
+
+        private string GetNodeReportListFilterString(Guid nodeId, DateTimeOffset? startTime, DateTimeOffset? endTime)
+        {
+            string filter = null;
+            List<string> odataFilter = new List<string>();
+            if (startTime.HasValue)
+            {
+                odataFilter.Add("properties/startTime ge " + this.FormatDateTime(startTime.Value));
+            }
+            if (endTime.HasValue)
+            {
+                odataFilter.Add("properties/endTime le " + this.FormatDateTime(endTime.Value));
+            }
+            if (nodeId != null)
+            {
+                odataFilter.Add("properties/nodeId eq '" + Uri.EscapeDataString(nodeId.ToString()) + "'");
+            }
+            if (odataFilter.Count > 0)
+            {
+                filter = string.Join(" and ", odataFilter);
+            }
+
+            return filter;
+        }
+
+        private string GetNodeConfigurationListFilterString(string configurationName)
+        {
+            string filter = null;
+            List<string> odataFilter = new List<string>();
+            if (!string.IsNullOrWhiteSpace(configurationName))
+            {
+                odataFilter.Add("properties/configuration/name eq " + Uri.EscapeDataString(configurationName) + "'");
+            }
+            if (odataFilter.Count > 0)
+            {
+                filter = string.Join(" and ", odataFilter);
+            }
+
+            return filter;
         }
 
         #endregion

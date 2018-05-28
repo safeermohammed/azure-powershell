@@ -846,8 +846,11 @@ namespace Microsoft.Azure.Commands.Automation.Common
             credentialUpdateParams.Name = name;
             credentialUpdateParams.Description = description ?? exisitngCredential.Description;
 
-            credentialUpdateParams.UserName = userName;
-            credentialUpdateParams.Password = password;
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                credentialUpdateParams.UserName = userName;
+                credentialUpdateParams.Password = password;
+            }
 
             var credential = this.automationManagementClient.Credential.Update(resourceGroupName, automationAccountName, name,
                 credentialUpdateParams);

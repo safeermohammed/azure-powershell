@@ -48,9 +48,12 @@ namespace Microsoft.Azure.Commands.Automation.Model
             this.LastModifiedTime = connection.LastModifiedTime.ToLocalTime();
             this.ConnectionTypeName = connection.ConnectionType.Name;
             this.FieldDefinitionValues = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in connection.FieldDefinitionValues)
+            if (connection.FieldDefinitionValues != null)
             {
-                this.FieldDefinitionValues.Add(kvp.Key, kvp.Value.ToString());
+                foreach (var kvp in connection.FieldDefinitionValues)
+                {
+                    this.FieldDefinitionValues.Add(kvp.Key, kvp.Value.ToString());
+                }
             }
         }
 
