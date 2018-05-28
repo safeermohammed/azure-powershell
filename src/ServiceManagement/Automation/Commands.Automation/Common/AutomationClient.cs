@@ -282,9 +282,23 @@ namespace Microsoft.Azure.Commands.Automation.Common
                         string.Format(CultureInfo.CurrentCulture, Resources.RunbookNotFound, runbookName));
                 }
 
+<<<<<<< HEAD
                 var runbookUpdateParameters = new RunbookUpdateParameters();
                 runbookUpdateParameters.Name = runbookName;
                 runbookUpdateParameters.Tags = null;
+=======
+            var runbookUpdateParameters = new RunbookUpdateParameters();
+            runbookUpdateParameters.Name = runbookName;
+            runbookUpdateParameters.Tags = null;
+            
+            runbookUpdateParameters.Properties =  new RunbookUpdateProperties();
+            runbookUpdateParameters.Properties.Description = description ?? runbookModel.Properties.Description;
+            runbookUpdateParameters.Properties.LogProgress = (logProgress.HasValue) ?  logProgress.Value : runbookModel.Properties.LogProgress;
+            runbookUpdateParameters.Properties.LogVerbose = (logVerbose.HasValue) ? logVerbose.Value : runbookModel.Properties.LogVerbose;
+            runbookUpdateParameters.Properties.ServiceManagementTags = (tags != null)
+                ? string.Join(Constants.RunbookTagsSeparatorString, tags)
+                : runbookModel.Properties.ServiceManagementTags;
+>>>>>>> db396ce33f0414f30f19bc6410904438b77e99fb
 
                 runbookUpdateParameters.Properties = new RunbookUpdateProperties();
                 runbookUpdateParameters.Properties.Description = description ?? runbookModel.Properties.Description;
