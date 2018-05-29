@@ -129,7 +129,13 @@ CmdletsToExport = 'Get-AzureRMAutomationHybridWorkerGroup',
                'Start-AzureRmAutomationDscNodeConfigurationDeployment', 
                'Stop-AzureRmAutomationDscNodeConfigurationDeployment', 
                'Get-AzureRmAutomationDscNodeConfigurationDeploymentSchedule', 
-               'Get-AzureRmAutomationDscNodeConfigurationDeployment'
+               'Get-AzureRmAutomationDscNodeConfigurationDeployment',
+               # Update Management Cmdlets
+               'New-AzureRmAutomationSoftwareUpdateConfiguration',
+               'Get-AzureRmAutomationSoftwareUpdateConfiguration',
+               'Remove-AzureRmAutomationSoftwareUpdateConfiguration',
+               'Get-AzureRmAutomationSoftwareUpdateRun',
+               'Get-AzureRmAutomationSoftwareUpdateMachineRun'
 
 # Variables to export from this module
 # VariablesToExport = @()
