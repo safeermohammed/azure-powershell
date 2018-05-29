@@ -90,14 +90,28 @@ namespace Microsoft.Azure.Commands.Automation.Common
         public IEnumerable<Model.AutomationAccount> ListAutomationAccounts(string resourceGroupName, ref string nextLink)
         {
             Rest.Azure.IPage<AutomationManagement.Models.AutomationAccount> response;
-
-            if (string.IsNullOrEmpty(nextLink))
+            if(!string.IsNullOrWhiteSpace(resourceGroupName))
             {
-                response = this.automationManagementClient.AutomationAccount.List();
+                if(string.IsNullOrWhiteSpace(nextLink))
+                {
+                    response = this.automationManagementClient.AutomationAccount.ListByResourceGroup(resourceGroupName);
+                }
+                else
+                {
+                    response = this.automationManagementClient.AutomationAccount.ListByResourceGroupNext(nextLink);
+                }
+                
             }
             else
             {
-                response = this.automationManagementClient.AutomationAccount.ListByResourceGroupNext(nextLink);
+                if (string.IsNullOrWhiteSpace(nextLink))
+                {
+                    response = this.automationManagementClient.AutomationAccount.List();
+                }
+                else
+                {
+                    response = this.automationManagementClient.AutomationAccount.ListNext(nextLink);
+                }
             }
 
             nextLink = response.NextPageLink;

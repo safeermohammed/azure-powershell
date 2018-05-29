@@ -19,7 +19,7 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
     using System.Linq;
     using Sdk = Microsoft.Azure.Management.Automation.Models;
 
-    public class SoftwareUpdateConfiguration : BaseArmProperties
+    public class SoftwareUpdateConfiguration : BaseProperties
     {
         public UpdateConfiguration UpdateConfiguration { get; set; }
 
@@ -56,7 +56,6 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
         {
             this.ResourceGroupName = resourceGroupName;
             this.AutomationAccountName = automationAccountName;
-            this.CreatedBy = suc.CreatedBy;
             this.CreationTime = suc.CreationTime;
             this.Description = suc.ScheduleInfo.Description;
             this.ErrorInfo = suc.Error == null ? null : new ErrorInfo
@@ -64,7 +63,6 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
                 Code = suc.Error.Code,
                 Message = suc.Error.Message
             };
-            this.LastModifiedBy = suc.LastModifiedBy;
             this.LastModifiedTime = suc.LastModifiedTime;
             this.Name = suc.Name;
             this.ProvisioningState = suc.ProvisioningState;
