@@ -17,15 +17,13 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
     using System;
     using Management.Automation.Models;
 
-    public class SoftwareUpdateMachineRun : BaseArmProperties
+    public class SoftwareUpdateMachineRun : BaseProperties
     {
         internal SoftwareUpdateMachineRun(string resourceGroupName, string automationAccountName, SoftwareUpdateConfigurationMachineRun sucmr)
         {
             this.ResourceGroupName = resourceGroupName;
             this.AutomationAccountName = automationAccountName;
-            this.CreatedBy = sucmr.CreatedBy;
             this.CreationTime = sucmr.CreationTime;
-            this.LastModifiedBy = sucmr.LastModifiedBy;
             this.LastModifiedTime = sucmr.LastModifiedTime;
             this.MachineRunId = Guid.Parse(sucmr.Name);
             this.Name = sucmr.Name;

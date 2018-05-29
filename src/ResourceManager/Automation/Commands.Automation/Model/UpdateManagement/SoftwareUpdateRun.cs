@@ -18,7 +18,7 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
     using System.Xml;
     using Management.Automation.Models;
 
-    public class SoftwareUpdateRun : BaseArmProperties
+    public class SoftwareUpdateRun : BaseProperties
     {
         internal SoftwareUpdateRun(string resourceGroupName, string automationAccountName, SoftwareUpdateConfigurationRun sucr)
         {
@@ -26,11 +26,9 @@ namespace Microsoft.Azure.Commands.Automation.Model.UpdateManagement
             this.AutomationAccountName = automationAccountName;
             this.ComputerCount = sucr.ComputerCount.HasValue ? sucr.ComputerCount.Value : 0;    // TODO: why do we have this nullable still?
             this.ConfiguredDuration = XmlConvert.ToTimeSpan(sucr.ConfiguredDuration);
-            this.CreatedBy = sucr.CreatedBy;
             this.CreationTime = sucr.CreationTime;
             this.EndTime = sucr.EndTime;
             this.FailedCount = sucr.FailedCount.HasValue ? sucr.FailedCount.Value : 0;
-            this.LastModifiedBy = sucr.LastModifiedBy;
             this.LastModifiedTime = sucr.LastModifiedTime;
             this.Name = sucr.Name;
             this.OperatingSystem = (OperatingSystemType)Enum.Parse(typeof(OperatingSystemType), sucr.OsType, true);
