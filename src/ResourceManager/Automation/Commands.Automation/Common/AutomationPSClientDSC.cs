@@ -968,7 +968,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 {
                     var nodeConfiguration = this.automationManagementClient.DscNodeConfiguration.Get(resourceGroupName, automationAccountName, nodeConfigurationName);
 
-                    string computedRollupStatus = GetRollupStatus(resourceGroupName, automationAccountName, nodeConfigurationName);
+                    string computedRollupStatus = GetRollupStatus(resourceGroupName, automationAccountName, null);
 
                     if (string.IsNullOrEmpty(rollupStatus) || (rollupStatus != null && computedRollupStatus.Equals(rollupStatus)))
                     {
@@ -1444,7 +1444,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                                         resourceGroupName,
                                         automationAccountName,
                                         nodeId.ToString(),
-                                        this.GetNodeReportListFilterString(nodeId, startTime, endTime));
+                                        this.GetNodeReportListFilterString(null, startTime, endTime, null));
                 }
                 else
                 {
@@ -1711,7 +1711,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             return filter;
         }
 
-        private string GetNodeReportListFilterString(Guid nodeId, DateTimeOffset? startTime, DateTimeOffset? endTime)
+        private string GetNodeReportListFilterString(string type, DateTimeOffset? startTime, DateTimeOffset? endTime, DateTimeOffset? lastModifiedTime)
         {
             string filter = null;
             List<string> odataFilter = new List<string>();
@@ -1723,9 +1723,13 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 odataFilter.Add("properties/endTime le " + this.FormatDateTime(endTime.Value));
             }
-            if (nodeId != null)
+            if (string.IsNullOrWhiteSpace(type))
             {
-                odataFilter.Add("properties/nodeId eq '" + Uri.EscapeDataString(nodeId.ToString()) + "'");
+                odataFilter.Add("properties/type eq '" + Uri.EscapeDataString(type) + "'");
+            }
+            if (lastModifiedTime.HasValue)
+            {
+                odataFilter.Add("properties/lastModifiedTime ge " + this.FormatDateTime(startTime.Value));
             }
             if (odataFilter.Count > 0)
             {
