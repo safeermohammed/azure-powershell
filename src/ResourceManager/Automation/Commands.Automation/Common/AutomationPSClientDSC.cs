@@ -720,7 +720,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 // Note: No need to check if an existing configuration is already assigned. The confirmation is obtained when the cmdlet is executed
                 // *** 
 
-                var nodeConfiguration = new DscNodeConfigurationAssociationProperty { Name = nodeConfigurationName };
+                var nodeConfiguration = new DscNodeUpdateParametersProperties { Name = nodeConfigurationName };
 
                 var node =
                     this.automationManagementClient.DscNode.Update(
@@ -730,7 +730,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                         new DscNodeUpdateParameters
                         {
                             NodeId = nodeId.ToString(),
-                            NodeConfiguration = nodeConfiguration
+                            Properties = nodeConfiguration
                         });
 
                 return new Model.DscNode(resourceGroupName, automationAccountName, node);
