@@ -19,7 +19,7 @@ namespace Microsoft.Azure.Commands.Automation.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -793,8 +793,97 @@ namespace Microsoft.Azure.Commands.Automation.Properties {
         ///   Looks up a localized string similar to Software update configuration has no target computers..
         /// </summary>
         internal static string SoftwareUpdateConfigurationHasNoTargetComputers {
-            get {
+            get
+            {
                 return ResourceManager.GetString("SoftwareUpdateConfigurationHasNoTargetComputers", resourceCulture);
+            }
+        }
+        ///   Looks up a localized string similar to SourceControl &apos;{0}&apos; already exists..
+        /// </summary>
+        internal static string SourceControlAlreadyExists {
+            get {
+                return ResourceManager.GetString("SourceControlAlreadyExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating Azure Automation Source Control..
+        /// </summary>
+        internal static string SourceControlCreateAction {
+            get {
+                return ResourceManager.GetString("SourceControlCreateAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SourceControl &apos;{0}&apos; not found..
+        /// </summary>
+        internal static string SourceControlNotFound {
+            get {
+                return ResourceManager.GetString("SourceControlNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removing the Azure Automation Source Control..
+        /// </summary>
+        internal static string SourceControlRemoveAction {
+            get {
+                return ResourceManager.GetString("SourceControlRemoveAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove the Azure Automation Source Control?.
+        /// </summary>
+        internal static string SourceControlRemoveWarning {
+            get {
+                return ResourceManager.GetString("SourceControlRemoveWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SourceControl RepoUrl cannot be changed..
+        /// </summary>
+        internal static string SourceControlRepoUrlCannotBeChanged {
+            get {
+                return ResourceManager.GetString("SourceControlRepoUrlCannotBeChanged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SourceControl SyncJob with id: &apos;{0}&apos; already exists..
+        /// </summary>
+        internal static string SourceControlSyncJobAlreadyExist {
+            get {
+                return ResourceManager.GetString("SourceControlSyncJobAlreadyExist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SourceControl Sync Job with id: &apos;{0}&apos; not found..
+        /// </summary>
+        internal static string SourceControlSyncJobNotFound {
+            get {
+                return ResourceManager.GetString("SourceControlSyncJobNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SourceControl Type cannot be changed..
+        /// </summary>
+        internal static string SourceControlTypeCannotBeChanged {
+            get {
+                return ResourceManager.GetString("SourceControlTypeCannotBeChanged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Updating the Azure Automation Source Control..
+        /// </summary>
+        internal static string SourceControlUpdateAction {
+            get {
+                return ResourceManager.GetString("SourceControlUpdateAction", resourceCulture);
             }
         }
         
