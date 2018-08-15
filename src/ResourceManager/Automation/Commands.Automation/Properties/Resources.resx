@@ -470,4 +470,43 @@
   <data name="SoftwareUpdateConfigurationHasNoTargetComputers" xml:space="preserve">
     <value>Software update configuration has no target computers.</value>
   </data>
+  <data name="SourceControlAlreadyExists" xml:space="preserve">
+    <value>SourceControl '{0}' already exists.</value>
+    <comment>Automation</comment>
+  </data>
+  <data name="SourceControlNotFound" xml:space="preserve">
+    <value>SourceControl '{0}' not found.</value>
+    <comment>Automation</comment>
+  </data>
+  <data name="SourceControlRepoUrlCannotBeChanged" xml:space="preserve">
+    <value>SourceControl RepoUrl cannot be changed.</value>
+    <comment>Automation</comment>
+  </data>
+  <data name="SourceControlTypeCannotBeChanged" xml:space="preserve">
+    <value>SourceControl Type cannot be changed.</value>
+    <comment>Automation</comment>
+  </data>
+  <data name="SourceControlCreateAction" xml:space="preserve">
+    <value>Creating Azure Automation Source Control.</value>
+    <comment>Automation</comment>
+  </data>
+  <data name="SourceControlRemoveAction" xml:space="preserve">
+    <value>Removing the Azure Automation Source Control.</value>
+    <comment>Automation</comment>
+  </data>
+  <data name="SourceControlRemoveWarning" xml:space="preserve">
+    <value>Are you sure you want to remove the Azure Automation Source Control?</value>
+  </data>
+  <data name="SourceControlSyncJobAlreadyExist" xml:space="preserve">
+    <value>SourceControl SyncJob with id: '{0}' already exists.</value>
+    <comment>Automation</comment>
+  </data>
+  <data name="SourceControlSyncJobNotFound" xml:space="preserve">
+    <value>SourceControl Sync Job with id: '{0}' not found.</value>
+    <comment>Automation</comment>
+  </data>
+  <data name="SourceControlUpdateAction" xml:space="preserve">
+    <value>Updating the Azure Automation Source Control.</value>
+    <comment>Automation</comment>
+  </data>
 </root>

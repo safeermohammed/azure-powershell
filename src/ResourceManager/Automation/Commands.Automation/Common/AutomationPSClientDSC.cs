@@ -919,7 +919,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                           Name = configurationName
                      },
                      Parameters = this.ProcessConfigurationParameters(parameters, configurationData),
-                    NewNodeConfigurationBuildVersionRequired = incrementNodeConfigurationBuild
+                    //NewNodeConfigurationBuildVersionRequired = incrementNodeConfigurationBuild
                 };
 
                 var job = this.automationManagementClient.DscCompilationJob.Create(resourceGroupName, automationAccountName, Guid.NewGuid().ToString(), createJobParameters);
