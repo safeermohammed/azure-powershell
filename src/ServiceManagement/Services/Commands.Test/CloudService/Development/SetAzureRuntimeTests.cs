@@ -20,11 +20,14 @@ using Microsoft.WindowsAzure.Commands.Test.Utilities.CloudService;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
 using Microsoft.WindowsAzure.Commands.Utilities.Common.XmlSchema.ServiceConfigurationSchema;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.WindowsAzure.Commands.Common;
 
 namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cmdlet
 {
-    public class SetAzureRuntimeTests : TestBase
+    public class SetAzureRuntimeTests : SMTestBase
     {
         private MockCommandRuntime mockCommandRuntime;
 
@@ -61,6 +64,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         /// valid iisnode runtiem version
         /// </summary>
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestSetAzureRuntimeValidRuntimeVersions()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))
@@ -85,6 +89,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         /// results in no changes to package scaffolding (no changes in package.json)
         /// </summary>
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestSetAzureRuntimeInvalidRuntimeVersion()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))
@@ -110,6 +115,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         /// master package.json).  Results in no scaffolding changes - no changes to package.json.
         /// </summary>
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestSetAzureRuntimeInvalidRuntimeType()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))
@@ -136,6 +142,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         /// valid iisnode runtiem version
         /// </summary>
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestSetAzureRuntimeValidRuntimeVersionsCanInsensitive()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))

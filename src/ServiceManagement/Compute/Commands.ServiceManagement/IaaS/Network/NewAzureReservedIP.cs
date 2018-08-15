@@ -17,15 +17,27 @@ using Microsoft.WindowsAzure.Commands.ServiceManagement.Model;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Management.Network.Models;
 using Microsoft.WindowsAzure.Management.Network;
+using Microsoft.WindowsAzure.Management.Compute;
+using Microsoft.WindowsAzure.Management.Compute.Models;
+using System;
+using System.Collections.Generic;
 
 namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS
 {
     [Cmdlet(VerbsCommon.New, ReservedIPConstants.CmdletNoun, DefaultParameterSetName = ReserveNewIPParamSet), OutputType(typeof(ManagementOperationContext))]
     public class NewAzureReservedIPCmdlet : ServiceManagementBaseCmdlet
     {
-        protected const string ReserveNewIPParamSet = "CreateNewReservedIP";
-        protected const string ReserveInUseIPUsingSlotParamSet = "CreateInUseReservedIPUsingSlot";
-        protected const string ReserveInUseIPParamSet = "CreateInUseReservedIP";
+        public const string ReserveNewIPParamSet = "CreateNewReservedIP";
+        public const string ReserveInUseIPUsingSlotParamSet = "CreateInUseReservedIPUsingSlot";
+        public const string ReserveInUseIPParamSet = "CreateInUseReservedIP";
+
+        public NewAzureReservedIPCmdlet()
+        {
+        }
+
+        public NewAzureReservedIPCmdlet(IClientProvider provider) : base(provider)
+        {
+        }
 
         [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveNewIPParamSet, HelpMessage = "Reserved IP Name.")]
         [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPUsingSlotParamSet, HelpMessage = "Reserved IP Name.")]
@@ -39,7 +51,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS
 
         [Parameter(Mandatory = false, Position = 1, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveNewIPParamSet, HelpMessage = "Reserved IP Label.")]
         [Parameter(Mandatory = false, Position = 3, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPUsingSlotParamSet, HelpMessage = "Reserved IP Label.")]
-        [Parameter(Mandatory = false, Position = 2, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPParamSet, HelpMessage = "Reserved IP Label.")]
+        [Parameter(Mandatory = false, Position = 1, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPParamSet, HelpMessage = "Reserved IP Label.")]
         [ValidateNotNullOrEmpty]
         public string Label
         {
@@ -49,7 +61,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS
 
         [Parameter(Mandatory = true, Position = 2, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveNewIPParamSet, HelpMessage = "Location Name.")]
         [Parameter(Mandatory = true, Position = 4, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPUsingSlotParamSet, HelpMessage = "Location Name.")]
-        [Parameter(Mandatory = true, Position = 3, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPParamSet, HelpMessage = "Location Name.")]
+        [Parameter(Mandatory = true, Position = 2, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPParamSet, HelpMessage = "Location Name.")]
         [ValidateNotNullOrEmpty]
         public string Location
         {
@@ -57,9 +69,55 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS
             set;
         }
 
-        protected override void OnProcessRecord()
+        [Parameter(Mandatory = true, Position = 3, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPParamSet, HelpMessage = "Service Name.")]
+        [ValidateNotNullOrEmpty]
+        public string ServiceName
+        {
+            get;
+            set;
+        }
+
+        [Parameter(Mandatory = false, Position = 4, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPParamSet, HelpMessage = "Virtual IP Name.")]
+        [ValidateNotNullOrEmpty]
+        public string VirtualIPName
+        {
+            get;
+            set;
+        }
+
+        [Parameter(Position = 5, Mandatory = false, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveInUseIPParamSet, HelpMessage = "Deployment slot [Staging | Production].")]
+        [ValidateSet(Microsoft.WindowsAzure.Commands.ServiceManagement.Model.DeploymentSlotType.Staging, Microsoft.WindowsAzure.Commands.ServiceManagement.Model.DeploymentSlotType.Production, IgnoreCase = true)]
+        [ValidateNotNullOrEmpty]
+        public string Slot
+        {
+            get;
+            set;
+        }
+
+        [Parameter(Mandatory = false, Position= 6, ValueFromPipelineByPropertyName = true, ParameterSetName = ReserveNewIPParamSet, HelpMessage = "List of IPTags.")]
+        [ValidateNotNullOrEmpty]
+        public List<IPTag> IPTagList
+        {
+            get;
+            set;
+        }
+
+        public override void ExecuteCmdlet()
         {
             ServiceManagementProfile.Initialize();
+            string deploymentName = string.Empty;
+
+            if (!string.IsNullOrEmpty(this.ServiceName))
+            {
+                var slotType = string.IsNullOrEmpty(this.Slot) ?
+                            DeploymentSlot.Production :
+                            (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), this.Slot, true);
+
+
+                deploymentName = this.ComputeClient.Deployments.GetBySlot(
+                            this.ServiceName,
+                            slotType).Name;
+            }
 
             ExecuteClientActionNewSM(
                 null,
@@ -70,7 +128,11 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS
                     {
                         Name           = this.ReservedIPName,
                         Label          = this.Label,
-                        Location       = this.Location
+                        Location       = this.Location,
+                        ServiceName    = this.ServiceName,
+                        DeploymentName = deploymentName,
+                        VirtualIPName = this.VirtualIPName,
+                        IPTags = this.IPTagList,
                     };
 
                     return this.NetworkClient.ReservedIPs.Create(parameters);

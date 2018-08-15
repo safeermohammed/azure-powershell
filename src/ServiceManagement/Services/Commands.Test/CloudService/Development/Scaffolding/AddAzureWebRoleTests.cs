@@ -14,6 +14,7 @@
 
 using System.IO;
 using System.Management.Automation;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.CloudService.Development.Scaffolding;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
@@ -22,11 +23,13 @@ using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Properties;
 using Microsoft.WindowsAzure.Commands.Common;
+using System;
+using Microsoft.Azure.Commands.Common.Authentication;
 
 namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Scaffolding
 {
     
-    public class AddAzureWebRoleTests : TestBase
+    public class AddAzureWebRoleTests : SMTestBase
     {
         private MockCommandRuntime mockCommandRuntime;
 
@@ -39,6 +42,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Scaffold
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void AddAzureWebRoleProcess()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))
@@ -62,6 +66,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Scaffold
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void AddAzureWebRoleWillRecreateDeploymentSettings()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))
@@ -89,10 +94,11 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Scaffold
         }
 
         [Fact(Skip = "TODO: Fix SetScaffolding in CloudServiceProject.")]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void AddAzureWebRoleWithTemplateFolder()
         {
             string scaffoldingPath = "MyWebTemplateFolder";
-            Directory.CreateDirectory(Path.Combine(System.Environment.CurrentDirectory, scaffoldingPath));
+            Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, scaffoldingPath));
 
             using (FileSystemHelper files = new FileSystemHelper(this))
             {
@@ -115,13 +121,14 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Scaffold
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void AddAzureWebRoleWithMissingScaffoldXmlFail()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))
             {
                 string roleName = "WebRole1";
                 string serviceName = "AzureService";
-                string scaffoldingPath = "TemplateMissingScaffoldXml";
+                string scaffoldingPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TemplateMissingScaffoldXml");
                 if (Directory.Exists(scaffoldingPath))
                 {
                     Directory.Delete(scaffoldingPath, true);

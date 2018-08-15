@@ -12,40 +12,36 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Management.StreamAnalytics.Models;
 using System;
 using System.Collections.Generic;
-using Microsoft.Azure.Management.StreamAnalytics.Models;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics.Models
 {
     public class PSJob
     {
-        private Job job;
+        private StreamingJob streamingJob;
 
         public PSJob()
         {
-            job = new Job();
+            streamingJob = new StreamingJob();
         }
 
-        public PSJob(Job job)
+        public PSJob(StreamingJob job)
         {
             if (job == null)
             {
                 throw new ArgumentNullException("job");
             }
 
-            this.job = job;
+            this.streamingJob = job;
         }
 
         public string JobName
         {
             get
             {
-                return job.Name;
-            }
-            set
-            {
-                job.Name = value;
+                return streamingJob.Name;
             }
         }
 
@@ -55,11 +51,7 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
         {
             get
             {
-                return job.Properties.JobId;
-            }
-            internal set
-            {
-                job.Properties.JobId = value;
+                return streamingJob.JobId;
             }
         }
 
@@ -67,11 +59,11 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
         {
             get
             {
-                return job.Location;
+                return streamingJob.Location;
             }
             internal set
             {
-                job.Location = value;
+                streamingJob.Location = value;
             }
         }
 
@@ -79,11 +71,7 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
         {
             get
             {
-                return job.Properties.CreatedDate;
-            }
-            internal set
-            {
-                job.Properties.CreatedDate = value;
+                return streamingJob.CreatedDate;
             }
         }
 
@@ -91,23 +79,15 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
         {
             get
             {
-                return job.Properties.ProvisioningState;
-            }
-            internal set
-            {
-                job.Properties.ProvisioningState = value;
+                return streamingJob.ProvisioningState;
             }
         }
-        
+
         public string JobState
         {
             get
             {
-                return job.Properties.JobState;
-            }
-            internal set
-            {
-                job.Properties.JobState = value;
+                return streamingJob.JobState;
             }
         }
 
@@ -115,29 +95,29 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
         {
             get
             {
-                return job.Tags;
+                return streamingJob.Tags;
             }
             internal set
             {
-                job.Tags = value;
+                streamingJob.Tags = value;
             }
         }
 
-        public JobProperties Properties
+        public StreamingJob Properties
         {
             get
             {
-                return job.Properties;
+                return streamingJob;
             }
             internal set
             {
-                job.Properties = value;
+                streamingJob = value;
             }
         }
 
         public string PropertiesInJson
         {
-            get { return job.Properties.ToFormattedString(); }
+            get { return streamingJob.ToFormattedString(); }
         }
     }
 }

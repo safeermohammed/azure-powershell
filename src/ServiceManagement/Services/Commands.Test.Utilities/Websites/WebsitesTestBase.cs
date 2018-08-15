@@ -17,18 +17,26 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Common;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
+using System;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Websites
 {
     [TestClass]
-    public class WebsitesTestBase : TestBase
+    public class WebsitesTestBase : SMTestBase
     {
         protected string subscriptionId = "035B9E16-BA8E-40A3-BEEA-4998F452C203";
 
         [TestInitialize]
         public virtual void SetupTest()
         {
+            AzureSessionInitializer.InitializeAzureSession();
+            ServiceManagementProfileProvider.InitializeServiceManagementProfile();
             new FileSystemHelper(this).CreateAzureSdkDirectoryAndImportPublishSettings();
+
+            currentProfile = new AzureSMProfile(Path.Combine(AzureSession.Instance.ProfileDirectory, AzureSession.Instance.ProfileFile));
         }
 
         [TestCleanup]
@@ -49,6 +57,21 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Websites
             {
                 File.Delete(sitesFile);
             }
+        }
+
+        protected void SetupProfile(string storageName)
+        {
+
+            currentProfile = new AzureSMProfile(Path.Combine(AzureSession.Instance.ProfileDirectory, AzureSession.Instance.ProfileFile));
+            AzureSMCmdlet.CurrentProfile = currentProfile;
+            var subscription = new AzureSubscription { Id = subscriptionId };
+            subscription.SetDefault();
+            currentProfile.SubscriptionTable[new Guid(subscriptionId)] = subscription;
+            if (storageName != null)
+            {
+                currentProfile.Context.Subscription.SetStorageAccount(storageName);
+            }
+            currentProfile.Save();
         }
     }
 }

@@ -14,20 +14,25 @@
 
 using System;
 using System.IO;
+using System.Management.Automation;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Threading;
 using System.Xml;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.WindowsAzure.Management.SiteRecovery.Models;
 using Hyak.Common;
+using Microsoft.Azure.Commands.RecoveryServices.SiteRecovery;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
+using Microsoft.WindowsAzure.Management.RecoveryServices;
+using Microsoft.WindowsAzure.Management.RecoveryServices.Models;
+using Microsoft.WindowsAzure.Management.SiteRecovery;
+using Microsoft.WindowsAzure.Management.SiteRecovery.Models;
 
 namespace Microsoft.Azure.Commands.RecoveryServices
 {
     /// <summary>
     /// The base class for all Windows Azure Recovery Services commands
     /// </summary>
-    public abstract class RecoveryServicesCmdletBase : AzurePSCmdlet
+    public abstract class RecoveryServicesCmdletBase : AzureSMCmdlet
     {
         /// <summary>
         /// Recovery Services client.
@@ -48,7 +53,7 @@ namespace Microsoft.Azure.Commands.RecoveryServices
             {
                 if (this.recoveryServicesClient == null)
                 {
-                    this.recoveryServicesClient = new PSRecoveryServicesClient(CurrentContext.Subscription);
+                    this.recoveryServicesClient = new PSRecoveryServicesClient(Profile, Profile.Context.Subscription);
                 }
 
                 return this.recoveryServicesClient;
@@ -75,13 +80,13 @@ namespace Microsoft.Azure.Commands.RecoveryServices
                 {
                     using (Stream stream = new MemoryStream())
                     {
-                        if (cloudException.Error.Message != null)
+                        if (cloudException.Message != null)
                         {
-                            byte[] data = System.Text.Encoding.UTF8.GetBytes(cloudException.Error.Message);
+                            byte[] data = System.Text.Encoding.UTF8.GetBytes(cloudException.Message);
                             stream.Write(data, 0, data.Length);
                             stream.Position = 0;
 
-                            var deserializer = new DataContractSerializer(typeof(Error));
+                            var deserializer = new DataContractSerializer(typeof(ErrorInException));
                             error = (Error)deserializer.ReadObject(stream);
 
                             throw new InvalidOperationException(
@@ -107,7 +112,7 @@ namespace Microsoft.Azure.Commands.RecoveryServices
                     throw new XmlException(
                         string.Format(
                         Properties.Resources.InvalidCloudExceptionErrorMessage,
-                        cloudException.Error.Message),
+                        cloudException.Message),
                         cloudException);
                 }
                 catch (SerializationException)
@@ -115,7 +120,7 @@ namespace Microsoft.Azure.Commands.RecoveryServices
                     throw new SerializationException(
                         string.Format(
                         Properties.Resources.InvalidCloudExceptionErrorMessage,
-                        clientRequestIdMsg + cloudException.Error.Message),
+                        clientRequestIdMsg + cloudException.Message),
                         cloudException);
                 }
             }
@@ -127,6 +132,108 @@ namespace Microsoft.Azure.Commands.RecoveryServices
                     clientRequestIdMsg + ex.Message),
                     ex);
             }
+        }
+
+        /// <summary>
+        /// Vault upgrade exception handler.
+        /// </summary>
+        /// <param name="ex">Exception to handle.</param>
+        /// <returns>Object to be returned after categorizing all the errors properly
+        /// received as part of vault upgrade operations.</returns>
+        public ExceptionDetails HandleVaultUpgradeException(Exception ex)
+        {
+            ExceptionDetails exceptionDetails = null;
+            string clientRequestIdMsg = string.Empty;
+            if (this.recoveryServicesClient != null)
+            {
+                clientRequestIdMsg = string.Format(
+                    Properties.Resources.ClientRequestIdMessage,
+                    this.recoveryServicesClient.ClientRequestId,
+                    Environment.NewLine);
+            }
+
+            CloudException cloudException = ex as CloudException;
+            if (cloudException != null)
+            {
+                DataContractSerializer deserializer = null;
+
+                try
+                {
+                    using (Stream stream = new MemoryStream())
+                    {
+                        if (cloudException.Error != null && cloudException.Error.OriginalMessage != null)
+                        {
+                            string message = cloudException.Error.OriginalMessage;
+                            byte[] data = System.Text.Encoding.UTF8.GetBytes(message);
+                            stream.Write(data, 0, data.Length);
+                            stream.Position = 0;
+
+                            if (message.Contains("http://schemas.microsoft.com/wars"))
+                            {
+                                deserializer = new DataContractSerializer(typeof(StartVaultUpgradeError));
+                                StartVaultUpgradeError error = (StartVaultUpgradeError)deserializer.ReadObject(stream);
+                                string msg = string.Format(
+                                    Properties.Resources.StartVaultUpgradeExceptionDetails,
+                                    clientRequestIdMsg,
+                                    error.Message.Value);
+                                this.WriteVaultUpgradeError(new InvalidOperationException(msg));
+                            }
+                            else
+                            {
+                                deserializer = new DataContractSerializer(typeof(VaultUpgradeError));
+                                VaultUpgradeError error = (VaultUpgradeError)deserializer.ReadObject(stream);
+                                if (error.Details != null)
+                                {
+                                    return this.recoveryServicesClient.ParseErrorDetails(error.Details, clientRequestIdMsg);
+                                }
+                                else
+                                {
+                                    StringBuilder exceptionMessage = new StringBuilder();
+                                    exceptionMessage.AppendLine(Properties.Resources.VaultUpgradeExceptionDetails).AppendLine(" ");
+                                    exceptionMessage.Append(this.recoveryServicesClient.ParseError(error));
+                                    exceptionMessage.AppendLine(clientRequestIdMsg);
+                                    this.WriteVaultUpgradeError(
+                                        new InvalidOperationException(exceptionMessage.ToString()));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception(
+                                string.Format(
+                                Properties.Resources.InvalidCloudExceptionErrorMessage,
+                                clientRequestIdMsg + ex.Message),
+                                ex);
+                        }
+                    }
+                }
+                catch (XmlException)
+                {
+                    throw new XmlException(
+                        string.Format(
+                        Properties.Resources.InvalidCloudExceptionErrorMessage,
+                        cloudException.Message),
+                        cloudException);
+                }
+                catch (SerializationException)
+                {
+                    throw new SerializationException(
+                        string.Format(
+                        Properties.Resources.InvalidCloudExceptionErrorMessage,
+                        clientRequestIdMsg + cloudException.Message),
+                        cloudException);
+                }
+            }
+            else if (ex.Message != null)
+            {
+                throw new Exception(
+                    string.Format(
+                    Properties.Resources.InvalidCloudExceptionErrorMessage,
+                    clientRequestIdMsg + ex.Message),
+                    ex);
+            }
+
+            return exceptionDetails;
         }
 
         /// <summary>
@@ -154,6 +261,20 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         }
 
         /// <summary>
+        /// Error to be written for vault upgrade operations.
+        /// </summary>
+        /// <param name="ex">The Exception.</param>
+        public void WriteVaultUpgradeError(Exception ex)
+        {
+            this.WriteError(
+                new ErrorRecord(
+                    ex,
+                    string.Empty,
+                    ErrorCategory.InvalidOperation,
+                    null));
+        }
+        
+        /// <summary>
         /// Handles interrupts.
         /// </summary>
         protected override void StopProcessing()
@@ -161,6 +282,51 @@ namespace Microsoft.Azure.Commands.RecoveryServices
             // Ctrl + C and etc
             base.StopProcessing();
             this.StopProcessingFlag = true;
+        }
+
+        /// <summary>
+        /// Validates if the usage by ID is allowed or not.
+        /// </summary>
+        /// <param name="replicationProvider">Replication provider.</param>
+        /// <param name="paramName">Parameter name.</param>
+        protected void ValidateUsageById(string replicationProvider, string paramName)
+        {
+            if (replicationProvider != Constants.HyperVReplica)
+            {
+                throw new Exception(
+                    string.Format(
+                    "Call using ID based parameter {0} is not supported for this provider. Please use its corresponding full object parameter instead",
+                    paramName));
+            }
+            else
+            {
+                this.WriteWarningWithTimestamp(
+                    string.Format(
+                    Properties.Resources.IDBasedParamUsageNotSupportedFromNextRelease,
+                    paramName));
+            }
+        }
+
+        /// <summary>
+        /// Gets the current vault location.
+        /// </summary>
+        /// <returns>The current vault location.</returns>
+        protected string GetCurrentValutLocation()
+        {
+            string location = string.Empty;
+
+            CloudServiceListResponse response =  
+                this.RecoveryServicesClient.GetRecoveryServicesClient.CloudServices.List();
+            foreach (var cloudService in response.CloudServices)
+            {
+                if (cloudService.Name == PSRecoveryServicesClient.asrVaultCreds.CloudServiceName)
+                {
+                    location = cloudService.GeoRegion;
+                    break;
+                }
+            }
+
+            return location;
         }
     }
 }

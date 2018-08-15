@@ -12,160 +12,450 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Common.Extensions;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.ApplicationInsights;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
+using Microsoft.Azure.ServiceManagemenet.Common.Models;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.WindowsAzure.Commands.Common.Properties;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Management.Automation;
+using System.Text;
+using System.Collections.Generic;
 
 namespace Microsoft.WindowsAzure.Commands.Utilities.Common
 {
-    public abstract class AzurePSCmdlet : PSCmdlet
+    /// <summary>
+    /// Represents base class for all Azure cmdlets.
+    /// </summary>
+    public abstract class AzurePSCmdlet : PSCmdlet, IDisposable
     {
-        private readonly RecordingTracingInterceptor httpTracingInterceptor = new RecordingTracingInterceptor();
+        private const string PSVERSION = "PSVersion";
+        private const string DEFAULT_PSVERSION = "3.0.0.0";
 
-        static AzurePSCmdlet()
+        public ConcurrentQueue<string> DebugMessages { get; private set; }
+
+        private RecordingTracingInterceptor _httpTracingInterceptor;
+        private object lockObject = new object();
+        private AzurePSDataCollectionProfile _cachedProfile = null;
+
+        protected AzurePSDataCollectionProfile _dataCollectionProfile
         {
-            if (!TestMockSupport.RunningMocked)
+            get
             {
-                AzureSession.ClientFactory.AddAction(new RPRegistrationAction());
+                lock (lockObject)
+                {
+                    DataCollectionController controller;
+                    if (_cachedProfile == null && AzureSession.Instance.TryGetComponent(DataCollectionController.RegistryKey, out controller))
+                    {
+                        _cachedProfile = controller.GetProfile(() => WriteWarning(DataCollectionWarning));
+                    }
+                    else if (_cachedProfile == null)
+                    {
+                        _cachedProfile = new AzurePSDataCollectionProfile(true);
+                        WriteWarning(DataCollectionWarning);
+                    }
+
+                    return _cachedProfile;
+                }
             }
 
-            AzureSession.ClientFactory.UserAgents.Add(AzurePowerShell.UserAgentValue);
+            set
+            {
+                lock (lockObject)
+                {
+                    _cachedProfile = value;
+                }
+            }
         }
 
+        protected static string _errorRecordFolderPath = null;
+        protected static string _sessionId = Guid.NewGuid().ToString();
+        protected const string _fileTimeStampSuffixFormat = "yyyy-MM-dd-THH-mm-ss-fff";
+        protected string _clientRequestId = Guid.NewGuid().ToString();
+        protected MetricHelper _metricHelper;
+        protected AzurePSQoSEvent _qosEvent;
+        protected DebugStreamTraceListener _adalListener;
+
+        protected virtual bool IsUsageMetricEnabled
+        {
+            get { return true; }
+        }
+
+        protected virtual bool IsErrorMetricEnabled
+        {
+            get { return true; }
+        }
+
+        /// <summary>
+        /// Indicates installed PowerShell version
+        /// </summary>
+        private string _psVersion;
+
+        /// <summary>
+        /// Get PsVersion returned from PowerShell.Runspace instance
+        /// </summary>
+        protected string PSVersion
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_psVersion))
+                {
+                    if (this.Host != null)
+                    {
+                        _psVersion = this.Host.Version.ToString();
+                    }
+                    else
+                    {
+                        //We are doing this for perf. reasons. This code will execute during tests and so reducing the perf. overhead while running tests.
+                        _psVersion = DEFAULT_PSVERSION;
+                    }
+                }
+
+                return _psVersion;
+            }
+        }
+
+        /// <summary>
+        /// Gets the PowerShell module name used for user agent header.
+        /// By default uses "Azure PowerShell"
+        /// </summary>
+        protected virtual string ModuleName { get { return "AzurePowershell"; } }
+
+        /// <summary>
+        /// Gets PowerShell module version used for user agent header.
+        /// </summary>
+        protected string ModuleVersion { get { return AzurePowerShell.AssemblyVersion; } }
+
+        /// <summary>
+        /// The context for management cmdlet requests - includes account, tenant, subscription, 
+        /// and credential information for targeting and authorizing management calls.
+        /// </summary>
+        protected abstract IAzureContext DefaultContext { get; }
+
+        protected abstract string DataCollectionWarning { get; }
+
+        private SessionState _sessionState;
+
+        public new SessionState SessionState
+        {
+            get
+            {
+                return _sessionState;
+            }
+            set
+            {
+                _sessionState = value;
+            }
+        }
+
+        private RuntimeDefinedParameterDictionary _asJobDynamicParameters;
+
+        public RuntimeDefinedParameterDictionary AsJobDynamicParameters
+        {
+            get
+            {
+                if (_asJobDynamicParameters == null)
+                {
+                    _asJobDynamicParameters = new RuntimeDefinedParameterDictionary();
+                }
+                return _asJobDynamicParameters;
+            }
+            set
+            {
+                _asJobDynamicParameters = value;
+            }
+        }
+
+        /// <summary>
+        /// Initializes AzurePSCmdlet properties.
+        /// </summary>
         public AzurePSCmdlet()
         {
-            DefaultProfileClient = new ProfileClient();
+            DebugMessages = new ConcurrentQueue<string>();
+        }
 
-            if (AzureSession.CurrentContext.Subscription == null &&
-               DefaultProfileClient.Profile.DefaultSubscription != null)
+        // Register Dynamic Parameters for use in long running jobs
+        public void RegisterDynamicParameters(RuntimeDefinedParameterDictionary parameters)
+        {
+            this.AsJobDynamicParameters = parameters;
+        }
+
+
+        /// <summary>
+        /// Check whether the data collection is opted in from user
+        /// </summary>
+        /// <returns>true if allowed</returns>
+        public bool IsDataCollectionAllowed()
+        {
+            if (_dataCollectionProfile != null &&
+                _dataCollectionProfile.EnableAzureDataCollection.HasValue &&
+                _dataCollectionProfile.EnableAzureDataCollection.Value)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        protected bool CheckIfInteractive()
+        {
+            bool interactive = true;
+            if (this.Host == null ||
+                this.Host.UI == null ||
+                this.Host.UI.RawUI == null ||
+                Environment.GetCommandLineArgs().Any(s =>
+                    s.Equals("-NonInteractive", StringComparison.OrdinalIgnoreCase)))
+            {
+                interactive = false;
+            }
+            else
             {
                 try
                 {
-                    AzureSession.SetCurrentContext(
-                        DefaultProfileClient.Profile.DefaultSubscription,
-                        DefaultProfileClient.GetEnvironmentOrDefault(
-                            DefaultProfileClient.Profile.DefaultSubscription.Environment),
-                        DefaultProfileClient.GetAccountOrNull(DefaultProfileClient.Profile.DefaultSubscription.Account));
+                    var test = this.Host.UI.RawUI.KeyAvailable;
                 }
                 catch
                 {
-                    // Ignore anything at this point
+                    interactive = false;
                 }
             }
 
+            if (!interactive && _dataCollectionProfile != null && !_dataCollectionProfile.EnableAzureDataCollection.HasValue)
+            {
+                _dataCollectionProfile.EnableAzureDataCollection = false;
+            }
+            return interactive;
         }
 
-        public AzureContext CurrentContext
+
+        protected virtual void LogCmdletStartInvocationInfo()
         {
-            get { return AzureSession.CurrentContext; }
+            if (string.IsNullOrEmpty(ParameterSetName))
+            {
+                WriteDebugWithTimestamp(string.Format("{0} begin processing " +
+                   "without ParameterSet.", this.GetType().Name));
+            }
+            else
+            {
+                WriteDebugWithTimestamp(string.Format("{0} begin processing " +
+                   "with ParameterSet '{1}'.", this.GetType().Name, ParameterSetName));
+            }
         }
 
-        public bool HasCurrentSubscription
+        protected virtual void LogCmdletEndInvocationInfo()
         {
-            get { return AzureSession.CurrentContext.Subscription != null; }
+            string message = string.Format("{0} end processing.", this.GetType().Name);
+            WriteDebugWithTimestamp(message);
         }
 
-        public ProfileClient DefaultProfileClient { get; private set; }
+        protected virtual void SetupDebuggingTraces()
+        {
+            _httpTracingInterceptor = _httpTracingInterceptor ?? new
+                RecordingTracingInterceptor(DebugMessages);
+            _adalListener = _adalListener ?? new DebugStreamTraceListener(DebugMessages);
+            RecordingTracingInterceptor.AddToContext(_httpTracingInterceptor);
+            DebugStreamTraceListener.AddAdalTracing(_adalListener);
+        }
+
+        protected virtual void TearDownDebuggingTraces()
+        {
+            RecordingTracingInterceptor.RemoveFromContext(_httpTracingInterceptor);
+            DebugStreamTraceListener.RemoveAdalTracing(_adalListener);
+            FlushDebugMessages();
+        }
+
+
+        protected virtual void SetupHttpClientPipeline()
+        {
+            AzureSession.Instance.ClientFactory.AddUserAgent(ModuleName, string.Format("v{0}", ModuleVersion));
+            AzureSession.Instance.ClientFactory.AddUserAgent(PSVERSION, string.Format("v{0}", PSVersion));
+
+            AzureSession.Instance.ClientFactory.AddHandler(
+                new CmdletInfoHandler(this.CommandRuntime.ToString(),
+                    this.ParameterSetName, this._clientRequestId));
+
+        }
+
+        protected virtual void TearDownHttpClientPipeline()
+        {
+            AzureSession.Instance.ClientFactory.RemoveUserAgent(ModuleName);
+            AzureSession.Instance.ClientFactory.RemoveHandler(typeof(CmdletInfoHandler));
+        }
+        /// <summary>
+        /// Cmdlet begin process. Write to logs, setup Http Tracing and initialize profile
+        /// </summary>
+        protected override void BeginProcessing()
+        {
+            SessionState = base.SessionState;
+            var profile = _dataCollectionProfile;
+            //TODO: Inject from CI server
+            lock (lockObject)
+            {
+                if (_metricHelper == null)
+                {
+                    _metricHelper = new MetricHelper(profile);
+                    _metricHelper.AddTelemetryClient(new TelemetryClient
+                    {
+                        InstrumentationKey = "7df6ff70-8353-4672-80d6-568517fed090"
+                    });
+                }
+            }
+
+            InitializeQosEvent();
+            LogCmdletStartInvocationInfo();
+            SetupDebuggingTraces();
+            SetupHttpClientPipeline();
+            base.BeginProcessing();
+
+            //Now see if the cmdlet has any Breaking change attributes on it and process them if it does
+            //This will print any breaking change attribute messages that are applied to the cmdlet
+            BreakingChangeAttributeHelper.ProcessCustomAttributesAtRuntime(this.GetType(), this.MyInvocation, WriteWarning);
+        }
+
+        /// <summary>
+        /// Perform end of pipeline processing.
+        /// </summary>
+        protected override void EndProcessing()
+        {
+            LogQosEvent();
+            LogCmdletEndInvocationInfo();
+            TearDownDebuggingTraces();
+            TearDownHttpClientPipeline();
+            base.EndProcessing();
+        }
 
         protected string CurrentPath()
         {
-            // SessionState is only available within Powershell so default to
-            // the CurrentDirectory when being run from tests.
+            // SessionState is only available within PowerShell so default to
+            // the TestMockSupport.TestExecutionFolder when being run from tests.
             return (SessionState != null) ?
                 SessionState.Path.CurrentLocation.Path :
-                Environment.CurrentDirectory;
+                TestMockSupport.TestExecutionFolder;
         }
 
         protected bool IsVerbose()
         {
-            bool verbose = MyInvocation.BoundParameters.ContainsKey("Verbose") && ((SwitchParameter)MyInvocation.BoundParameters["Verbose"]).ToBool();
+            bool verbose = MyInvocation.BoundParameters.ContainsKey("Verbose")
+                && ((SwitchParameter)MyInvocation.BoundParameters["Verbose"]).ToBool();
             return verbose;
         }
 
-        public new void WriteError(ErrorRecord errorRecord)
+        protected new void WriteError(ErrorRecord errorRecord)
         {
-            FlushMessagesFromTracingInterceptor();
+            FlushDebugMessages(IsDataCollectionAllowed());
+            if (_qosEvent != null && errorRecord != null)
+            {
+                _qosEvent.Exception = errorRecord.Exception;
+                _qosEvent.IsSuccess = false;
+            }
+
             base.WriteError(errorRecord);
         }
 
-        public new void WriteObject(object sendToPipeline)
+        protected new void ThrowTerminatingError(ErrorRecord errorRecord)
         {
-            FlushMessagesFromTracingInterceptor();
+            FlushDebugMessages(IsDataCollectionAllowed());
+            base.ThrowTerminatingError(errorRecord);
+        }
+
+        protected new void WriteObject(object sendToPipeline)
+        {
+            FlushDebugMessages();
             base.WriteObject(sendToPipeline);
         }
 
-        public new void WriteObject(object sendToPipeline, bool enumerateCollection)
+        protected new void WriteObject(object sendToPipeline, bool enumerateCollection)
         {
-            FlushMessagesFromTracingInterceptor();
+            FlushDebugMessages();
             base.WriteObject(sendToPipeline, enumerateCollection);
         }
 
-        public new void WriteVerbose(string text)
+        protected new void WriteVerbose(string text)
         {
-            FlushMessagesFromTracingInterceptor();
+            FlushDebugMessages();
             base.WriteVerbose(text);
         }
 
-        public new void WriteWarning(string text)
+        protected new void WriteWarning(string text)
         {
-            FlushMessagesFromTracingInterceptor();
+            FlushDebugMessages();
             base.WriteWarning(text);
         }
 
-        public new void WriteCommandDetail(string text)
+        protected new void WriteCommandDetail(string text)
         {
-            FlushMessagesFromTracingInterceptor();
+            FlushDebugMessages();
             base.WriteCommandDetail(text);
         }
 
-        public new void WriteProgress(ProgressRecord progressRecord)
+        protected new void WriteProgress(ProgressRecord progressRecord)
         {
-            FlushMessagesFromTracingInterceptor();
+            FlushDebugMessages();
             base.WriteProgress(progressRecord);
         }
 
-        public new void WriteDebug(string text)
+        protected new void WriteDebug(string text)
         {
-            FlushMessagesFromTracingInterceptor();
+            FlushDebugMessages();
             base.WriteDebug(text);
         }
 
         protected void WriteVerboseWithTimestamp(string message, params object[] args)
         {
-            WriteVerbose(string.Format("{0:T} - {1}", DateTime.Now, string.Format(message, args)));
+            if (CommandRuntime != null)
+            {
+                WriteVerbose(string.Format("{0:T} - {1}", DateTime.Now, string.Format(message, args)));
+            }
         }
 
         protected void WriteVerboseWithTimestamp(string message)
         {
-            WriteVerbose(string.Format("{0:T} - {1}", DateTime.Now, message));
+            if (CommandRuntime != null)
+            {
+                WriteVerbose(string.Format("{0:T} - {1}", DateTime.Now, message));
+            }
         }
 
         protected void WriteWarningWithTimestamp(string message)
         {
-            WriteWarning(string.Format("{0:T} - {1}", DateTime.Now, message));
+            if (CommandRuntime != null)
+            {
+                WriteWarning(string.Format("{0:T} - {1}", DateTime.Now, message));
+            }
         }
 
         protected void WriteDebugWithTimestamp(string message, params object[] args)
         {
-            WriteDebug(string.Format("{0:T} - {1}", DateTime.Now, string.Format(message, args)));
+            if (CommandRuntime != null)
+            {
+                WriteDebug(string.Format("{0:T} - {1}", DateTime.Now, string.Format(message, args)));
+            }
         }
 
         protected void WriteDebugWithTimestamp(string message)
         {
-            WriteDebug(string.Format("{0:T} - {1}", DateTime.Now, message));
+            if (CommandRuntime != null)
+            {
+                WriteDebug(string.Format("{0:T} - {1}", DateTime.Now, message));
+            }
         }
 
         protected void WriteErrorWithTimestamp(string message)
         {
-            WriteError(
+            if (CommandRuntime != null)
+            {
+                WriteError(
                 new ErrorRecord(new Exception(string.Format("{0:T} - {1}", DateTime.Now, message)),
                 string.Empty,
                 ErrorCategory.NotSpecified,
                 null));
+            }
         }
 
         /// <summary>
@@ -189,6 +479,198 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Common
             WriteObject(customObject);
         }
 
+        private void FlushDebugMessages(bool record = false)
+        {
+            if (record)
+            {
+                RecordDebugMessages();
+            }
+
+            string message;
+            while (DebugMessages.TryDequeue(out message))
+            {
+                base.WriteDebug(message);
+            }
+        }
+
+        protected abstract void InitializeQosEvent();
+
+        private void RecordDebugMessages()
+        {
+            try
+            {
+                // Create 'ErrorRecords' folder under profile directory, if not exists
+                if (string.IsNullOrEmpty(_errorRecordFolderPath)
+                    || !Directory.Exists(_errorRecordFolderPath))
+                {
+                    _errorRecordFolderPath = Path.Combine(AzurePowerShell.ProfileDirectory,
+                        "ErrorRecords");
+                    Directory.CreateDirectory(_errorRecordFolderPath);
+                }
+
+                CommandInfo cmd = this.MyInvocation.MyCommand;
+
+                string filePrefix = cmd.Name;
+                string timeSampSuffix = DateTime.Now.ToString(_fileTimeStampSuffixFormat);
+                string fileName = filePrefix + "_" + timeSampSuffix + ".log";
+                string filePath = Path.Combine(_errorRecordFolderPath, fileName);
+
+                StringBuilder sb = new StringBuilder();
+                sb.Append("Module : ").AppendLine(cmd.ModuleName);
+                sb.Append("Cmdlet : ").AppendLine(cmd.Name);
+
+                sb.AppendLine("Parameters");
+                foreach (var item in this.MyInvocation.BoundParameters)
+                {
+                    sb.Append(" -").Append(item.Key).Append(" : ");
+                    sb.AppendLine(item.Value == null ? "null" : item.Value.ToString());
+                }
+
+                sb.AppendLine();
+
+                foreach (var content in DebugMessages)
+                {
+                    sb.AppendLine(content);
+                }
+
+                AzureSession.Instance.DataStore.WriteFile(filePath, sb.ToString());
+            }
+            catch
+            {
+                // do not throw an error if recording debug messages fails
+            }
+        }
+
+        /// <summary>
+        /// Invoke this method when the cmdlet is completed or terminated.
+        /// </summary>
+        protected void LogQosEvent()
+        {
+            if (_qosEvent == null)
+            {
+                return;
+            }
+
+            _qosEvent.FinishQosEvent();
+
+            if (!IsUsageMetricEnabled && (!IsErrorMetricEnabled || _qosEvent.IsSuccess))
+            {
+                return;
+            }
+
+            if (!IsDataCollectionAllowed())
+            {
+                return;
+            }
+
+            WriteDebug(_qosEvent.ToString());
+
+            try
+            {
+                _metricHelper.SetPSHost(this.Host);
+                _metricHelper.LogQoSEvent(_qosEvent, IsUsageMetricEnabled, IsErrorMetricEnabled);
+                _metricHelper.FlushMetric();
+                WriteDebug("Finish sending metric.");
+            }
+            catch (Exception e)
+            {
+                //Swallow error from Application Insights event collection.
+                WriteWarning(e.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Guards execution of the given action using ShouldProcess and ShouldContinue.  This is a legacy 
+        /// version forcompatibility with older RDFE cmdlets.
+        /// </summary>
+        /// <param name="force">Do not ask for confirmation</param>
+        /// <param name="continueMessage">Message to describe the action</param>
+        /// <param name="processMessage">Message to prompt after the active is performed.</param>
+        /// <param name="target">The target name.</param>
+        /// <param name="action">The action code</param>
+        protected virtual void ConfirmAction(bool force, string continueMessage, string processMessage, string target,
+            Action action)
+        {
+            if (_qosEvent != null)
+            {
+                _qosEvent.PauseQoSTimer();
+            }
+
+            if (force || ShouldContinue(continueMessage, ""))
+            {
+                if (ShouldProcess(target, processMessage))
+                {
+                    if (_qosEvent != null)
+                    {
+                        _qosEvent.ResumeQosTimer();
+                    }
+                    action();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Guards execution of the given action using ShouldProcess and ShouldContinue.  The optional 
+        /// useSHouldContinue predicate determines whether SHouldContinue should be called for this 
+        /// particular action (e.g. a resource is being overwritten). By default, both 
+        /// ShouldProcess and ShouldContinue will be executed.  Cmdlets that use this method overload 
+        /// must have a force parameter.
+        /// </summary>
+        /// <param name="force">Do not ask for confirmation</param>
+        /// <param name="continueMessage">Message to describe the action</param>
+        /// <param name="processMessage">Message to prompt after the active is performed.</param>
+        /// <param name="target">The target name.</param>
+        /// <param name="action">The action code</param>
+        /// <param name="useShouldContinue">A predicate indicating whether ShouldContinue should be invoked for thsi action</param>
+        protected virtual void ConfirmAction(bool force, string continueMessage, string processMessage, string target, Action action, Func<bool> useShouldContinue)
+        {
+            if (null == useShouldContinue)
+            {
+                useShouldContinue = () => true;
+            }
+            if (_qosEvent != null)
+            {
+                _qosEvent.PauseQoSTimer();
+            }
+
+            if (ShouldProcess(target, processMessage))
+            {
+                if (force || !useShouldContinue() || ShouldContinue(continueMessage, ""))
+                {
+                    if (_qosEvent != null)
+                    {
+                        _qosEvent.ResumeQosTimer();
+                    }
+                    action();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Prompt for confirmation depending on the ConfirmLevel. By default No confirmation prompt 
+        /// occurs unless ConfirmLevel >= $ConfirmPreference.  Guarding the actions of a cmdlet with this 
+        /// method will enable the cmdlet to support -WhatIf and -Confirm parameters.
+        /// </summary>
+        /// <param name="processMessage">The change being made to the resource</param>
+        /// <param name="target">The resource that is being changed</param>
+        /// <param name="action">The action to perform if confirmed</param>
+        protected virtual void ConfirmAction(string processMessage, string target, Action action)
+        {
+            if (_qosEvent != null)
+            {
+                _qosEvent.PauseQoSTimer();
+            }
+
+            if (ShouldProcess(target, processMessage))
+            {
+                if (_qosEvent != null)
+                {
+                    _qosEvent.ResumeQosTimer();
+                }
+                action();
+            }
+        }
+
         public virtual void ExecuteCmdlet()
         {
             // Do nothing.
@@ -199,78 +681,118 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.Common
             try
             {
                 base.ProcessRecord();
-                ExecuteCmdlet();
+                this.ExecuteSynchronouslyOrAsJob();
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!IsTerminatingError(ex))
             {
                 WriteExceptionError(ex);
             }
         }
 
-        /// <summary>
-        /// Cmdlet begin process
-        /// </summary>
-        protected override void BeginProcessing()
-        {
-            if (string.IsNullOrEmpty(ParameterSetName))
-            {
-                WriteDebugWithTimestamp(string.Format(Resources.BeginProcessingWithoutParameterSetLog, this.GetType().Name));
-            }
-            else
-            {
-                WriteDebugWithTimestamp(string.Format(Resources.BeginProcessingWithParameterSetLog, this.GetType().Name, ParameterSetName));
-            }
-
-            if (CurrentContext != null && CurrentContext.Account != null && CurrentContext.Account.Id != null)
-            {
-                WriteDebugWithTimestamp(string.Format("using account id '{0}'...", CurrentContext.Account.Id));
-            }
-
-            RecordingTracingInterceptor.AddToContext(httpTracingInterceptor);
-
-            base.BeginProcessing();
-        }
-
-        private void FlushMessagesFromTracingInterceptor()
-        {
-            string message;
-            while (httpTracingInterceptor.MessageQueue.TryDequeue(out message))
-            {
-                base.WriteDebug(message);
-            }
-        }
+        private string _implementationBackgroundJobDescription;
 
         /// <summary>
-        /// End processing
+        /// Job Name paroperty iof this cmdlet is run as a job
         /// </summary>
-        protected override void EndProcessing()
+        public virtual string ImplementationBackgroundJobDescription
         {
-            string message = string.Format(Resources.EndProcessingLog, this.GetType().Name);
-            WriteDebugWithTimestamp(message);
-
-            RecordingTracingInterceptor.RemoveFromContext(httpTracingInterceptor);
-            FlushMessagesFromTracingInterceptor();
-
-            base.EndProcessing();
-        }
-
-        /// <summary>
-        /// Asks for confirmation before executing the action.
-        /// </summary>
-        /// <param name="force">Do not ask for confirmation</param>
-        /// <param name="actionMessage">Message to describe the action</param>
-        /// <param name="processMessage">Message to prompt after the active is performed.</param>
-        /// <param name="target">The target name.</param>
-        /// <param name="action">The action code</param>
-        protected void ConfirmAction(bool force, string actionMessage, string processMessage, string target, Action action)
-        {
-            if (force || ShouldContinue(actionMessage, ""))
+            get
             {
-                if (ShouldProcess(target, processMessage))
+                if (_implementationBackgroundJobDescription != null)
                 {
-                    action();
+                    return _implementationBackgroundJobDescription;
+                }
+                else
+                {
+                    string name = "Long Running Azure Operation";
+                    string commandName = MyInvocation?.MyCommand?.Name;
+                    string objectName = null;
+                    if (this.IsBound("Name"))
+                    {
+                        objectName = MyInvocation.BoundParameters["Name"].ToString();
+                    }
+                    else if (this.IsBound("InputObject") == true)
+                    {
+                        var type = MyInvocation.BoundParameters["InputObject"].GetType();
+                        var inputObject = Convert.ChangeType(MyInvocation.BoundParameters["InputObject"], type);
+                        if (type.GetProperty("Name") != null)
+                        {
+                            objectName = inputObject.GetType().GetProperty("Name").GetValue(inputObject).ToString();
+                        }
+                        else if (type.GetProperty("ResourceId") != null)
+                        {
+                            string[] tokens = inputObject.GetType().GetProperty("ResourceId").GetValue(inputObject).ToString().Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (tokens.Length >= 8)
+                            {
+                                objectName = tokens[tokens.Length - 1];
+                            }
+                        }
+                    }
+                    else if (this.IsBound("ResourceId") == true)
+                    {
+                        string[] tokens = MyInvocation.BoundParameters["ResourceId"].ToString().Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (tokens.Length >= 8)
+                        {
+                            objectName = tokens[tokens.Length - 1];
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(commandName))
+                    {
+                        if (!string.IsNullOrWhiteSpace(objectName))
+                        {
+                            name = string.Format("Long Running Operation for '{0}' on resource '{1}'", commandName, objectName);
+                        }
+                        else
+                        {
+                            name = string.Format("Long Running Operation for '{0}'", commandName);
+                        }
+                    }
+
+                    return name;
                 }
             }
+            set
+            {
+                _implementationBackgroundJobDescription = value;
+            }
+        }
+
+        public void SetBackgroundJobDescription(string jobName)
+        {
+            ImplementationBackgroundJobDescription = jobName;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            try
+            {
+                FlushDebugMessages();
+            }
+            catch { }
+            if (disposing && _adalListener != null)
+            {
+                _adalListener.Dispose();
+                _adalListener = null;
+            }
+
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public virtual bool IsTerminatingError(Exception ex)
+        {
+            var pipelineStoppedEx = ex as PipelineStoppedException;
+            if (pipelineStoppedEx != null && pipelineStoppedEx.InnerException == null)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

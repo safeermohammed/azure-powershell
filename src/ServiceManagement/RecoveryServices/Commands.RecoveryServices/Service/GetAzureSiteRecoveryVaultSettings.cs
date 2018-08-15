@@ -26,6 +26,9 @@ namespace Microsoft.Azure.Commands.RecoveryServices
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "AzureSiteRecoveryVaultSettings")]
     [OutputType(typeof(ASRVaultSettings))]
+    [Obsolete("This cmdlet has been marked for deprecation in an upcoming release. Please use the " +
+        "equivalent cmdlet from the AzureRm.RecoveryServices.SiteRecovery module instead.",
+        false)]
     public class GetAzureSiteRecoveryVaultSettings : RecoveryServicesCmdletBase
     {
         /// <summary>
@@ -33,6 +36,11 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// </summary>
         public override void ExecuteCmdlet()
         {
+            this.WriteWarningWithTimestamp(
+                string.Format(
+                    Properties.Resources.CmdletWillBeDeprecatedSoon,
+                    this.MyInvocation.MyCommand.Name));
+
             this.WriteObject(new ASRVaultSettings(
                 PSRecoveryServicesClient.asrVaultCreds.ResourceName,
                 PSRecoveryServicesClient.asrVaultCreds.CloudServiceName));

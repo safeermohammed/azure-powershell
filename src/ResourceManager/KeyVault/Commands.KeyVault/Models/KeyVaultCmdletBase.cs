@@ -12,19 +12,16 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Common.Extensions;
-using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System;
-using System.IO;
-using System.Net.Http;
+using System.Collections.Generic;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.ResourceManager.Common;
 
 namespace Microsoft.Azure.Commands.KeyVault.Models
 {
-    public class KeyVaultCmdletBase : AzurePSCmdlet
-    {        
-        public KeyVaultCmdletBase()
-        {        
-        }
+    public class KeyVaultCmdletBase : AzureRMCmdlet
+    {
+        public static readonly DateTime EpochDate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         internal IKeyVaultDataServiceClient DataServiceClient
         {
@@ -33,9 +30,8 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
                 if (dataServiceClient == null)
                 {
                     this.dataServiceClient = new KeyVaultDataServiceClient(
-                        AzureSession.AuthenticationFactory,
-                        AzureSession.CurrentContext,
-                        new HttpClient());
+                        AzureSession.Instance.AuthenticationFactory,
+                        DefaultContext);
                 }
 
                 return this.dataServiceClient;
@@ -46,16 +42,31 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
             }
         }
 
-        internal string ResolvePath(string filePath, string notFoundMessage)
+        protected string GetDefaultFileForOperation( string operationName, string vaultName, string entityName )
         {
-            FileInfo keyFile = new FileInfo(this.GetUnresolvedProviderPathFromPSPath(filePath));
-            if (!keyFile.Exists)
-            {
-                throw new FileNotFoundException(string.Format(notFoundMessage, filePath));
-            }
-            return keyFile.FullName;
+            // caller is responsible for parameter validation
+            var currentPath = CurrentPath();
+            var filename = string.Format("{0}\\{1}-{2}-{3}", currentPath, vaultName, entityName, DateTime.UtcNow.Subtract(EpochDate).TotalSeconds);
+
+            return filename;
         }
 
         private IKeyVaultDataServiceClient dataServiceClient;
+
+        /// <summary>
+        /// Utility function that will continually iterate over the updated KeyVaultObjectFilterOptions until the options
+        /// NextLink is null, and writes all the retrieved objects.
+        /// </summary>
+        /// <typeparam name="TObject">The object type to write.</typeparam>
+        /// <param name="options">The KeyVaultObjectFilterOptions</param>
+        /// <param name="getObjects">Function that takes the options and returns a list of objects.</param>
+        protected void GetAndWriteObjects<TObject>(KeyVaultObjectFilterOptions options, Func<KeyVaultObjectFilterOptions, IEnumerable<TObject>> getObjects)
+        {
+            do
+            {
+                var pageResults = getObjects(options);
+                WriteObject(pageResults, true);
+            } while (!string.IsNullOrEmpty(options.NextLink));
+        }
     }
 }

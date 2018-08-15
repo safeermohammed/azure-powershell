@@ -12,11 +12,11 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-
 using System;
+using System.Collections;
 using System.Management.Automation;
 using System.Net;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.WindowsAzure.Commands.Common;
 using Microsoft.WindowsAzure.Commands.ServiceManagement.Extensions;
 using Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers;
 using Microsoft.WindowsAzure.Commands.ServiceManagement.Properties;
@@ -106,6 +106,13 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.HostedServices
             set;
         }
 
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Extended Properties.")]
+        public Hashtable ExtendedProperty
+        {
+            get;
+            set;
+        }
+
         public virtual void NewPaaSDeploymentProcess()
         {
             bool removePackage = false;
@@ -113,7 +120,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.HostedServices
             AssertNoPersistenVmRoleExistsInDeployment(PVM.DeploymentSlotType.Production);
             AssertNoPersistenVmRoleExistsInDeployment(PVM.DeploymentSlotType.Staging);
 
-            var storageName = CurrentContext.Subscription.GetProperty(AzureSubscription.Property.StorageAccount);
+            var storageName = Profile.Context.Subscription.GetStorageAccountName();
 
             Uri packageUrl;
             if (this.Package.StartsWith(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
@@ -159,26 +166,34 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.HostedServices
                     }
                 }
 
-
-                var slotType = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), this.Slot, true);
-                DeploymentGetResponse d = null;
-                InvokeInOperationContext(() =>
+                Func<DeploymentSlot, DeploymentGetResponse> func = t =>
                 {
+                    DeploymentGetResponse d = null;
                     try
                     {
-                        d = this.ComputeClient.Deployments.GetBySlot(this.ServiceName, slotType);
+                        d = this.ComputeClient.Deployments.GetBySlot(this.ServiceName, t);
                     }
                     catch (CloudException ex)
                     {
                         if (ex.Response.StatusCode != HttpStatusCode.NotFound && IsVerbose() == false)
                         {
-                            this.WriteExceptionDetails(ex);
+                            WriteExceptionError(ex);
                         }
                     }
-                });
+
+                    return d;
+                };
+
+                var slotType = (DeploymentSlot)Enum.Parse(typeof(DeploymentSlot), this.Slot, true);
+                DeploymentGetResponse currentDeployment = null;
+                InvokeInOperationContext(() => currentDeployment = func(slotType));
+
+                var peerSlottype = slotType == DeploymentSlot.Production ? DeploymentSlot.Staging : DeploymentSlot.Production;
+                DeploymentGetResponse peerDeployment = null;
+                InvokeInOperationContext(() => peerDeployment = func(peerSlottype));
 
                 ExtensionManager extensionMgr = new ExtensionManager(this, ServiceName);
-                extConfig = extensionMgr.Set(d, ExtensionConfiguration, this.Slot);
+                extConfig = extensionMgr.Set(currentDeployment, peerDeployment, ExtensionConfiguration, this.Slot);
             }
             
             var deploymentInput = new DeploymentCreateParameters
@@ -190,6 +205,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.HostedServices
                 Name = this.Name,
                 StartDeployment = !this.DoNotStart.IsPresent,
                 TreatWarningsAsError = this.TreatWarningsAsError.IsPresent,
+                ExtendedProperties = this.ExtendedProperty != null ? ConvertToDictionary(this.ExtendedProperty) : null
             };
 
             InvokeInOperationContext(() =>
@@ -217,7 +233,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.HostedServices
                 }
                 catch (CloudException ex)
                 {
-                    this.WriteExceptionDetails(ex);
+                    WriteExceptionError(ex);
                 }
             });
         }
@@ -241,7 +257,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.HostedServices
                 {
                     if (ex.Response.StatusCode != HttpStatusCode.NotFound && IsVerbose() == false)
                     {
-                        this.WriteExceptionDetails(ex);
+                        WriteExceptionError(ex);
                     }
                 }
             });

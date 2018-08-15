@@ -12,15 +12,15 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.StreamAnalytics.Properties;
+using Microsoft.Azure.Management.StreamAnalytics;
+using Microsoft.Azure.Management.StreamAnalytics.Models;
+using Microsoft.Rest.Azure;
+using Microsoft.Rest.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
-using Microsoft.Azure.Commands.StreamAnalytics.Properties;
-using Microsoft.Azure.Management.StreamAnalytics;
-using Microsoft.Azure.Management.StreamAnalytics.Models;
-using Microsoft.WindowsAzure;
-using Hyak.Common;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics.Models
 {
@@ -31,7 +31,7 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
             var response = StreamAnalyticsManagementClient.Inputs.Get(
                 resourceGroupName, jobName, name);
 
-            return new PSInput(response.Input)
+            return new PSInput(response)
             {
                 ResourceGroupName = resourceGroupName,
                 JobName = jobName
@@ -42,11 +42,11 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
         {
             List<PSInput> inputs = new List<PSInput>();
 
-            var response = StreamAnalyticsManagementClient.Inputs.ListInputInJob(resourceGroupName, jobName);
+            var response = StreamAnalyticsManagementClient.Inputs.ListByStreamingJob(resourceGroupName, jobName, "*");
 
-            if (response != null && response.Value != null)
+            if (response != null)
             {
-                foreach (var input in response.Value)
+                foreach (var input in response)
                 {
                     inputs.Add(new PSInput(input)
                     {
@@ -97,14 +97,18 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
                 throw new ArgumentNullException("rawJsonContent");
             }
 
+            Input input = SafeJsonConvert.DeserializeObject<Input>(
+                rawJsonContent,
+                StreamAnalyticsClientExtensions.DeserializationSettings);
+
             // If create failed, the current behavior is to throw
-            var response = StreamAnalyticsManagementClient.Inputs.CreateOrUpdateWithRawJsonContent(
+            var response = StreamAnalyticsManagementClient.Inputs.CreateOrReplace(
+                    input,
                     resourceGroupName,
                     jobName,
-                    inputName,
-                    new InputCreateOrUpdateWithRawJsonContentParameters() { Content = rawJsonContent });
+                    inputName);
 
-            return response.Input;
+            return response;
         }
 
         public virtual PSInput CreatePSInput(CreatePSInputParameter parameter)
@@ -115,59 +119,46 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
             }
 
             PSInput input = null;
-            Action createInput = () =>
-            {
-                input = new PSInput(
-                    CreateOrUpdatePSInput(parameter.ResourceGroupName,
+            parameter.ConfirmAction(
+                    parameter.Force,
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        Resources.InputExists,
+                        parameter.InputName,
                         parameter.JobName,
+                        parameter.ResourceGroupName),
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        Resources.InputCreating,
                         parameter.InputName,
-                        parameter.RawJsonContent))
+                        parameter.JobName,
+                        parameter.ResourceGroupName),
+                    parameter.InputName,
+                    () =>
                     {
-                        ResourceGroupName = parameter.ResourceGroupName,
-                        JobName = parameter.JobName
-                    };
-            };
-
-            if (parameter.Force)
-            {
-                // If user decides to overwrite anyway, then there is no need to check if the linked service exists or not.
-                createInput();
-            }
-            else
-            {
-                bool inputExists = CheckInputExists(parameter.ResourceGroupName, parameter.JobName, parameter.InputName);
-
-                parameter.ConfirmAction(
-                        !inputExists,
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            Resources.InputExists,
-                            parameter.InputName,
-                            parameter.JobName,
-                            parameter.ResourceGroupName),
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            Resources.InputCreating,
-                            parameter.InputName,
-                            parameter.JobName,
-                            parameter.ResourceGroupName),
-                        parameter.InputName,
-                        createInput);
-            }
+                        input = new PSInput(
+                            CreateOrUpdatePSInput(parameter.ResourceGroupName,
+                                parameter.JobName,
+                                parameter.InputName,
+                                parameter.RawJsonContent))
+                        {
+                            ResourceGroupName = parameter.ResourceGroupName,
+                            JobName = parameter.JobName
+                        };
+                    },
+                    () => CheckInputExists(parameter.ResourceGroupName, parameter.JobName, parameter.InputName));
 
             return input;
         }
 
-        public virtual HttpStatusCode RemovePSInput(string resourceGroupName, string jobName, string inputName)
+        public virtual void RemovePSInput(string resourceGroupName, string jobName, string inputName)
         {
-            AzureOperationResponse response = StreamAnalyticsManagementClient.Inputs.Delete(resourceGroupName, jobName, inputName);
-
-            return response.StatusCode;
+            StreamAnalyticsManagementClient.Inputs.Delete(resourceGroupName, jobName, inputName);
         }
 
-        public virtual DataSourceTestConnectionResponse TestPSInput(string resourceGroupName, string jobName, string inputName)
+        public virtual ResourceTestStatus TestPSInput(string resourceGroupName, string jobName, string inputName)
         {
-            return StreamAnalyticsManagementClient.Inputs.TestConnection(resourceGroupName, jobName, inputName);
+            return StreamAnalyticsManagementClient.Inputs.Test(resourceGroupName, jobName, inputName);
         }
 
         private bool CheckInputExists(string resourceGroupName, string jobName, string inputName)

@@ -13,6 +13,8 @@
 // ----------------------------------------------------------------------------------
 
 using System;
+using Microsoft.WindowsAzure.Commands.Common.Test;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.Mocks;
 using Microsoft.WindowsAzure.Commands.Utilities.WAPackIaaS;
@@ -29,27 +31,34 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.Operations
         /// Tests WaitOnJob with no timeout and a job that completes immediately.
         /// </summary>
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void WaitOnJobCompletesImmediately()
         {
-            Guid jobId = Guid.NewGuid();
+            // Fix test flakiness
+            TestExecutionHelpers.RetryAction(
+                () =>
+                {
+                    Guid jobId = Guid.NewGuid();
 
-            MockRequestChannel mockChannel = MockRequestChannel.Create();
-            mockChannel.AddReturnObject(new Job {Name = "TestJob", ID = jobId, IsCompleted = true});
+                    MockRequestChannel mockChannel = MockRequestChannel.Create();
+                    mockChannel.AddReturnObject(new Job {Name = "TestJob", ID = jobId, IsCompleted = true});
 
-            var jobOperations = new JobOperations(new WebClientFactory(
-                                                      new Subscription(),
-                                                      mockChannel));
-            DateTime start = DateTime.Now;
-            jobOperations.WaitOnJob(jobId);
-            Assert.True((DateTime.Now - start).TotalMilliseconds < 500);
+                    var jobOperations = new JobOperations(new WebClientFactory(
+                        new Subscription(),
+                        mockChannel));
+                    DateTime start = DateTime.Now;
+                    jobOperations.WaitOnJob(jobId);
+                    Assert.True((DateTime.Now - start).TotalMilliseconds < 500);
+                });
         }
 
         /// <summary>
         /// Tests WaitOnJob with a timeout where the the Job does not complete before timeout occurs
         /// </summary>
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void WaitOnJobTimeoutJobNotFinished()
@@ -79,6 +88,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.Operations
         /// Tests WaitOnJob with empty response (no job) from server
         /// </summary>
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         [Trait("Type", "WAPackIaaS-Negative")]
@@ -101,6 +111,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.Operations
         /// Tests WaitOnJob with a timeout where the job completes before the timeout occurs
         /// </summary>
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void WaitOnJobTimeoutJobFinished()

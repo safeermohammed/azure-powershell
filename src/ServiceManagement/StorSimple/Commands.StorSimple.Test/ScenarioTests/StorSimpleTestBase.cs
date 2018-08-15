@@ -19,12 +19,13 @@ using System.Net.Http;
 using System.Net.Security;
 using System.Reflection;
 using Microsoft.Azure;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.Azure.Test;
 using Microsoft.Azure.Test.HttpRecorder;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Microsoft.WindowsAzure.Management.Scheduler;
 using Microsoft.WindowsAzure.Management.StorSimple;
+using Microsoft.Azure.Test.Authentication;
 
 namespace Microsoft.WindowsAzure.Commands.StorSimple.Test.ScenarioTests
 {
@@ -43,7 +44,7 @@ namespace Microsoft.WindowsAzure.Commands.StorSimple.Test.ScenarioTests
         {
             var storSimpleManagementClient = GetStorSimpleClient();
             var cloudServiceClient = GetCloudServiceClient();
-            helper.SetupManagementClients(storSimpleManagementClient, cloudServiceClient);
+            helper.SetupSomeOfManagementClients(storSimpleManagementClient, cloudServiceClient);
 
             //helper.SetupSomeOfManagementClients();
         }
@@ -97,6 +98,9 @@ namespace Microsoft.WindowsAzure.Commands.StorSimple.Test.ScenarioTests
             ServicePointManager.ServerCertificateValidationCallback = IgnoreCertificateErrorHandler;
 
             StorSimpleManagementClient client;
+            var credentials = new SubscriptionCredentialsAdapter(
+                testEnvironment.AuthorizationContext.TokenCredentials[TokenAudience.Management],
+                testEnvironment.SubscriptionId);
 
             if (testEnvironment.UsesCustomUri())
             {
@@ -105,8 +109,7 @@ namespace Microsoft.WindowsAzure.Commands.StorSimple.Test.ScenarioTests
                     ConfigurationManager.AppSettings["ResourceName"],
                     ConfigurationManager.AppSettings["ResourceId"],
                     ConfigurationManager.AppSettings["ResourceNamespace"],
-                    ConfigurationManager.AppSettings["CisStampId"],
-                    testEnvironment.Credentials as SubscriptionCloudCredentials,
+                    credentials,
                     testEnvironment.BaseUri);
             }
 
@@ -117,8 +120,7 @@ namespace Microsoft.WindowsAzure.Commands.StorSimple.Test.ScenarioTests
                     ConfigurationManager.AppSettings["ResourceName"],
                     ConfigurationManager.AppSettings["ResourceId"],
                     ConfigurationManager.AppSettings["ResourceNamespace"],
-                    ConfigurationManager.AppSettings["CisStampId"],
-                    testEnvironment.Credentials as SubscriptionCloudCredentials);
+                    credentials);
             }
 
             return GetServiceClient<T>(factory, client);

@@ -12,9 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.KeyVault.Client;
-using Microsoft.Azure.Commands.KeyVault.Cmdlets;
-using Cmdlet = Microsoft.Azure.Commands.KeyVault.Models;
+using Microsoft.Azure.Commands.KeyVault.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Moq;
 using System;
@@ -27,29 +25,49 @@ namespace Microsoft.Azure.Commands.KeyVault.Test.UnitTests
     public class SetKeyVaultSecretTests : KeyVaultUnitTestBase
     {
         private SetAzureKeyVaultSecret cmdlet;
+        private PSKeyVaultSecretAttributes secretAttributes;
+        private SecureString secureSecretValue;
+        private PSKeyVaultSecret secret;
 
         public SetKeyVaultSecretTests()
         {
             base.SetupTest();
 
+            secretAttributes = new PSKeyVaultSecretAttributes(true, null, null, null, null);
+            secureSecretValue = SecretValue.ConvertToSecureString();
+            secret = new PSKeyVaultSecret() { VaultName = VaultName, Name = SecretName, Version = SecretVersion, SecretValue = secureSecretValue, Attributes = secretAttributes };
+
             cmdlet = new SetAzureKeyVaultSecret()
             {
                 CommandRuntime = commandRuntimeMock.Object,
                 DataServiceClient = keyVaultClientMock.Object,
-                VaultName = VaultName
+                VaultName = secret.VaultName,
+                Name = secret.Name,
+                SecretValue = secret.SecretValue,
+                Disable = new SwitchParameter(!(secretAttributes.Enabled.Value)),
+                Expires = secretAttributes.Expires,
+                NotBefore = secretAttributes.NotBefore,
+                ContentType = secretAttributes.ContentType,
+                Tag = secretAttributes.Tags
             };
+            cmdlet.MyInvocation.BoundParameters.Add("SecretValue", secret.SecretValue);
         }
 
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void CanSetSecretTest()
         {
-            SecureString secureSecretValue = SecretValue.ConvertToSecureString();
-            Cmdlet.Secret expected = new Cmdlet.Secret() { Name = SecretName, VaultName = VaultName, SecretValue = secureSecretValue, Version = SecretVersion };
-            keyVaultClientMock.Setup(kv => kv.SetSecret(VaultName, SecretName, secureSecretValue)).Returns(expected).Verifiable();
+            PSKeyVaultSecret expected = secret;
+            keyVaultClientMock.Setup(kv => kv.SetSecret(VaultName, SecretName, secureSecretValue,
+                It.Is<PSKeyVaultSecretAttributes>(st => st.Enabled == secretAttributes.Enabled
+                        && st.Expires == secretAttributes.Expires
+                        && st.NotBefore == secretAttributes.NotBefore
+                        && st.ContentType == secretAttributes.ContentType
+                        && st.Tags == secretAttributes.Tags))).Returns(expected).Verifiable();
 
-            cmdlet.Name = SecretName;
-            cmdlet.SecretValue = secureSecretValue;
+            // Mock the should process to return true
+            commandRuntimeMock.Setup(cr => cr.ShouldProcess(SecretName, It.IsAny<string>())).Returns(true);
+
             cmdlet.ExecuteCmdlet();
 
             // Assert
@@ -61,20 +79,25 @@ namespace Microsoft.Azure.Commands.KeyVault.Test.UnitTests
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ErrorSetSecretTest()
         {
-            SecureString secureSecretValue = SecretValue.ConvertToSecureString();
-            keyVaultClientMock.Setup(kv => kv.SetSecret(VaultName, SecretName, secureSecretValue))
+            // Mock the should process to return true
+            commandRuntimeMock.Setup(cr => cr.ShouldProcess(SecretName, It.IsAny<string>())).Returns(true);
+
+            keyVaultClientMock.Setup(kv => kv.SetSecret(VaultName, SecretName, secureSecretValue,
+                It.Is<PSKeyVaultSecretAttributes>(st => st.Enabled == secretAttributes.Enabled
+                        && st.Expires == secretAttributes.Expires
+                        && st.NotBefore == secretAttributes.NotBefore
+                        && st.ContentType == secretAttributes.ContentType
+                        && st.Tags == secretAttributes.Tags)))
                 .Throws(new Exception("exception")).Verifiable();
 
-            cmdlet.Name = SecretName;
-            cmdlet.SecretValue = secureSecretValue;
             try
             {
                 cmdlet.ExecuteCmdlet();
             }
-            catch{}
+            catch { }
 
             keyVaultClientMock.VerifyAll();
-            commandRuntimeMock.Verify(f => f.WriteObject(It.IsAny<Cmdlet.Secret>()), Times.Never());
+            commandRuntimeMock.Verify(f => f.WriteObject(It.IsAny<PSKeyVaultSecret>()), Times.Never());
         }
     }
 }

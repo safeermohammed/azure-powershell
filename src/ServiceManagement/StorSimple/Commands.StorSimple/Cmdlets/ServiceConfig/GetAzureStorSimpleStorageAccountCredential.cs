@@ -28,7 +28,7 @@ namespace Microsoft.WindowsAzure.Commands.StorSimple.Cmdlets
     public class GetAzureStorSimpleStorageAccountCredential : StorSimpleCmdletBase
     {
         [Alias("Name")]
-        [Parameter(Position = 0, Mandatory = false, HelpMessage = StorSimpleCmdletHelpMessage.HelpMessageStorageAccountName)]
+        [Parameter(Position = 0, Mandatory = false, HelpMessage = StorSimpleCmdletHelpMessage.StorageAccountName)]
         public string StorageAccountName { get; set; }
 
         public override void ExecuteCmdlet()
@@ -38,7 +38,7 @@ namespace Microsoft.WindowsAzure.Commands.StorSimple.Cmdlets
                 var allSACs = StorSimpleClient.GetAllStorageAccountCredentials();
                 if (StorageAccountName == null)
                 {
-                    WriteObject(allSACs);
+                    WriteObject(allSACs, true);
                     WriteVerbose(string.Format(Resources.SACGet_StatusMessage, allSACs.Count, allSACs.Count > 1 ? "s" : string.Empty));
                     return;
                 }
@@ -46,8 +46,7 @@ namespace Microsoft.WindowsAzure.Commands.StorSimple.Cmdlets
                 var sac = allSACs.Where(x => x.Name.Equals(StorageAccountName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
                 if (sac == null)
                 {
-                    WriteVerbose(string.Format(Resources.SACNotFoundWithName, StorageAccountName));
-                    WriteObject(null);
+                    throw new ArgumentException(string.Format(Resources.SACNotFoundWithName, StorageAccountName));
                 }
                 else
                 {

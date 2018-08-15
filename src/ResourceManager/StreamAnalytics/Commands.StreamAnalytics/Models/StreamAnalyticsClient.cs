@@ -12,11 +12,10 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System.IO;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Management.StreamAnalytics;
-using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Extensions.Models;
-using Microsoft.Azure.Common.Extensions;
+using System.IO;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics.Models
 {
@@ -24,9 +23,9 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
     {
         public IStreamAnalyticsManagementClient StreamAnalyticsManagementClient { get; private set; }
 
-        public StreamAnalyticsClient(AzureContext context)
+        public StreamAnalyticsClient(IAzureContext context)
         {
-            StreamAnalyticsManagementClient = AzureSession.ClientFactory.CreateClient<StreamAnalyticsManagementClient>(
+            StreamAnalyticsManagementClient = AzureSession.Instance.ClientFactory.CreateArmClient<StreamAnalyticsManagementClient>(
                 context, AzureEnvironment.Endpoint.ResourceManager);
         }
 

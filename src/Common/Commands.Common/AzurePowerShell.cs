@@ -12,7 +12,6 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Common.Extensions.Properties;
 using System;
 using System.IO;
 using System.Net.Http.Headers;
@@ -27,9 +26,9 @@ namespace Microsoft.WindowsAzure.Commands.Common
 
         public const string AssemblyCopyright = "Copyright © Microsoft";
 
-        public const string AssemblyVersion = "0.8.14";
+        public const string AssemblyVersion = "6.2.1";
 
-        public const string AssemblyFileVersion = "0.8.14";
+        public const string AssemblyFileVersion = "6.2.1";
 
         public const string ProfileFile = "AzureProfile.json";
 
@@ -45,6 +44,6 @@ namespace Microsoft.WindowsAzure.Commands.Common
 
         public static string ProfileDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            Resources.AzureDirectoryName);
+            "Windows Azure PowerShell");
     }
 }

@@ -28,7 +28,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
     /// </summary>
     [Cmdlet(VerbsCommon.Remove, "AzureAutomationAccount")]
     [OutputType(typeof(AutomationAccount))]
-    public class RemoveAzureAutomationAccount : AzurePSCmdlet
+    public class RemoveAzureAutomationAccount : AzureSMCmdlet
     {
         /// <summary>
         /// The automation client.
@@ -42,7 +42,8 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         {
             get
             {
-                return this.automationClient = this.automationClient ?? new AutomationClient(CurrentContext.Subscription);
+                return this.automationClient = this.automationClient ?? new AutomationClient(Profile, 
+                    Profile.Context.Subscription);
             }
 
             set

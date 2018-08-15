@@ -115,6 +115,15 @@ namespace Microsoft.Azure.Commands.Automation.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The Compilation Job having Id: {0} was not found..
+        /// </summary>
+        internal static string CompilationJobNotFound {
+            get {
+                return ResourceManager.GetString("CompilationJobNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The Connection already exists. Connection name: {0}..
         /// </summary>
         internal static string ConnectionAlreadyExists {
@@ -138,6 +147,15 @@ namespace Microsoft.Azure.Commands.Automation.Properties {
         internal static string ConnectionNotFound {
             get {
                 return ResourceManager.GetString("ConnectionNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The connection type was not found. ConnectionType name: {0}..
+        /// </summary>
+        internal static string ConnectionTypeNotFound {
+            get {
+                return ResourceManager.GetString("ConnectionTypeNotFound", resourceCulture);
             }
         }
         
@@ -273,6 +291,15 @@ namespace Microsoft.Azure.Commands.Automation.Properties {
         internal static string RemoveAzureAutomationScheduleWarning {
             get {
                 return ResourceManager.GetString("RemoveAzureAutomationScheduleWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This connection type has connections associated with it. If you delete this connection type, all connections associated with it will be unusable and should be removed, unless you create a new connection type with the same name that has the same field definitions as the deleted connection type. However, it can have additional fields as well. Are you sure you want to remove the Azure Automation {0} ?.
+        /// </summary>
+        internal static string RemoveConnectionTypeThatHasConnectionWarning {
+            get {
+                return ResourceManager.GetString("RemoveConnectionTypeThatHasConnectionWarning", resourceCulture);
             }
         }
         

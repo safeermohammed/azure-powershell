@@ -1,43 +1,79 @@
 {
   "Entries": [
     {
-      "RequestUri": "/1449d5b7-8a83-47db-ae4c-9b03e888bad0/groups/deadbeef-dead-beef-dead-beefdeadbeef?api-version=1.42-previewInternal",
-      "EncodedRequestUri": "LzE0NDlkNWI3LThhODMtNDdkYi1hZTRjLTliMDNlODg4YmFkMC9ncm91cHMvZGVhZGJlZWYtZGVhZC1iZWVmLWRlYWQtYmVlZmRlYWRiZWVmP2FwaS12ZXJzaW9uPTEuNDItcHJldmlld0ludGVybmFs",
-      "RequestMethod": "GET",
-      "RequestBody": "",
+      "RequestUri": "/1273adef-00a3-4086-a51a-dbcce1857d36/getObjectsByObjectIds?api-version=1.6",
+      "EncodedRequestUri": "LzEyNzNhZGVmLTAwYTMtNDA4Ni1hNTFhLWRiY2NlMTg1N2QzNi9nZXRPYmplY3RzQnlPYmplY3RJZHM/YXBpLXZlcnNpb249MS42",
+      "RequestMethod": "POST",
+      "RequestBody": "{\r\n  \"objectIds\": [\r\n    \"baadc0de-baad-c0de-baad-c0debaadc0de\"\r\n  ],\r\n  \"includeDirectoryObjectReferences\": true\r\n}",
       "RequestHeaders": {
+        "Content-Type": [
+          "application/json; charset=utf-8"
+        ],
+        "Content-Length": [
+          "116"
+        ],
+        "x-ms-client-request-id": [
+          "3b229732-d5a6-4bc4-b7db-88472684b8e6"
+        ],
+        "accept-language": [
+          "en-US"
+        ],
         "User-Agent": [
-          "Microsoft.Azure.Graph.RBAC.GraphRbacManagementClient/1.0.0.0"
+          "FxVersion/4.7.2115.0",
+          "OSName/Windows10Enterprise",
+          "OSVersion/6.3.15063",
+          "Microsoft.Azure.Graph.RBAC.Version1_6.GraphRbacManagementClient/1.0.0.0"
         ]
       },
-      "ResponseBody": "{\r\n  \"odata.error\": {\r\n    \"code\": \"Request_ResourceNotFound\",\r\n    \"message\": {\r\n      \"lang\": \"en\",\r\n      \"value\": \"Resource 'deadbeef-dead-beef-dead-beefdeadbeef' does not exist or one of its queried reference-property objects are not present.\"\r\n    }\r\n  }\r\n}",
+      "ResponseBody": "{\r\n  \"odata.metadata\": \"https://graph.windows.net/1273adef-00a3-4086-a51a-dbcce1857d36/$metadata#directoryObjects\",\r\n  \"value\": []\r\n}",
       "ResponseHeaders": {
+        "Content-Length": [
+          "121"
+        ],
+        "Content-Type": [
+          "application/json; odata=minimalmetadata; streaming=true; charset=utf-8"
+        ],
+        "Expires": [
+          "-1"
+        ],
+        "Pragma": [
+          "no-cache"
+        ],
         "ocp-aad-diagnostics-server-name": [
-          "MsH+7bNxSLKcmuX3JqvzScisCtZwuMTpgstB41T1Viw="
+          "Llgy9/ab0slLzBlr4d1Q8lNJvx6g8YZ9cwM/rai9BcE="
         ],
         "request-id": [
-          "672ea08e-287e-4d34-96ee-e4c9abc3f6ea"
+          "fcab7665-33d8-4b97-b810-1922118e785c"
         ],
         "client-request-id": [
-          "11f5383e-b376-4544-b1c4-1ed685744871"
-        ],
-        "x-ms-gateway-rewrite": [
-          "false"
+          "07263285-3f52-4370-84bd-48f437e5414e"
         ],
         "x-ms-dirapi-data-contract-version": [
-          "1.42-previewInternal"
+          "1.6"
         ],
         "ocp-aad-session-key": [
-          "gLvrZeUb9JcrOoSFU8e5y1-jXYfm-smywAGHVeU1NTTsDEIwr9JOOFfKXLLIsJz6ccS3c8iXCR3mg45tjy1nOF8qOjzExjAhucX1X2UIUkQ.6gOuysV9qaj1rQyPg4Z8Qk41RIuZxK6anGAisXQLRXo"
+          "XIyhB2nRyfDl3CazcyBE3tFa8XHfCckgJZx20zWk2oSUASDlCikfr0uZcF3L5-bfqiQeHyjiySCjDcR6SsbLMFR2h6zDl7iTiYELFRQcO4OxMtwGtbYIcIWRX4JOY44aKTdQWpLxaO40FRzIG-AwmUCZOqXPo1rGlNI0Ksoqy1y4Q-yu67czl_Y5As3WSFkOpMHkKzrrQenAq820GmDr-Q._SUr9RmiXaWILa9s2RORvQsZUD5KCgUQvvcfVRRBCic"
+        ],
+        "X-Content-Type-Options": [
+          "nosniff"
+        ],
+        "DataServiceVersion": [
+          "3.0;"
         ],
         "Strict-Transport-Security": [
           "max-age=31536000; includeSubDomains"
         ],
+        "Access-Control-Allow-Origin": [
+          "*"
+        ],
+        "Duration": [
+          "946833"
+        ],
         "Cache-Control": [
-          "private"
+          "no-cache"
         ],
         "Server": [
-          "Microsoft-IIS/8.0"
+          "Microsoft-IIS/8.5"
         ],
         "X-AspNet-Version": [
           "4.0.30319"
@@ -47,15 +83,16 @@
           "ASP.NET"
         ],
         "Date": [
-          "Tue, 16 Sep 2014 00:29:23 GMT"
+          "Tue, 31 Oct 2017 19:32:32 GMT"
         ]
       },
-      "StatusCode": 404
+      "StatusCode": 200
     }
   ],
   "Names": {},
   "Variables": {
-    "SubscriptionId": "db1ab6f0-4769-4b27-930e-01e2ef9c123c",
-    "TenantId": "1449d5b7-8a83-47db-ae4c-9b03e888bad0"
+    "SubscriptionId": "4004a9fd-d58e-48dc-aeb2-4a4aec58606f",
+    "TenantId": "1273adef-00a3-4086-a51a-dbcce1857d36",
+    "Domain": "rbacclitest.onmicrosoft.com"
   }
 }

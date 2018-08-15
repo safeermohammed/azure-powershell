@@ -12,10 +12,11 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using Microsoft.Azure.Commands.StreamAnalytics.Models;
 using System.Collections.Generic;
 using System.Management.Automation;
 using System.Security.Permissions;
-using Microsoft.Azure.Commands.StreamAnalytics.Models;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics
 {
@@ -24,6 +25,7 @@ namespace Microsoft.Azure.Commands.StreamAnalytics
     {
         [Parameter(ParameterSetName = StreamAnalyticsObjectsInResourceGroup, Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -49,7 +51,7 @@ namespace Microsoft.Azure.Commands.StreamAnalytics
                 }
             }
 
-            string propertiesToExpand = "inputs,transformation,outputs";
+            string propertiesToExpand = "inputs,transformation,outputs,functions";
             if (NoExpand.IsPresent)
             {
                 propertiesToExpand = string.Empty;

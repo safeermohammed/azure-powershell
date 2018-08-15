@@ -19,6 +19,7 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.ExpressRoute;
@@ -31,7 +32,7 @@ using Microsoft.Azure;
 namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
 {
     
-    public class AzureDedicatedCircuitLinkTests : TestBase
+    public class AzureDedicatedCircuitLinkTests : SMTestBase
     {
         private const string SubscriptionId = "foo";
 
@@ -44,6 +45,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void NewAzureDedicatedCircuitLinkSuccessful()
         {
             // Setup
@@ -66,15 +68,23 @@ namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
                     RequestId = "",               
                     StatusCode = new HttpStatusCode()
                 };
-            var t = new Task<DedicatedCircuitLinkGetResponse>(() => expected);
-            t.Start();
+            var tGet = new Task<DedicatedCircuitLinkGetResponse>(() => expected);
+            tGet.Start();
 
-            dclMock.Setup(f => f.NewAsync(It.Is<string>(x => x == serviceKey), It.Is<string>(y => y == vNetName), It.IsAny<CancellationToken>())).Returns((string sKey, string vNet, CancellationToken cancellation) => t);
+            ExpressRouteOperationStatusResponse expectedStatus = new ExpressRouteOperationStatusResponse()
+            {
+                HttpStatusCode = HttpStatusCode.OK
+            };
+
+            var tNew = new Task<ExpressRouteOperationStatusResponse>(() => expectedStatus);
+            tNew.Start();
+            dclMock.Setup(f => f.NewAsync(It.Is<string>(x => x == serviceKey), It.Is<string>(y => y == vNetName), It.IsAny<CancellationToken>())).Returns((string sKey, string vNet, CancellationToken cancellation) => tNew);
+            dclMock.Setup(f => f.GetAsync(It.Is<string>(skey => skey == serviceKey), It.Is<string>(vnet => vnet == vNetName), It.IsAny<CancellationToken>())).Returns((string skey, string vnet, CancellationToken cancellation) => tGet);
             client.SetupGet(f => f.DedicatedCircuitLinks).Returns(dclMock.Object);
 
             NewAzureDedicatedCircuitLinkCommand cmdlet = new NewAzureDedicatedCircuitLinkCommand()
             {
-                ServiceKey = serviceKey,
+                ServiceKey = Guid.Parse(serviceKey),
                 VNetName = vNetName,
                 CommandRuntime = mockCommandRuntime,
                 ExpressRouteClient = new ExpressRouteClient(client.Object)
@@ -89,6 +99,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void GetAzureDedicatedCircuitLinkSuccessful()
         {
             // Setup
@@ -119,7 +130,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
 
             GetAzureDedicatedCircuitLinkCommand cmdlet = new GetAzureDedicatedCircuitLinkCommand()
             {
-                ServiceKey = serviceKey,
+                ServiceKey = Guid.Parse(serviceKey),
                 VNetName = vNetName,
                 CommandRuntime = mockCommandRuntime,
                 ExpressRouteClient = new ExpressRouteClient(client.Object)
@@ -135,7 +146,8 @@ namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
         }
 
         [Fact]
-        public void RemoveAzureDedicatedCircuitSuccessful()
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void RemoveAzureDedicatedCircuitLinkSuccessful()
         {
             string serviceKey = "aa28cd19-b10a-41ff-981b-53c6bbf15ead";
             string vNetName = "DedicatedCircuitNetwork";
@@ -158,7 +170,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
 
             RemoveAzureDedicatedCircuitLinkCommand cmdlet = new RemoveAzureDedicatedCircuitLinkCommand()
             {
-                ServiceKey = serviceKey,
+                ServiceKey = Guid.Parse(serviceKey),
                 VNetName = vNetName,
                 CommandRuntime = mockCommandRuntime,
                 ExpressRouteClient = new ExpressRouteClient(client.Object)
@@ -172,6 +184,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
 
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ListAzureDedicatedCircuitLinkSuccessful()
         {
             // Setup
@@ -205,7 +218,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
 
             GetAzureDedicatedCircuitLinkCommand cmdlet = new GetAzureDedicatedCircuitLinkCommand()
             {
-                ServiceKey = serviceKey,
+                ServiceKey = Guid.Parse(serviceKey),
                 CommandRuntime = mockCommandRuntime,
                 ExpressRouteClient = new ExpressRouteClient(client.Object)
             };
@@ -213,9 +226,10 @@ namespace Microsoft.WindowsAzure.Commands.Test.ExpressRoute
             cmdlet.ExecuteCmdlet();
 
             // Assert
-            IEnumerable<AzureDedicatedCircuitLink> actual =
-                mockCommandRuntime.OutputPipeline[0] as IEnumerable<AzureDedicatedCircuitLink>;
-            Assert.Equal(actual.ToArray().Count(), 2);
+            IEnumerable<AzureDedicatedCircuitLink> actual = 
+                System.Management.Automation.LanguagePrimitives.GetEnumerable(mockCommandRuntime.OutputPipeline ).Cast<AzureDedicatedCircuitLink>();
+
+            Assert.Equal(actual.Count(), 2);
         }
     }
 }

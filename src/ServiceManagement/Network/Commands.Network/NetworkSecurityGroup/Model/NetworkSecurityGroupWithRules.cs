@@ -17,7 +17,7 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.WindowsAzure.Management.Network.Models;
 
-namespace Microsoft.Azure.Commands.Network.NetworkSecurityGroup.Model
+namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Network.NetworkSecurityGroup.Model
 {
     public class NetworkSecurityGroupWithRules : SimpleNetworkSecurityGroup
     {
@@ -32,10 +32,15 @@ namespace Microsoft.Azure.Commands.Network.NetworkSecurityGroup.Model
         public NetworkSecurityGroupWithRules(NetworkSecurityGroupGetResponse networkSecurityGroupAsGetResponse)
             : base(networkSecurityGroupAsGetResponse)
         {
-            Mapper.CreateMap<Microsoft.WindowsAzure.Management.Network.Models.NetworkSecurityRule, NetworkSecurityRule>();
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<Microsoft.WindowsAzure.Management.Network.Models.NetworkSecurityRule, NetworkSecurityRule>();
+            });
+
+            IMapper mapper = config.CreateMapper();
             if (networkSecurityGroupAsGetResponse.Rules != null)
             {
-                rules.AddRange(networkSecurityGroupAsGetResponse.Rules.Select(Mapper.Map<NetworkSecurityRule>));
+                rules.AddRange(networkSecurityGroupAsGetResponse.Rules.Select(mapper.Map<NetworkSecurityRule>));
             }
         }
     }

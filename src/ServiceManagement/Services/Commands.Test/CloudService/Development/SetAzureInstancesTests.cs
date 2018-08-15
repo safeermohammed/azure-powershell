@@ -21,11 +21,15 @@ using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
 using Microsoft.WindowsAzure.Commands.Utilities.Common.XmlSchema.ServiceConfigurationSchema;
 using Microsoft.WindowsAzure.Commands.Utilities.Properties;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.WindowsAzure.Commands.Common;
 
 namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cmdlet
 {
-    public class SetAzureInstancesTests : TestBase
+    public class SetAzureInstancesTests : SMTestBase
     {
         private const string serviceName = "AzureService";
 
@@ -39,9 +43,11 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
             cmdlet = new SetAzureServiceProjectRoleCommand();
             cmdlet.CommandRuntime = mockCommandRuntime;
             cmdlet.PassThru = true;
+
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsNode()
         {
             int newRoleInstances = 10;
@@ -65,6 +71,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsPHP()
         {
             int newRoleInstances = 10;
@@ -87,6 +94,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsRoleNameDoesNotExistFail()
         {
             string roleName = "WebRole1";
@@ -99,6 +107,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsNodeRoleNameDoesNotExistServiceContainsWebRoleFail()
         {
             string roleName = "WebRole1";
@@ -113,6 +122,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsPHPRoleNameDoesNotExistServiceContainsWebRoleFail()
         {
             string roleName = "WebRole1";
@@ -127,6 +137,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsNodeRoleNameDoesNotExistServiceContainsWorkerRoleFail()
         {
             string roleName = "WorkerRole1";
@@ -141,6 +152,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsPHPRoleNameDoesNotExistServiceContainsWorkerRoleFail()
         {
             string roleName = "WorkerRole1";
@@ -155,6 +167,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsEmptyRoleNameFail()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))
@@ -165,6 +178,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsNullRoleNameFail()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))
@@ -175,6 +189,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsLargeRoleInstanceFail()
         {
             string roleName = "WebRole1";
@@ -187,6 +202,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessNegativeRoleInstanceFail()
         {
             string roleName = "WebRole1";
@@ -199,6 +215,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureInstancesProcessTestsCaseInsensitive()
         {
             int newRoleInstances = 10;
@@ -222,54 +239,56 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Tests.Cm
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureServiceProjectRoleWithoutPassingRoleName()
         {
-            string originalDirectory = Directory.GetCurrentDirectory();
+            TestMockSupport.TestExecutionFolder = AppDomain.CurrentDomain.BaseDirectory;
             string serviceName = "AzureService1";
-            if (Directory.Exists(serviceName))
+            if (Directory.Exists(Path.Combine(TestMockSupport.TestExecutionFolder,serviceName)))
             {
-                Directory.Delete(serviceName, true);
+                Directory.Delete(Path.Combine(TestMockSupport.TestExecutionFolder, serviceName), true);
             }
-            CloudServiceProject service = new CloudServiceProject(Directory.GetCurrentDirectory(), serviceName, null);
+            CloudServiceProject service = new CloudServiceProject(TestMockSupport.TestExecutionFolder, serviceName, null);
             service.AddWebRole(Test.Utilities.Common.Data.NodeWebRoleScaffoldingPath);
-            Directory.SetCurrentDirectory(Path.Combine(service.Paths.RootPath, "WebRole1"));
+            TestMockSupport.TestExecutionFolder = Path.Combine(service.Paths.RootPath, "WebRole1");
             cmdlet.RoleName = string.Empty;
             cmdlet.ExecuteCmdlet();
             service = new CloudServiceProject(service.Paths.RootPath, null);
 
             Assert.Equal<string>("WebRole1", cmdlet.RoleName);
-            Directory.SetCurrentDirectory(originalDirectory);
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureServiceProjectRoleInDeepDirectory()
         {
-            string originalDirectory = Directory.GetCurrentDirectory();
+            TestMockSupport.TestExecutionFolder = AppDomain.CurrentDomain.BaseDirectory;
             string serviceName = "AzureService2";
-            if (Directory.Exists(serviceName))
+            if (Directory.Exists(Path.Combine(TestMockSupport.TestExecutionFolder, serviceName)))
             {
-                Directory.Delete(serviceName, true);
+                Directory.Delete(Path.Combine(TestMockSupport.TestExecutionFolder, serviceName), true);
             }
-            CloudServiceProject service = new CloudServiceProject(Directory.GetCurrentDirectory(), serviceName, null);
+            CloudServiceProject service = new CloudServiceProject(TestMockSupport.TestExecutionFolder, serviceName, null);
             service.AddWebRole(Test.Utilities.Common.Data.NodeWebRoleScaffoldingPath);
-            Directory.SetCurrentDirectory(Path.Combine(service.Paths.RootPath, "WebRole1", "bin"));
+            TestMockSupport.TestExecutionFolder = Path.Combine(service.Paths.RootPath, "WebRole1", "bin");
             cmdlet.RoleName = string.Empty;
             cmdlet.ExecuteCmdlet();
             service = new CloudServiceProject(service.Paths.RootPath, null);
 
             Assert.Equal<string>("WebRole1", cmdlet.RoleName);
-            Directory.SetCurrentDirectory(originalDirectory);
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetAzureServiceProjectRoleInServiecRootDirectoryFail()
         {
+            TestMockSupport.TestExecutionFolder = AppDomain.CurrentDomain.BaseDirectory;
             string serviceName = "AzureService3";
-            if (Directory.Exists(serviceName))
+            if (Directory.Exists(Path.Combine(TestMockSupport.TestExecutionFolder, serviceName)))
             {
-                Directory.Delete(serviceName, true);
+                Directory.Delete(Path.Combine(TestMockSupport.TestExecutionFolder, serviceName), true);
             }
-            CloudServiceProject service = new CloudServiceProject(Directory.GetCurrentDirectory(), serviceName, null);
+            CloudServiceProject service = new CloudServiceProject(TestMockSupport.TestExecutionFolder, serviceName, null);
             service.AddWebRole(Test.Utilities.Common.Data.NodeWebRoleScaffoldingPath);
             cmdlet.RoleName = string.Empty;
             Testing.AssertThrows<InvalidOperationException>(() => cmdlet.ExecuteCmdlet(), Resources.CannotFindServiceRoot);

@@ -12,15 +12,15 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.StreamAnalytics.Properties;
+using Microsoft.Azure.Management.StreamAnalytics;
+using Microsoft.Azure.Management.StreamAnalytics.Models;
+using Microsoft.Rest.Azure;
+using Microsoft.Rest.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
-using Microsoft.Azure.Commands.StreamAnalytics.Properties;
-using Microsoft.Azure.Management.StreamAnalytics;
-using Microsoft.Azure.Management.StreamAnalytics.Models;
-using Microsoft.WindowsAzure;
-using Hyak.Common;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics.Models
 {
@@ -28,11 +28,10 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
     {
         public virtual PSJob GetJob(string resourceGroupName, string jobName, string propertiesToExpand)
         {
-            JobGetParameters parameters = new JobGetParameters(propertiesToExpand);
             var response = StreamAnalyticsManagementClient.StreamingJobs.Get(
-                resourceGroupName, jobName, parameters);
+                resourceGroupName, jobName, propertiesToExpand);
 
-            return new PSJob(response.Job)
+            return new PSJob(response)
             {
                 ResourceGroupName = resourceGroupName
             };
@@ -41,17 +40,16 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
         public virtual List<PSJob> ListJobs(string resourceGroupName, string propertiesToExpand)
         {
             List<PSJob> jobs = new List<PSJob>();
-            JobListParameters parameters = new JobListParameters(propertiesToExpand);
-            var response = StreamAnalyticsManagementClient.StreamingJobs.ListJobsInResourceGroup(resourceGroupName, parameters);
+            var response = StreamAnalyticsManagementClient.StreamingJobs.ListByResourceGroup(resourceGroupName, propertiesToExpand);
 
-            if (response != null && response.Value != null)
+            if (response != null)
             {
-                foreach (var job in response.Value)
+                foreach (var job in response)
                 {
                     jobs.Add(new PSJob(job)
-                        {
-                            ResourceGroupName = resourceGroupName
-                        });
+                    {
+                        ResourceGroupName = resourceGroupName
+                    });
                 }
             }
 
@@ -61,17 +59,16 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
         public virtual List<PSJob> ListJobs(string propertiesToExpand)
         {
             List<PSJob> jobs = new List<PSJob>();
-            JobListParameters parameters = new JobListParameters(propertiesToExpand);
-            var response = StreamAnalyticsManagementClient.StreamingJobs.ListJobsInSubscription(parameters);
+            var response = StreamAnalyticsManagementClient.StreamingJobs.List(propertiesToExpand);
 
-            if (response != null && response.Value != null)
+            if (response != null)
             {
-                foreach (var job in response.Value)
+                foreach (var job in response)
                 {
                     jobs.Add(new PSJob(job)
-                        {
-                            ResourceGroupName = StreamAnalyticsCommonUtilities.ExtractResourceGroupFromId(job.Id)
-                        });
+                    {
+                        ResourceGroupName = StreamAnalyticsCommonUtilities.ExtractResourceGroupFromId(job.Id)
+                    });
                 }
             }
 
@@ -116,18 +113,21 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
                 throw new ArgumentNullException("rawJsonContent");
             }
 
+            StreamingJob streamingjob = SafeJsonConvert.DeserializeObject<StreamingJob>(
+                rawJsonContent,
+                StreamAnalyticsClientExtensions.DeserializationSettings);
+
             // If create failed, the current behavior is to throw
             var response =
-                StreamAnalyticsManagementClient.StreamingJobs.CreateOrUpdateWithRawJsonContent(
+                StreamAnalyticsManagementClient.StreamingJobs.CreateOrReplace(
+                    streamingjob,
                     resourceGroupName,
-                    jobName,
-                    new JobCreateOrUpdateWithRawJsonContentParameters() { Content = rawJsonContent });
+                    jobName);
 
-            return new PSJob(response.Job)
-                {
-                    ResourceGroupName = resourceGroupName,
-                    JobName = jobName
-                };
+            return new PSJob(response)
+            {
+                ResourceGroupName = resourceGroupName
+            };
         }
 
         public virtual PSJob CreatePSJob(CreatePSJobParameter parameter)
@@ -138,88 +138,70 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
             }
 
             PSJob job = null;
-            Action createJob = () =>
-            {
-                job = CreateOrUpdatePSJob(parameter.ResourceGroupName, parameter.JobName, parameter.RawJsonContent);
-            };
-
-            if (parameter.Force)
-            {
-                // If user decides to overwrite anyway, then there is no need to check if the linked service exists or not.
-                createJob();
-            }
-            else
-            {
-                bool jobExists = CheckJobExists(parameter.ResourceGroupName, parameter.JobName);
-
-                parameter.ConfirmAction(
-                        !jobExists,
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            Resources.JobExists,
-                            parameter.JobName,
-                            parameter.ResourceGroupName),
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            Resources.JobCreating,
-                            parameter.JobName,
-                            parameter.ResourceGroupName),
+            parameter.ConfirmAction(
+                    parameter.Force,
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        Resources.JobExists,
                         parameter.JobName,
-                        createJob);
-            }
-
+                        parameter.ResourceGroupName),
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        Resources.JobCreating,
+                        parameter.JobName,
+                        parameter.ResourceGroupName),
+                    parameter.JobName,
+                    () =>
+                    {
+                        job = CreateOrUpdatePSJob(parameter.ResourceGroupName, parameter.JobName, parameter.RawJsonContent);
+                    },
+                    () => CheckJobExists(parameter.ResourceGroupName, parameter.JobName));
             return job;
         }
 
-        public virtual HttpStatusCode StartPSJob(string resourceGroupName, string jobName, JobStartParameters parameter)
+        public virtual void StartPSJob(string resourceGroupName, string jobName, StartStreamingJobParameters parameter)
         {
-            AzureOperationResponse response = StreamAnalyticsManagementClient.StreamingJobs.Start(resourceGroupName, jobName, parameter);
-
-            return response.StatusCode;
+            StreamAnalyticsManagementClient.StreamingJobs.Start(resourceGroupName, jobName, parameter);
         }
 
-        public virtual HttpStatusCode StartPSJob(StartPSJobParameter parameter)
+        public virtual void StartPSJob(StartPSJobParameter parameter)
         {
             if (parameter == null)
             {
                 throw new ArgumentNullException("parameter");
             }
 
-            return StartPSJob(parameter.ResourceGroupName, parameter.JobName, parameter.StartParameters);
+            StartPSJob(parameter.ResourceGroupName, parameter.JobName, parameter.StartParameters);
         }
 
-        public virtual HttpStatusCode StopPSJob(string resourceGroupName, string jobName)
+        public virtual void StopPSJob(string resourceGroupName, string jobName)
         {
-            AzureOperationResponse response = StreamAnalyticsManagementClient.StreamingJobs.Stop(resourceGroupName, jobName);
-
-            return response.StatusCode;
+            StreamAnalyticsManagementClient.StreamingJobs.Stop(resourceGroupName, jobName);
         }
 
-        public virtual HttpStatusCode StopPSJob(JobParametersBase parameter)
+        public virtual void StopPSJob(JobParametersBase parameter)
         {
             if (parameter == null)
             {
                 throw new ArgumentNullException("parameter");
             }
 
-            return StopPSJob(parameter.ResourceGroupName, parameter.JobName);
+            StopPSJob(parameter.ResourceGroupName, parameter.JobName);
         }
 
-        public virtual HttpStatusCode RemovePSJob(string resourceGroupName, string jobName)
+        public virtual void RemovePSJob(string resourceGroupName, string jobName)
         {
-            AzureOperationResponse response = StreamAnalyticsManagementClient.StreamingJobs.Delete(resourceGroupName, jobName);
-
-            return response.StatusCode;
+            StreamAnalyticsManagementClient.StreamingJobs.Delete(resourceGroupName, jobName);
         }
 
-        public virtual HttpStatusCode RemovePSJob(JobParametersBase parameter)
+        public virtual void RemovePSJob(JobParametersBase parameter)
         {
             if (parameter == null)
             {
                 throw new ArgumentNullException("parameter");
             }
 
-            return RemovePSJob(parameter.ResourceGroupName, parameter.JobName);
+            RemovePSJob(parameter.ResourceGroupName, parameter.JobName);
         }
 
         private bool CheckJobExists(string resourceGroupName, string jobName)

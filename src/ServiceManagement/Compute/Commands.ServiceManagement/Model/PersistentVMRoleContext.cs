@@ -36,12 +36,15 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Model
         public string DNSName { get; set; }
         public string Status { get; set; }
         public GuestAgentStatus GuestAgentStatus { get; set; }
+        public MaintenanceStatus MaintenanceStatus { get; set; }
         public List<ResourceExtensionStatus> ResourceExtensionStatusList { get; set; }
         public string PublicIPAddress { get; set; }
         public string PublicIPName { get; set; }
+        public string PublicIPDomainNameLabel { get; set; }
+        public List<string> PublicIPFqdns { get; set; }
         public NetworkInterfaceList NetworkInterfaces { get; set; }
         public string VirtualNetworkName { get; set; }
-
+        public string RemoteAccessCertificateThumbprint { get; set; }
         public PersistentVM GetInstance()
         {
             return this.VM;

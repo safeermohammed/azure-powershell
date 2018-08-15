@@ -5,8 +5,9 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.MediaServices;
 using Microsoft.WindowsAzure.Management.MediaServices;
 using Microsoft.WindowsAzure.Management.MediaServices.Models;
@@ -14,6 +15,7 @@ using Microsoft.WindowsAzure.Management.Storage;
 using Moq;
 using Hyak.Common;
 using Microsoft.Azure;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Test.MediaServices
 {
@@ -26,6 +28,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.MediaServices
 
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeleteAzureMediaServiceAccountAsync()
         {
             Mock<MediaServicesManagementClient> clientMock = InitMediaManagementClientMock();
@@ -48,6 +51,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.MediaServices
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDeleteAzureMediaServiceAccountAsync404()
         {
             FakeHttpMessageHandler fakeHttpHandler;
@@ -81,6 +85,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.MediaServices
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestRegenerateMediaServicesAccountAsync()
         {
             Mock<MediaServicesManagementClient> clientMock = InitMediaManagementClientMock();
@@ -106,6 +111,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.MediaServices
         }
         
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestGetMediaServiceAsync()
         {
 
@@ -141,6 +147,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.MediaServices
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestGetMediaServiceAccountsAsync()
         {
 
@@ -179,6 +186,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.MediaServices
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestCreateNewAzureMediaServiceAsync()
         {
             FakeHttpMessageHandler fakeHttpHandler;
@@ -215,6 +223,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.MediaServices
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestCreateNewAzureMediaServiceAsyncInvalidAccount()
         {
             FakeHttpMessageHandler fakeHttpHandler;
@@ -264,7 +273,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.MediaServices
         {
             AzureSubscription windowsAzureSubscription = new AzureSubscription
             {
-                Id = new Guid(SubscriptionId),
+                Id = SubscriptionId,
             };
             return windowsAzureSubscription;
         }

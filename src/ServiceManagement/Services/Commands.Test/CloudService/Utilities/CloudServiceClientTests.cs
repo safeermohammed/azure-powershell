@@ -13,12 +13,11 @@
 // ----------------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
-using Microsoft.Azure.Common.Extensions.Models;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
@@ -31,13 +30,14 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using Moq;
 using MockStorageService = Microsoft.WindowsAzure.Commands.Test.Utilities.Common.MockStorageService;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.Azure;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
 {
     
-    public class CloudServiceClientTests : TestBase
+    public class CloudServiceClientTests : SMTestBase
     {
         private AzureSubscription subscription;
 
@@ -77,7 +77,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
             a.QueueEndpoint = "http://awesome.queue.core.windows.net/";
             a.TableEndpoint = "http://awesome.table.core.windows.net/";
             a.PrimaryKey =
-                "MNao3bm7t7B/x+g2/ssh9HnG0mEh1QV5EHpcna8CetYn+TSRoA8/SBoH6B3Ufwtnz3jZLSw9GEUuCTr3VooBWq==";
+                "MNao3bm7t7B/x+g2/ssh9HnG0mEh1QV5EHpcna8CetYn+TSRoA8/SBoH6B3Ufwtnz3jZLSw9GEUuCTr3VooBWq==";// [SuppressMessage("Microsoft.Security", "CS001:SecretInline")]
             a.SecondaryKey = "secondaryKey";
         }
 
@@ -108,10 +108,10 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
 
             subscription = new AzureSubscription
             {
-                Properties = new Dictionary<AzureSubscription.Property,string> {{AzureSubscription.Property.Default, "True"}},
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 Name = Test.Utilities.Common.Data.Subscription1,
             };
+            subscription.SetDefault();
 
             cloudBlobUtilityMock = new Mock<CloudBlobUtility>();
             cloudBlobUtilityMock.Setup(f => f.UploadPackageToBlob(
@@ -120,7 +120,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
                 It.IsAny<string>(),
                 It.IsAny<BlobRequestOptions>())).Returns(new Uri("http://www.packageurl.azure.com"));
 
-            clientMocks = new ClientMocks(subscription.Id);
+            clientMocks = new ClientMocks(subscription.GetId());
 
             services.InitializeMocks(clientMocks.ComputeManagementClientMock);
             storageService.InitializeMocks(clientMocks.StorageManagementClientMock);
@@ -136,6 +136,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestStartCloudService()
         {
             client.StartCloudService(serviceName);
@@ -145,6 +146,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestStopCloudService()
         {
             client.StopCloudService(serviceName);
@@ -154,6 +156,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestRemoveCloudService()
         {
             clientMocks.ComputeManagementClientMock.Setup(
@@ -181,6 +184,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestRemoveCloudServiceWithStaging()
         {
             services.Clear()
@@ -220,6 +224,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestRemoveCloudServiceWithoutDeployments()
         {
             RemoveDeployments();
@@ -253,6 +258,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact (Skip = "Ignore")]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestPublishNewCloudService()
         {
             RemoveDeployments();
@@ -271,7 +277,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
                 // Setup
                 string rootPath = files.CreateNewService(serviceName);
                 files.CreateAzureSdkDirectoryAndImportPublishSettings();
-                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath("Services"));
+                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath(@"..\..\..\..\..\Package\Debug\ServiceManagement\Azure\Services"));
                 cloudServiceProject.AddWebRole(Test.Utilities.Common.Data.NodeWebRoleScaffoldingPath);
 
 
@@ -284,6 +290,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact(Skip = "Ignore")]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestUpgradeCloudService()
         {
             clientMocks.ComputeManagementClientMock.Setup(
@@ -307,7 +314,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
                 // Setup
                 string rootPath = files.CreateNewService(serviceName);
                 files.CreateAzureSdkDirectoryAndImportPublishSettings();
-                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath("Services"));
+                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath(@"..\..\..\..\..\Package\Debug\ServiceManagement\Azure\Services"));
                 cloudServiceProject.AddWebRole(Test.Utilities.Common.Data.NodeWebRoleScaffoldingPath);
 
                 ExecuteInTempCurrentDirectory(rootPath, () => client.PublishCloudService(location: "West US"));
@@ -318,6 +325,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact(Skip = "Ignore")]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestCreateStorageServiceWithPublish()
         {
             RemoveDeployments();
@@ -338,7 +346,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
                 // Setup
                 string rootPath = files.CreateNewService(serviceName);
                 files.CreateAzureSdkDirectoryAndImportPublishSettings();
-                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath("Services"));
+                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath(@"..\..\..\..\..\Package\Debug\ServiceManagement\Azure\Services"));
                 cloudServiceProject.AddWebRole(Test.Utilities.Common.Data.NodeWebRoleScaffoldingPath);
 
                 ExecuteInTempCurrentDirectory(rootPath, () => client.PublishCloudService(location: "West US"));
@@ -348,6 +356,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact(Skip = "Ignore")]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestPublishWithCurrentStorageAccount()
         {
             RemoveDeployments();
@@ -366,9 +375,9 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
                 // Setup
                 string rootPath = files.CreateNewService(serviceName);
                 files.CreateAzureSdkDirectoryAndImportPublishSettings();
-                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath("Services"));
+                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath(@"..\..\..\..\..\Package\Debug\ServiceManagement\Azure\Services"));
                 cloudServiceProject.AddWebRole(Test.Utilities.Common.Data.NodeWebRoleScaffoldingPath);
-                subscription.Properties[AzureSubscription.Property.StorageAccount] = storageName;
+                subscription.SetStorageAccount(storageName);
 
                 ExecuteInTempCurrentDirectory(rootPath, () => client.PublishCloudService(location: "West US"));
 
@@ -381,6 +390,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact(Skip = "Ignore")]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestPublishWithDefaultLocation()
         {
             RemoveDeployments();
@@ -408,7 +418,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
                 // Setup
                 string rootPath = files.CreateNewService(serviceName);
                 files.CreateAzureSdkDirectoryAndImportPublishSettings();
-                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath("Services"));
+                var cloudServiceProject = new CloudServiceProject(rootPath, FileUtilities.GetContentFilePath(@"..\..\..\..\..\Package\Debug\ServiceManagement\Azure\Services"));
                 cloudServiceProject.AddWebRole(Test.Utilities.Common.Data.NodeWebRoleScaffoldingPath);
 
                 ExecuteInTempCurrentDirectory(rootPath, () => client.PublishCloudService());
@@ -418,6 +428,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestPublishFromPackageUsingDefaultLocation()
         {
             RemoveDeployments();
@@ -459,6 +470,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Utilities
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestUpgradeCloudServiceFromAPackage()
         {
             clientMocks.ComputeManagementClientMock.Setup(

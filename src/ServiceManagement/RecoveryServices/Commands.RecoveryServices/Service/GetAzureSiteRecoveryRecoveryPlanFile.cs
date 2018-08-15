@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Management.Automation;
 using Microsoft.Azure.Commands.RecoveryServices.SiteRecovery;
-using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.SiteRecovery.Models;
 
 namespace Microsoft.Azure.Commands.RecoveryServices
@@ -25,6 +24,9 @@ namespace Microsoft.Azure.Commands.RecoveryServices
     /// This command will download the xml file for the recovery plan.
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "AzureSiteRecoveryRecoveryPlanFile", DefaultParameterSetName = ASRParameterSets.ByRPObject)]
+    [Obsolete("This cmdlet has been marked for deprecation in an upcoming release. Please use the " +
+        "equivalent cmdlet from the AzureRm.RecoveryServices.SiteRecovery module instead.",
+        false)]
     public class GetAzureSiteRecoveryRecoveryPlanFile : RecoveryServicesCmdletBase
     {
         #region Parameters
@@ -33,21 +35,21 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// </summary>
         [Parameter(Mandatory = true)]
         [ValidateNotNullOrEmpty]
-        public string Path {get; set;}
+        public string Path { get; set; }
 
         /// <summary>
         /// Gets or sets ID of the Recovery Plan.
         /// </summary>
         [Parameter(ParameterSetName = ASRParameterSets.ById, Mandatory = true)]
         [ValidateNotNullOrEmpty]
-        public string Id {get; set;}
+        public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets Recovery Plan object.
         /// </summary>
         [Parameter(ParameterSetName = ASRParameterSets.ByRPObject, Mandatory = true, ValueFromPipeline = true)]
         [ValidateNotNullOrEmpty]
-        public ASRRecoveryPlan RecoveryPlan {get; set;}
+        public ASRRecoveryPlan RecoveryPlan { get; set; }
         #endregion Parameters
 
         /// <summary>
@@ -57,6 +59,11 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         {
             try
             {
+                this.WriteWarningWithTimestamp(
+                    string.Format(
+                        Properties.Resources.CmdletWillBeDeprecatedSoon,
+                        this.MyInvocation.MyCommand.Name));
+
                 switch (this.ParameterSetName)
                 {
                     case ASRParameterSets.ByRPObject:

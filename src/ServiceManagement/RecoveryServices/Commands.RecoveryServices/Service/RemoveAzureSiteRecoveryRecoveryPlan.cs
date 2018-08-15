@@ -17,7 +17,6 @@ using System.Diagnostics;
 using System.Management.Automation;
 using System.Threading;
 using Microsoft.Azure.Commands.RecoveryServices.SiteRecovery;
-using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Management.SiteRecovery.Models;
 
 namespace Microsoft.Azure.Commands.RecoveryServices
@@ -27,6 +26,9 @@ namespace Microsoft.Azure.Commands.RecoveryServices
     /// </summary>
     [Cmdlet(VerbsCommon.Remove, "AzureSiteRecoveryRecoveryPlan", DefaultParameterSetName = ASRParameterSets.ByRPObject, SupportsShouldProcess = true)]
     [OutputType(typeof(ASRJob))]
+    [Obsolete("This cmdlet has been marked for deprecation in an upcoming release. Please use the " +
+        "equivalent cmdlet from the AzureRm.RecoveryServices.SiteRecovery module instead.",
+        false)]
     public class RemoveAzureSiteRecoveryRecoveryPlan : RecoveryServicesCmdletBase
     {
         #region Parameters
@@ -45,20 +47,20 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// </summary>
         [Parameter(ParameterSetName = ASRParameterSets.ById, Mandatory = true)]
         [ValidateNotNullOrEmpty]
-        public string Id {get; set;}
+        public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets Recovery Plan object.
         /// </summary>
         [Parameter(ParameterSetName = ASRParameterSets.ByRPObject, Mandatory = true, ValueFromPipeline = true)]
         [ValidateNotNullOrEmpty]
-        public ASRRecoveryPlan RecoveryPlan {get; set;}
+        public ASRRecoveryPlan RecoveryPlan { get; set; }
 
         /// <summary>
         /// Gets or sets switch parameter. This is required to wait for job completion.
         /// </summary>
         [Parameter]
-        public SwitchParameter WaitForCompletion {get; set;}
+        public SwitchParameter WaitForCompletion { get; set; }
 
         /// <summary>
         /// Gets or sets switch parameter. On passing, command does not ask for confirmation.
@@ -72,6 +74,11 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// </summary>
         public override void ExecuteCmdlet()
         {
+            this.WriteWarningWithTimestamp(
+                string.Format(
+                    Properties.Resources.CmdletWillBeDeprecatedSoon,
+                    this.MyInvocation.MyCommand.Name));
+
             switch (this.ParameterSetName)
             {
                 case ASRParameterSets.ByRPObject:
@@ -83,8 +90,8 @@ namespace Microsoft.Azure.Commands.RecoveryServices
                     break;
             }
 
-            ConfirmAction(
-                Force.IsPresent,
+            this.ConfirmAction(
+                this.Force.IsPresent,
                 string.Format(Properties.Resources.RemoveRPWarning, this.targetNameOrId),
                 Properties.Resources.RemoveRPWhatIfMessage,
                 this.targetNameOrId,

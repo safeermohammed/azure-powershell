@@ -22,8 +22,18 @@ namespace Microsoft.Azure.Commands.Resources.Models.Authorization
 
         public string Id { get; set; }
 
+        public bool IsCustom { get; set; }
+
+        public string Description { get; set; }
+
         public List<string> Actions { get; set; }
 
         public List<string> NotActions { get; set; }
+
+        public List<string> DataActions { get; set; }
+
+        public List<string> NotDataActions { get; set; }
+
+        public List<string> AssignableScopes { get; set; }
     }
 }

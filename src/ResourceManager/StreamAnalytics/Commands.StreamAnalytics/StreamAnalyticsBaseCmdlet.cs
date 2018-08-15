@@ -12,22 +12,21 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Globalization;
+using Microsoft.Azure.Commands.ResourceManager.Common;
 using Microsoft.Azure.Commands.StreamAnalytics.Models;
 using Microsoft.Azure.Commands.StreamAnalytics.Properties;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Hyak.Common;
+using Microsoft.Rest.Azure;
+using System;
+using System.Globalization;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics
 {
-    public abstract class StreamAnalyticsBaseCmdlet : AzurePSCmdlet
+    public abstract class StreamAnalyticsBaseCmdlet : AzureRMCmdlet
     {
         private StreamAnalyticsClient streamAnalyticsClient;
 
-        protected const string StreamAnalyticsObjectsInSubscription = "For stream analytics objects in the given subscription";
-        protected const string StreamAnalyticsObjectsInResourceGroup = "For stream analytics objects in the given resource group";
+        protected const string StreamAnalyticsObjectsInSubscription = "BySubscription";
+        protected const string StreamAnalyticsObjectsInResourceGroup = "ByResourceGroup";
 
         internal StreamAnalyticsClient StreamAnalyticsClient
         {
@@ -35,7 +34,7 @@ namespace Microsoft.Azure.Commands.StreamAnalytics
             {
                 if (this.streamAnalyticsClient == null)
                 {
-                    this.streamAnalyticsClient = new StreamAnalyticsClient(CurrentContext);
+                    this.streamAnalyticsClient = new StreamAnalyticsClient(DefaultProfile.DefaultContext);
                 }
                 return this.streamAnalyticsClient;
             }

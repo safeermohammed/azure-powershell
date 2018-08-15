@@ -28,6 +28,8 @@ using ConfigurationSet = Microsoft.WindowsAzure.Commands.ServiceManagement.Model
 using DataVirtualHardDisk = Microsoft.WindowsAzure.Commands.ServiceManagement.Model.DataVirtualHardDisk;
 using OSVirtualHardDisk = Microsoft.WindowsAzure.Commands.ServiceManagement.Model.OSVirtualHardDisk;
 using RoleInstance = Microsoft.WindowsAzure.Management.Compute.Models.RoleInstance;
+using CSM = Microsoft.WindowsAzure.Commands.ServiceManagement.Model;
+using MCM = Microsoft.WindowsAzure.Management.Compute.Models;
 
 namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers
 {
@@ -46,6 +48,8 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers
             overrides.Add(typeof(DataVirtualHardDisk), "MediaLink", ignoreAttrib);
             overrides.Add(typeof(DataVirtualHardDisk), "SourceMediaLink", ignoreAttrib);
             overrides.Add(typeof(OSVirtualHardDisk), "MediaLink", ignoreAttrib);
+            overrides.Add(typeof(CSM.DebugSettings), "ConsoleScreenshotBlobUri", ignoreAttrib);
+            overrides.Add(typeof(CSM.DebugSettings), "SerialOutputBlobUri", ignoreAttrib);
 
             var serializer = new System.Xml.Serialization.XmlSerializer(typeof(PersistentVM), overrides, new Type[] { typeof(NetworkConfigurationSet) }, null, null);
             using (TextWriter writer = new StreamWriter(filePath))
@@ -68,6 +72,8 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers
             overrides.Add(typeof(DataVirtualHardDisk), "SourceMediaLink", ignoreAttrib);
             overrides.Add(typeof(OSVirtualHardDisk), "MediaLink", ignoreAttrib);
             overrides.Add(typeof(OSVirtualHardDisk), "SourceImageName", ignoreAttrib);
+            overrides.Add(typeof(CSM.DebugSettings), "ConsoleScreenshotBlobUri", ignoreAttrib);
+            overrides.Add(typeof(CSM.DebugSettings), "SerialOutputBlobUri", ignoreAttrib);
 
             var serializer = new System.Xml.Serialization.XmlSerializer(typeof(PersistentVM), overrides, new Type[] { typeof(NetworkConfigurationSet) }, null, null);
 
@@ -115,29 +121,50 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers
             return roleNamesCollection;
         }
 
+        // Return the list of role names that match any of the given query.
+        public static RoleNamesCollection GetRoleNames(IList<RoleInstance> roleInstanceList, string[] roleNameQueries)
+        {
+            List<string> distinctRoleNameList = new List<string>();
+
+            foreach (var roleNameQuery in roleNameQueries)
+            {
+                var unionResult = distinctRoleNameList.Union(GetRoleNames(roleInstanceList, roleNameQuery));
+                distinctRoleNameList = unionResult.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            }
+
+            var roleNamesCollection = new RoleNamesCollection();
+
+            foreach (var roleName in distinctRoleNameList)
+            {
+                roleNamesCollection.Add(roleName);
+            }
+
+            return roleNamesCollection;
+        }
+
         public static Collection<ConfigurationSet> MapConfigurationSets(IList<Management.Compute.Models.ConfigurationSet> configurationSets)
         {
             var result = new Collection<ConfigurationSet>();
-            var n = configurationSets.Where(c => c.ConfigurationSetType == "NetworkConfiguration").Select(Mapper.Map<Model.NetworkConfigurationSet>).ToList();
-            var w = configurationSets.Where(c => c.ConfigurationSetType == ConfigurationSetTypes.WindowsProvisioningConfiguration).Select(Mapper.Map<WindowsProvisioningConfigurationSet>).ToList();
-            var l = configurationSets.Where(c => c.ConfigurationSetType == ConfigurationSetTypes.LinuxProvisioningConfiguration).Select(Mapper.Map<LinuxProvisioningConfigurationSet>).ToList();
+            var n = configurationSets.Where(c => c.ConfigurationSetType == "NetworkConfiguration").Select(ServiceManagementProfile.Mapper.Map<Model.NetworkConfigurationSet>).ToList();
+            var w = configurationSets.Where(c => c.ConfigurationSetType == ConfigurationSetTypes.WindowsProvisioningConfiguration).Select(ServiceManagementProfile.Mapper.Map<WindowsProvisioningConfigurationSet>).ToList();
+            var l = configurationSets.Where(c => c.ConfigurationSetType == ConfigurationSetTypes.LinuxProvisioningConfiguration).Select(ServiceManagementProfile.Mapper.Map<LinuxProvisioningConfigurationSet>).ToList();
             n.ForEach(result.Add);
             w.ForEach(result.Add);
             l.ForEach(result.Add);
             return result;
         }
 
-        public static  IList<Management.Compute.Models.ConfigurationSet> MapConfigurationSets(Collection<ConfigurationSet> configurationSets)
+        public static  IList<MCM.ConfigurationSet> MapConfigurationSets(Collection<ConfigurationSet> configurationSets)
         {
             var result = new Collection<Management.Compute.Models.ConfigurationSet>();
             foreach (var networkConfig in configurationSets.OfType<NetworkConfigurationSet>())
             {
-                result.Add(Mapper.Map<Management.Compute.Models.ConfigurationSet>(networkConfig));
+                result.Add(ServiceManagementProfile.Mapper.Map<Management.Compute.Models.ConfigurationSet>(networkConfig));
             }
 
             foreach (var windowsConfig in configurationSets.OfType<WindowsProvisioningConfigurationSet>())
             {
-                var newWinCfg = Mapper.Map<Management.Compute.Models.ConfigurationSet>(windowsConfig);
+                var newWinCfg = ServiceManagementProfile.Mapper.Map<Management.Compute.Models.ConfigurationSet>(windowsConfig);
                 if (windowsConfig.WinRM != null)
                 {
                     newWinCfg.WindowsRemoteManagement = new WindowsRemoteManagementSettings();
@@ -161,7 +188,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers
 
             foreach (var linuxConfig in configurationSets.OfType<LinuxProvisioningConfigurationSet>())
             {
-                result.Add(Mapper.Map<Management.Compute.Models.ConfigurationSet>(linuxConfig));
+                result.Add(ServiceManagementProfile.Mapper.Map<Management.Compute.Models.ConfigurationSet>(linuxConfig));
             }
 
             return result;
@@ -185,6 +212,39 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers
             }
 
             return name;
+        }
+
+        public static MCM.VMImageInput MapVMImageInput(CSM.VMImageInput vmImageInput)
+        {
+            var result = new MCM.VMImageInput();
+
+            if (vmImageInput == null)
+            {
+                return null;
+            }
+
+            if (vmImageInput.OSDiskConfiguration != null)
+            {
+                result.OSDiskConfiguration = new MCM.OSDiskConfiguration()
+                    {
+                        ResizedSizeInGB = vmImageInput.OSDiskConfiguration.ResizedSizeInGB
+                    };
+            }
+
+            if (vmImageInput.DataDiskConfigurations != null)
+            {
+                result.DataDiskConfigurations = new Collection<MCM.DataDiskConfiguration>();
+                foreach (var dataDiskConfig in vmImageInput.DataDiskConfigurations)
+                {
+                    result.DataDiskConfigurations.Add(
+                        new MCM.DataDiskConfiguration()
+                        {
+                            DiskName = dataDiskConfig.Name,
+                            ResizedSizeInGB = dataDiskConfig.ResizedSizeInGB
+                        });
+                }
+            }
+            return result;
         }
 
         public static string ConvertCustomDataFileToBase64(string fileName)

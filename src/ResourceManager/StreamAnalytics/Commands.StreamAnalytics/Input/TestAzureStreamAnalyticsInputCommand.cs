@@ -12,13 +12,13 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.StreamAnalytics.Properties;
+using Microsoft.Azure.Management.StreamAnalytics.Models;
 using System;
 using System.Globalization;
 using System.Management.Automation;
 using System.Net;
 using System.Security.Permissions;
-using Microsoft.Azure.Commands.StreamAnalytics.Properties;
-using Microsoft.Azure.Management.StreamAnalytics.Models;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics
 {
@@ -53,31 +53,22 @@ namespace Microsoft.Azure.Commands.StreamAnalytics
 
             try
             {
-                DataSourceTestConnectionResponse response = StreamAnalyticsClient.TestPSInput(ResourceGroupName, JobName, Name);
-                if (response.StatusCode == HttpStatusCode.OK && response.DataSourceTestStatus == DataSourceTestStatus.TestSucceeded)
+                ResourceTestStatus response = StreamAnalyticsClient.TestPSInput(ResourceGroupName, JobName, Name);
+                if (response.Status.Equals("TestSucceeded") && response.Error == null)
                 {
                     WriteObject(true);
-                }
-                else if (response.StatusCode == HttpStatusCode.NoContent)
-                {
-                    WriteWarning(string.Format(CultureInfo.InvariantCulture, Resources.InputNotFound, Name, JobName, ResourceGroupName));
                 }
                 else
                 {
                     string errorId = null;
                     string errorMessage = null;
-                    string innerErrorMessage = null;
                     if (response.Error != null)
                     {
                         errorId = response.Error.Code;
                         errorMessage = response.Error.Message;
-                        if (response.Error.Details != null)
-                        {
-                            innerErrorMessage = response.Error.Details.Message;
-                        }
                     }
 
-                    Exception ex = new Exception(errorMessage, new Exception(innerErrorMessage));
+                    Exception ex = new Exception(errorMessage);
                     WriteError(new ErrorRecord(ex, errorId, ErrorCategory.ConnectionError, null));
                 }
             }

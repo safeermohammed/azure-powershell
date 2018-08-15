@@ -14,25 +14,28 @@
 
 using System;
 using System.Text;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
-using Microsoft.Azure.Common.Extensions.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.WAPackIaaS.WebClient;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 
 namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
 {
     
-    public class GetAbsoluteUriTests
+    public class GetAbsoluteUriTests : SMTestBase
     {
         private Subscription subscription;
 
         public GetAbsoluteUriTests()
         {
             var azureSub = new AzureSubscription();
-            azureSub.Id = Guid.NewGuid();
+            azureSub.Id = Guid.NewGuid().ToString();
             this.subscription = new Subscription(azureSub);
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ShouldGenerateUri()
@@ -47,6 +50,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ShouldGenerateUriWithoutSubscription()
@@ -63,6 +67,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ShouldGenerateUriWithUriSuffix()
@@ -80,6 +85,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ShouldGenerateUriWithUriSuffixAndSingleQueryParameter()
@@ -99,6 +105,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ShouldGenerateUriWithUriSuffixAndTwoQueryParameter()
@@ -119,6 +126,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ShouldGenerateUriWithUriSuffixAndSingleFilter()
@@ -139,6 +147,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ShouldGenerateUriWithUriSuffixAndTwoFilters()
@@ -161,6 +170,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ShouldGenerateUriWithSuffixAndFilterAndQueryParameter()
@@ -184,6 +194,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ShouldGenerateUriWithUriSuffixAndSingleGuidFilter()

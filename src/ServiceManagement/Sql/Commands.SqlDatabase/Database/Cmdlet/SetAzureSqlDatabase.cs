@@ -16,12 +16,13 @@ using System;
 using System.Globalization;
 using System.Management.Automation;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Properties;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Common;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
 {
@@ -30,7 +31,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
     /// </summary>
     [Cmdlet(VerbsCommon.Set, "AzureSqlDatabase", SupportsShouldProcess = true,
         ConfirmImpact = ConfirmImpact.Medium)]
-    public class SetAzureSqlDatabase : AzurePSCmdlet
+    public class SetAzureSqlDatabase : AzureSMCmdlet
     {
         #region Parameter sets
 
@@ -280,11 +281,11 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
             try
             {
                 // Get the current subscription data.
-                AzureSubscription subscription = AzureSession.CurrentContext.Subscription;
+                IAzureSubscription subscription = Profile.Context.Subscription;
 
                 // Create a temporary context
                 ServerDataServiceCertAuth context =
-                    ServerDataServiceCertAuth.Create(this.ServerName, subscription);
+                    ServerDataServiceCertAuth.Create(this.ServerName, Profile, subscription);
 
                 GetClientRequestId = () => context.ClientRequestId;
 

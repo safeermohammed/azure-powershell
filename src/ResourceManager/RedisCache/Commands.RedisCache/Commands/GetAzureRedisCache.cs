@@ -14,49 +14,59 @@
 
 namespace Microsoft.Azure.Commands.RedisCache
 {
-    using Microsoft.Azure.Commands.RedisCache.Models;
-    using Microsoft.Azure.Management.Redis.Models;
+    using System;
     using System.Collections.Generic;
     using System.Management.Automation;
+    using Microsoft.Azure.Commands.RedisCache.Models;
+    using Microsoft.Azure.Management.Redis.Models;
+    using Microsoft.Rest.Azure;
+    using Properties;
+    using ResourceManager.Common.ArgumentCompleters;
 
-    [Cmdlet(VerbsCommon.Get, "AzureRedisCache", DefaultParameterSetName = BaseParameterSetName), OutputType(typeof(List<RedisCacheAttributes>))]
+    [Cmdlet(VerbsCommon.Get, "AzureRmRedisCache"), OutputType(typeof(List<RedisCacheAttributes>))]
     public class GetAzureRedisCache : RedisCacheCmdletBase
     {
-        internal const string BaseParameterSetName = "All In Subscription";
-        internal const string ResourceGroupParameterSetName = "All In Resource Group";
-        internal const string RedisCacheParameterSetName = "Specific Redis Cache";
-
-        [Parameter(ParameterSetName = ResourceGroupParameterSetName, ValueFromPipelineByPropertyName = true, Mandatory = true, HelpMessage = "Name of resource group under whcih want to create cache.")]
-        [Parameter(ParameterSetName = RedisCacheParameterSetName, ValueFromPipelineByPropertyName = true, Mandatory = true, HelpMessage = "Name of resource group under whcih want to create cache.")]
+        [Parameter(ValueFromPipelineByPropertyName = true, Mandatory = false, HelpMessage = "Name of resource group under which want to create cache.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
-        [Parameter(ParameterSetName = RedisCacheParameterSetName, ValueFromPipelineByPropertyName = true, Mandatory = true, HelpMessage = "Name of redis cache.")]
+        [Parameter(ValueFromPipelineByPropertyName = true, Mandatory = false, HelpMessage = "Name of redis cache.")]
         public string Name { get; set; }
 
         public override void ExecuteCmdlet()
         {
-            if (!string.IsNullOrEmpty(ResourceGroupName) && !string.IsNullOrEmpty(Name))
+            Utility.ValidateResourceGroupAndResourceName(ResourceGroupName, Name);
+            if (!string.IsNullOrEmpty(Name))
             {
-                // Get for single cache
-                WriteObject(new RedisCacheAttributes(CacheClient.GetCache(ResourceGroupName, Name), ResourceGroupName));
+                if (!string.IsNullOrEmpty(ResourceGroupName))
+                {
+                    // Get single cache directly by RP call
+                    WriteObject(new RedisCacheAttributes(CacheClient.GetCache(ResourceGroupName, Name), ResourceGroupName));
+                }
+                else
+                {
+                    // Get single cache from list of caches
+                    RedisResource response = CacheClient.GetCache(Name);
+                    WriteObject(new RedisCacheAttributes(response, Utility.GetResourceGroupNameFromRedisCacheId(response.Id)));
+                }
             }
             else
             {
                 // List all cache in given resource group if avaliable otherwise all cache in given subscription
-                RedisListResponse response = CacheClient.ListCaches(ResourceGroupName);
+                IPage<RedisResource> response = CacheClient.ListCaches(ResourceGroupName);
                 List<RedisCacheAttributes> list = new List<RedisCacheAttributes>();
-                foreach (RedisResource resource in response.Value)
+                foreach (RedisResource resource in response)
                 {
                     list.Add(new RedisCacheAttributes(resource, ResourceGroupName));
                 }
                 WriteObject(list, true);
 
-                while (!string.IsNullOrEmpty(response.NextLink))
+                while (!string.IsNullOrEmpty(response.NextPageLink))
                 {
                     // List using next link
-                    response = CacheClient.ListCachesUsingNextLink(response.NextLink);
+                    response = CacheClient.ListCachesUsingNextLink(ResourceGroupName, response.NextPageLink);
                     list = new List<RedisCacheAttributes>();
-                    foreach (RedisResource resource in response.Value)
+                    foreach (RedisResource resource in response)
                     {
                         list.Add(new RedisCacheAttributes(resource, ResourceGroupName));
                     }

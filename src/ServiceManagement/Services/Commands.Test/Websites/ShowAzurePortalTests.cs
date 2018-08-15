@@ -12,11 +12,13 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Websites;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Websites;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Websites
 {
@@ -24,6 +26,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
     public class ShowAzurePortalTests : WebsitesTestBase
     {
         [Fact(Skip = "Consider removing these.")]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ProcessGetAzurePublishSettingsTest()
         {
             ShowAzurePortalCommand showAzurePortalCommand = new ShowAzurePortalCommand

@@ -27,7 +27,8 @@ using Microsoft.WindowsAzure.Commands.Utilities.CloudService.Scaffolding;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Common.XmlSchema.ServiceDefinitionSchema;
 using Microsoft.WindowsAzure.Commands.Utilities;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Utilities.CloudService
 {
@@ -205,7 +206,9 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.CloudService
         private void AddRoleCore(string scaffolding, RoleInfo role)
         {
             Dictionary<string, object> parameters = CreateDefaultParameters(role);
-            parameters[ScaffoldParams.NodeModules] = GeneralUtilities.GetNodeModulesPath();
+            parameters[ScaffoldParams.NodeModules] = Path.Combine(
+                FileUtilities.GetAssemblyDirectory(),
+                Resources.NodeModulesPath);
             parameters[ScaffoldParams.NodeJsProgramFilesX86] = FileUtilities.GetWithProgramFilesPath(Resources.NodeProgramFilesFolderName, false);
 
             GenerateScaffolding(scaffolding, role.Name, parameters);
@@ -251,28 +254,6 @@ namespace Microsoft.WindowsAzure.Commands.Utilities.CloudService
             WorkerRoleInfo role = new WorkerRoleInfo(name, instanceCount);
             
             AddRoleCore(scaffolding, role);
-
-            return role;
-        }
-
-        /// <summary>
-        /// Adds the given role to both config files and the service def.
-        /// </summary>
-        /// <param name="role"></param>
-        /// <param name="type"></param>
-        private void AddPythonRoleCore(RoleInfo role, RoleType type)
-        {
-            Dictionary<string, object> parameters = CreateDefaultParameters(role);
-
-            string scaffoldPath = Path.Combine(Path.Combine(scaffoldingFolderPath, Resources.PythonScaffolding), type.ToString());
-            Scaffold.GenerateScaffolding(scaffoldPath, Path.Combine(Paths.RootPath, role.Name), parameters);
-        }
-
-        public RoleInfo AddDjangoWebRole(string name = null, int instanceCount = 1)
-        {
-            name = GetRoleName(name, Resources.WebRole, Components.Definition.WebRole == null ? new string[0] : Components.Definition.WebRole.Select(wr => wr.name.ToLower()));
-            WebRoleInfo role = new WebRoleInfo(name, instanceCount);
-            AddPythonRoleCore(role, RoleType.WebRole);
 
             return role;
         }

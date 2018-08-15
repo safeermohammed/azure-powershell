@@ -32,16 +32,11 @@ function Get-ResourceName
 
 <#
 .SYNOPSIS
-Gets the default location for a provider
+Gets valid password string for a VM
 #>
-function Get-ProviderLocation($provider)
+function Get-PasswordForVM
 {
-    $location = Get-AzureLocation | where {$_.Name -eq $provider}
-    if ($location -eq $null) {
-        "West US"
-    } else {
-        $location.Locations[0]
-    }
+	return (getAssetName) + '_196Ab!@'
 }
 
 <#
@@ -59,7 +54,10 @@ Cleans the created resource groups
 #>
 function Clean-ResourceGroup($rgname)
 {
-    if ([Microsoft.Azure.Test.HttpRecorder.HttpMockServer]::Mode -ne [Microsoft.Azure.Test.HttpRecorder.HttpRecorderMode]::Playback) {
-        Remove-AzureResourceGroup -Name $rgname -Force
+	$assemblies = [AppDomain]::Currentdomain.GetAssemblies() | Select-Object FullName | ForEach-Object { $_.FullName.Substring(0, $_.FullName.IndexOf(',')) }
+    if ($assemblies -notcontains 'Microsoft.Azure.Test.HttpRecorder.HttpMockServer' `
+		-or $assemblies -notcontains 'Microsoft.Azure.Test.HttpRecorder.HttpRecorderMode' `
+		-or [Microsoft.Azure.Test.HttpRecorder.HttpMockServer]::Mode -ne [Microsoft.Azure.Test.HttpRecorder.HttpRecorderMode]::Playback) {
+        Remove-AzureRmResourceGroup -Name $rgname -Force
     }
 }

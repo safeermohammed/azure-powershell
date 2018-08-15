@@ -12,14 +12,14 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Globalization;
-using System.Net;
 using Microsoft.Azure.Commands.StreamAnalytics.Properties;
 using Microsoft.Azure.Management.StreamAnalytics;
 using Microsoft.Azure.Management.StreamAnalytics.Models;
-using Microsoft.WindowsAzure;
-using Hyak.Common;
+using Microsoft.Rest.Azure;
+using Microsoft.Rest.Serialization;
+using System;
+using System.Globalization;
+using System.Net;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics.Models
 {
@@ -29,7 +29,7 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
         {
             var response = StreamAnalyticsManagementClient.Transformations.Get(resourceGroupName, jobName, transformationName);
 
-            return new PSTransformation(response.Transformation)
+            return new PSTransformation(response)
             {
                 ResourceGroupName = resourceGroupName,
                 JobName = jobName
@@ -43,14 +43,18 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
                 throw new ArgumentNullException("rawJsonContent");
             }
 
+            Transformation transformation = SafeJsonConvert.DeserializeObject<Transformation>(
+                rawJsonContent,
+                StreamAnalyticsClientExtensions.DeserializationSettings);
+
             // If create failed, the current behavior is to throw
-            var response = StreamAnalyticsManagementClient.Transformations.CreateOrUpdateWithRawJsonContent(
+            var response = StreamAnalyticsManagementClient.Transformations.CreateOrReplace(
+                    transformation,
                     resourceGroupName,
                     jobName,
-                    transformationName,
-                    new TransformationCreateOrUpdateWithRawJsonContentParameters() { Content = rawJsonContent });
+                    transformationName);
 
-            return response.Transformation;
+            return response;
         }
 
         public virtual PSTransformation CreatePSTransformation(CreatePSTransformationParameter parameter)
@@ -61,45 +65,34 @@ namespace Microsoft.Azure.Commands.StreamAnalytics.Models
             }
 
             PSTransformation transformation = null;
-            Action createTransformation = () =>
-            {
-                transformation =
-                    new PSTransformation(CreateOrUpdatePSTransformation(parameter.ResourceGroupName,
+            parameter.ConfirmAction(
+                    parameter.Force,
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        Resources.TransformationExists,
+                        parameter.TransformationName,
                         parameter.JobName,
+                        parameter.ResourceGroupName),
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        Resources.TransformationCreating,
                         parameter.TransformationName,
-                        parameter.RawJsonContent))
+                        parameter.JobName,
+                        parameter.ResourceGroupName),
+                    parameter.TransformationName,
+                    () =>
                     {
-                        ResourceGroupName = parameter.ResourceGroupName,
-                        JobName = parameter.JobName
-                    };
-            };
-
-            if (parameter.Force)
-            {
-                // If user decides to overwrite anyway, then there is no need to check if the linked service exists or not.
-                createTransformation();
-            }
-            else
-            {
-                bool transformationExists = CheckTransformationExists(parameter.ResourceGroupName, parameter.JobName, parameter.TransformationName);
-
-                parameter.ConfirmAction(
-                        !transformationExists,
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            Resources.TransformationExists,
-                            parameter.TransformationName,
-                            parameter.JobName,
-                            parameter.ResourceGroupName),
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            Resources.TransformationCreating,
-                            parameter.TransformationName,
-                            parameter.JobName,
-                            parameter.ResourceGroupName),
-                        parameter.TransformationName,
-                        createTransformation);
-            }
+                        transformation =
+                            new PSTransformation(CreateOrUpdatePSTransformation(parameter.ResourceGroupName,
+                                parameter.JobName,
+                                parameter.TransformationName,
+                                parameter.RawJsonContent))
+                            {
+                                ResourceGroupName = parameter.ResourceGroupName,
+                                JobName = parameter.JobName
+                            };
+                    },
+                    () => CheckTransformationExists(parameter.ResourceGroupName, parameter.JobName, parameter.TransformationName));
 
             return transformation;
         }

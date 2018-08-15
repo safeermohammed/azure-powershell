@@ -23,17 +23,28 @@ namespace Microsoft.WindowsAzure.Commands.ExpressRoute
     public class NewAzureBGPPeeringCommand : ExpressRouteBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Service Key representing Azure Circuit for which BGP peering needs to be created/modified")]
-        [ValidateGuid]
-        [ValidateNotNullOrEmpty]
-        public string ServiceKey { get; set; }
+        public Guid ServiceKey { get; set; }
 
-        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true,
-            HelpMessage = "Peer Asn")]
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Advertised Public Prefixes")]
+        [ValidateNotNullOrEmpty]
+        public string AdvertisedPublicPrefixes { get; set; }
+
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Customer AS number")]
+        public UInt32 CustomerAsn { get; set; }
+
+        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Peer Asn")]
         public UInt32 PeerAsn { get; set; }
+
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Legacy Mode")]
+        [DefaultValue(LegacyMode.False)]
+        public LegacyMode LegacyMode { get; set; }
 
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Primary Peer Subnet")]
         [ValidateNotNullOrEmpty]
         public string PrimaryPeerSubnet { get; set; }
+
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Routing Registry Name for Prefix Validation")]
+        public string RoutingRegistryName { get; set; }
 
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Secondary Peer Subnet")]
         [ValidateNotNullOrEmpty]
@@ -46,15 +57,35 @@ namespace Microsoft.WindowsAzure.Commands.ExpressRoute
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Vlan Id")]
         public UInt32 VlanId { get; set; }
 
-        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Bgp Peering Access Type: Public or Private")]
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Bgp Peering Access Type: Microsoft, Public or Private")]
+        [ValidateSet("Microsoft", "Public", "Private")]
         [DefaultValue("Private")]
         public BgpPeeringAccessType AccessType { get; set; }
 
+        [Parameter(Mandatory = false, HelpMessage = "Bgp Peer Address Type: IPv4, IPv6")]
+        [ValidateSet("IPv4", "IPv6")]
+        [DefaultValue("IPv4")]
+        public PeerAddressTypeValues PeerAddressType { get; set; }
+
         public override void ExecuteCmdlet()
         {
-            var route = ExpressRouteClient.NewAzureBGPPeering(ServiceKey, PeerAsn, PrimaryPeerSubnet,
-                SecondaryPeerSubnet, VlanId, AccessType, SharedKey);
+            AzureBgpPeering route = null;
+            route = ExpressRouteClient.NewAzureBGPPeering(ServiceKey, PeerAddressType, AdvertisedPublicPrefixes, CustomerAsn, PeerAsn, PrimaryPeerSubnet, RoutingRegistryName, SecondaryPeerSubnet,
+                                                          VlanId, AccessType, SharedKey, Convert.ToUInt32(LegacyMode));
+            
             WriteObject(route);
         }
+    }
+
+    public enum LegacyMode
+    {
+        False = 0,
+        True = 1
+    }
+
+    public enum PeerAddressTypeValues
+    {
+        IPv4 = 0,
+        IPv6 = 1
     }
 }

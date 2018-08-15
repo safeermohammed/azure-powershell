@@ -22,11 +22,15 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
 
         public const string All = "All";
 
+        public const string SignedBuild = "SignedBuild";
+
         public const string Automation = "Automation";
 
         public const string ServiceBus = "ServiceBus";
 
         public const string CloudService = "CloudService";
+
+        public const string DiagnosticsExtension = "DiagnosticsExtension";
 
         public const string Management = "Management";
 
@@ -38,6 +42,8 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
 
         public const string Store = "Store";
 
+        public const string Sql = "Sql";
+
         public const string ServiceManagement = "ServiceManagement";
 
         public const string Resources = "Resources";
@@ -46,13 +52,13 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
 
         public const string TrafficManager = "TrafficManager";
 
-        public const string ManagedCache = "ManagedCache";
-
         public const string Scheduler = "Scheduler";
 
         public const string KeyVault = "KeyVault";
 
         public const string Network = "Network";
+
+        public const string DevTestLabs = "DevTestLabs";
 
         // Owners
         public const string OneSDK = "OneSDK";

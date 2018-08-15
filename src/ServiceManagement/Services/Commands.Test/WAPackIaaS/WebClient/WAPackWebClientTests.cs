@@ -15,14 +15,16 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.Mocks;
 using Microsoft.WindowsAzure.Commands.Utilities.WAPackIaaS.WebClient;
+using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 
 namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
 {
     
-    public class WAPackWebClientTests
+    public class WAPackWebClientTests : SMTestBase
     {
         private MockRequestChannel channel;
 
@@ -44,6 +46,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void ExpectLanguageAndContentShouldBeSetToJson()
@@ -55,6 +58,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
 
         #region Test request.Method
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void MethodShouldBeSetToGetOnGet()
@@ -64,6 +68,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void MethodShouldBeSetToPostOnCreate()
@@ -73,6 +78,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void MethodShouldBeSetToDeleteOnDelete()
@@ -82,6 +88,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void MethodShouldBeSetToPutOnUpdate()
@@ -92,6 +99,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         #endregion
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void PreferContentShouldBeSetOnUpdate()
@@ -101,6 +109,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.WAPackIaaS.WebClient
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait("Type", "WAPackIaaS-All")]
         [Trait("Type", "WAPackIaaS-Unit")]
         public void CanAddCustomerHeaders()

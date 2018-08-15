@@ -12,13 +12,18 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.Resources.Models.ActiveDirectory;
+using Microsoft.Azure.Graph.RBAC.Version1_6.ActiveDirectory;
 
 namespace Microsoft.Azure.Commands.Resources.Models.Authorization
 {
     public class FilterRoleAssignmentsOptions
     {
-        public string RoleDefinition { get; set; }
+        public string RoleDefinitionName { get; set; }
+
+        /// <summary>
+        /// RoleDefinitionId Guid
+        /// </summary>
+        public string RoleDefinitionId { get; set; }
 
         private string scope;
 
@@ -26,23 +31,19 @@ namespace Microsoft.Azure.Commands.Resources.Models.Authorization
         {
             get
             {
-                string result;
-                string resourceIdentifier = ResourceIdentifier.ToString();
-
                 if (!string.IsNullOrEmpty(scope))
                 {
-                    result = scope;
-                }
-                else if (!string.IsNullOrEmpty(resourceIdentifier))
-                {
-                    result = resourceIdentifier;
-                }
-                else
-                {
-                    result = null;
+                    return scope;
                 }
 
-                return result;
+                string resourceIdentifier = ResourceIdentifier.ToString();
+
+                if (!string.IsNullOrEmpty(resourceIdentifier))
+                {
+                    return resourceIdentifier;
+                }
+
+                return null;
             }
             set
             {
@@ -53,5 +54,13 @@ namespace Microsoft.Azure.Commands.Resources.Models.Authorization
         public ResourceIdentifier ResourceIdentifier { get; set; }
 
         public ADObjectFilterOptions ADObjectFilter { get; set; }
+
+        public bool ExpandPrincipalGroups { get; set; }
+
+        public bool IncludeClassicAdministrators { get; set; }
+
+        public bool ExcludeAssignmentsForDeletedPrincipals { get; set; }
+
+        public bool CanDelegate { get; set; }
     }
 }

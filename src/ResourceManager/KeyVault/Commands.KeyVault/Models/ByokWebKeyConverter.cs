@@ -12,11 +12,11 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.KeyVault.WebKey;
 using System;
-using System.Security;
 using System.IO;
-using Microsoft.Azure.Commands.KeyVault.Properties;
-using Microsoft.Azure.Commands.KeyVault.WebKey;
+using System.Security;
+using KeyVaultProperties = Microsoft.Azure.Commands.KeyVault.Properties;
 
 namespace Microsoft.Azure.Commands.KeyVault.Models
 {
@@ -25,52 +25,41 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
     /// </summary>
     internal class ByokWebKeyConverter : IWebKeyConverter
     {
-        public ByokWebKeyConverter(IWebKeyConverter next=null)
+        public ByokWebKeyConverter(IWebKeyConverter next = null)
         {
             this.next = next;
         }
-        
+
         public JsonWebKey ConvertKeyFromFile(FileInfo fileInfo, SecureString password)
         {
             if (CanProcess(fileInfo))
-            {
                 return Convert(fileInfo.FullName);
-            }
             else if (next != null)
-            {
                 return next.ConvertKeyFromFile(fileInfo, password);
-            }
             else
-            {
-                throw new ArgumentException(string.Format(Resources.UnsupportedFileFormat, fileInfo.Name));
-            }
+                throw new ArgumentException(string.Format(KeyVaultProperties.Resources.UnsupportedFileFormat, fileInfo.Name));
         }
 
         private bool CanProcess(FileInfo fileInfo)
         {
             if (fileInfo == null || string.IsNullOrEmpty(fileInfo.Extension))
-            {
                 return false;
-            }
 
             return ByokFileExtension.Equals(fileInfo.Extension, StringComparison.OrdinalIgnoreCase);
         }
 
         private JsonWebKey Convert(string byokFileName)
-        {            
+        {
             byte[] byokBlob = File.ReadAllBytes(byokFileName);
 
             if (byokBlob == null || byokBlob.Length == 0)
-            {
-                throw new ArgumentException(string.Format(Resources.InvalidKeyBlob, "BYOK"));
-            }
-
+                throw new ArgumentException(string.Format(KeyVaultProperties.Resources.InvalidKeyBlob, "BYOK"));
             return new JsonWebKey()
             {
                 Kty = JsonWebKeyType.RsaHsm,
                 T = byokBlob,
             };
-        }              
+        }
 
         private IWebKeyConverter next;
         private const string ByokFileExtension = ".byok";

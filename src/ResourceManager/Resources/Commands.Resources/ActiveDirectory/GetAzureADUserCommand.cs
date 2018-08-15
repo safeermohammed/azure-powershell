@@ -12,8 +12,8 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.ActiveDirectory.Models;
-using Microsoft.Azure.Commands.Resources.Models.ActiveDirectory;
+using Microsoft.Azure.Graph.RBAC.Version1_6.ActiveDirectory;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System;
 using System.Collections.Generic;
 using System.Management.Automation;
@@ -23,13 +23,17 @@ namespace Microsoft.Azure.Commands.ActiveDirectory
     /// <summary>
     /// Get AD users.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureADUser", DefaultParameterSetName = ParameterSet.Empty), OutputType(typeof(List<PSADUser>))]
+    [Cmdlet(VerbsCommon.Get, "AzureRmADUser", DefaultParameterSetName = ParameterSet.Empty, SupportsPaging = true), OutputType(typeof(List<PSADUser>))]
     public class GetAzureADUserCommand : ActiveDirectoryBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.SearchString,
-            HelpMessage = "The user search string.")]
+            HelpMessage = "Used to find users that begin with the provided string.")]
+        [Alias("SearchString")]
         [ValidateNotNullOrEmpty]
-        public string SearchString { get; set; }
+        public string StartsWith { get; set; }
+
+        [Parameter(Mandatory = true, ParameterSetName = ParameterSet.DisplayName, HelpMessage = "The display name of the user.")]
+        public string DisplayName { get; set; }
 
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ObjectId,
             HelpMessage = "The user object id.")]
@@ -51,20 +55,21 @@ namespace Microsoft.Azure.Commands.ActiveDirectory
 
         public override void ExecuteCmdlet()
         {
-            ADObjectFilterOptions options = new ADObjectFilterOptions
+            ExecutionBlock(() =>
             {
-                SearchString = SearchString,
-                UPN = UserPrincipalName,
-                Id = ObjectId == Guid.Empty ? null : ObjectId.ToString(),
-                Paging = true,
-                Mail = Mail
-            };
+                ADObjectFilterOptions options = new ADObjectFilterOptions
+                {
+                    SearchString = this.IsParameterBound(c => c.StartsWith) ? StartsWith + "*" : DisplayName,
+                    UPN = UserPrincipalName,
+                    Id = ObjectId == Guid.Empty ? null : ObjectId.ToString(),
+                    Paging = true,
+                    Mail = Mail
+                };
 
-            do
-            {
-                WriteObject(ActiveDirectoryClient.FilterUsers(options), true);
-
-            } while (!string.IsNullOrEmpty(options.NextLink));
+                ulong first = MyInvocation.BoundParameters.ContainsKey("First") ? this.PagingParameters.First : ulong.MaxValue;
+                ulong skip = MyInvocation.BoundParameters.ContainsKey("Skip") ? this.PagingParameters.Skip : 0;
+                WriteObject(ActiveDirectoryClient.FilterUsers(options, first, skip), true);
+            });
         }
     }
 }

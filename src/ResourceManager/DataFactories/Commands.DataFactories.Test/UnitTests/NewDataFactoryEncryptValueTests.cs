@@ -14,6 +14,7 @@
 
 using Microsoft.Azure.Commands.DataFactories;
 using Microsoft.Azure.Commands.DataFactories.Test;
+using Microsoft.DataTransfer.Gateway.Encryption;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Moq;
 using System;
@@ -25,8 +26,9 @@ namespace Microsoft.WindowsAzure.Commands.Test.DataFactory
 {
     public class NewDataFactoryEncryptValueTests : DataFactoryUnitTestBase
     {
-        public NewDataFactoryEncryptValueTests()
+        public NewDataFactoryEncryptValueTests(Xunit.Abstractions.ITestOutputHelper output)
         {
+            Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
             base.SetupTest();
         }
 
@@ -37,6 +39,10 @@ namespace Microsoft.WindowsAzure.Commands.Test.DataFactory
             SecureString secureString = new SecureString();
             string expectedOutput = "My encrypted string " + Guid.NewGuid();
             string linkedServiceType = "OnPremisesSqlLinkedService";
+            string nonCredentialValue = "Driver=mydriver;server=myserver";
+            string authenticationType = "Basic";
+            string serverName = null;
+            string databaseName = null;
 
             var cmdlet = new NewAzureDataFactoryEncryptValueCommand
             {
@@ -46,17 +52,21 @@ namespace Microsoft.WindowsAzure.Commands.Test.DataFactory
                 ResourceGroupName = ResourceGroupName,
                 DataFactoryName = DataFactoryName,
                 GatewayName = GatewayName,
-                Type = linkedServiceType
+                Type = linkedServiceType,
+                NonCredentialValue = nonCredentialValue,
+                AuthenticationType = authenticationType,
+                Server = serverName,
+                Database = databaseName
             };
 
             // Arrange
-            this.dataFactoriesClientMock.Setup(f => f.OnPremisesEncryptString(secureString, ResourceGroupName, DataFactoryName, GatewayName, null, linkedServiceType)).Returns(expectedOutput);
+            this.dataFactoriesClientMock.Setup(f => f.OnPremisesEncryptString(secureString, ResourceGroupName, DataFactoryName, GatewayName, null, linkedServiceType, nonCredentialValue, authenticationType, serverName, databaseName)).Returns(expectedOutput);
 
             // Action
             cmdlet.ExecuteCmdlet();
 
             // Assert
-            this.dataFactoriesClientMock.Verify(f => f.OnPremisesEncryptString(secureString, ResourceGroupName, DataFactoryName, GatewayName, null, linkedServiceType), Times.Once());
+            this.dataFactoriesClientMock.Verify(f => f.OnPremisesEncryptString(secureString, ResourceGroupName, DataFactoryName, GatewayName, null, linkedServiceType, nonCredentialValue, authenticationType, serverName, databaseName), Times.Once());
             this.commandRuntimeMock.Verify(f => f.WriteObject(expectedOutput), Times.Once());
         }
 
@@ -70,6 +80,10 @@ namespace Microsoft.WindowsAzure.Commands.Test.DataFactory
             SecureString winAuthPassword = new SecureString();
             PSCredential credential = new PSCredential(winAuthUserName, winAuthPassword);
             string linkedServiceType = "OnPremisesFileSystemLinkedService";
+            string nonCredentialValue = "Driver=mydriver;server=myserver";
+            string authenticationType = "Basic";
+            string serverName = null;
+            string databaseName = null;
 
             var cmdlet = new NewAzureDataFactoryEncryptValueCommand
             {
@@ -80,18 +94,41 @@ namespace Microsoft.WindowsAzure.Commands.Test.DataFactory
                 DataFactoryName = DataFactoryName,
                 GatewayName = GatewayName,
                 Credential = credential,
-                Type = linkedServiceType
+                Type = linkedServiceType,
+                NonCredentialValue = nonCredentialValue,
+                AuthenticationType = authenticationType,
+                Server = serverName,
+                Database = databaseName
             };
 
             // Arrange
-            this.dataFactoriesClientMock.Setup(f => f.OnPremisesEncryptString(secureString, ResourceGroupName, DataFactoryName, GatewayName, credential, linkedServiceType)).Returns(expectedOutput);
+            this.dataFactoriesClientMock.Setup(f => f.OnPremisesEncryptString(secureString, ResourceGroupName, DataFactoryName, GatewayName, credential, linkedServiceType, nonCredentialValue, authenticationType, serverName, databaseName)).Returns(expectedOutput);
 
             // Action
             cmdlet.ExecuteCmdlet();
 
             // Assert
-            this.dataFactoriesClientMock.Verify(f => f.OnPremisesEncryptString(secureString, ResourceGroupName, DataFactoryName, GatewayName, credential, linkedServiceType), Times.Once());
+            this.dataFactoriesClientMock.Verify(f => f.OnPremisesEncryptString(secureString, ResourceGroupName, DataFactoryName, GatewayName, credential, linkedServiceType, nonCredentialValue, authenticationType, serverName, databaseName), Times.Once());
             this.commandRuntimeMock.Verify(f => f.WriteObject(expectedOutput), Times.Once());
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestOnPremDatasourceEncryption_LinkedServiceTypeParsing()
+        {
+            // Built-in linked service types
+            Assert.True(DataFactoryClient.GetLinkedServiceType("OnPremisesSqlLinkedService") == LinkedServiceType.OnPremisesSqlLinkedService);
+            Assert.True(DataFactoryClient.GetLinkedServiceType("OnPremisesFileSystemLinkedService") == LinkedServiceType.OnPremisesFileSystemLinkedService);
+            Assert.True(DataFactoryClient.GetLinkedServiceType("OnPremisesOracleLinkedService") == LinkedServiceType.OnPremisesOracleLinkedService);
+            Assert.True(DataFactoryClient.GetLinkedServiceType("OnPremisesOdbcLinkedService") == LinkedServiceType.OnPremisesOdbcLinkedService);
+            Assert.True(DataFactoryClient.GetLinkedServiceType("OnPremisesPostgreSqlLinkedService") == LinkedServiceType.OnPremisesPostgreSqlLinkedService);
+            Assert.True(DataFactoryClient.GetLinkedServiceType("OnPremisesTeradataLinkedService") == LinkedServiceType.OnPremisesTeradataLinkedService);
+            Assert.True(DataFactoryClient.GetLinkedServiceType("OnPremisesMySQLLinkedService") == LinkedServiceType.OnPremisesMySQLLinkedService);
+            Assert.True(DataFactoryClient.GetLinkedServiceType("OnPremisesDB2LinkedService") == LinkedServiceType.OnPremisesDB2LinkedService);
+            Assert.True(DataFactoryClient.GetLinkedServiceType("OnPremisesSybaseLinkedService") == LinkedServiceType.OnPremisesSybaseLinkedService);
+
+            // Generic linked service types should be converted to Unknown type
+            Assert.True(DataFactoryClient.GetLinkedServiceType("HdfsLinkedService") == LinkedServiceType.Unknown);
         }
     }
 }

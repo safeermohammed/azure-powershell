@@ -12,11 +12,10 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Globalization;
-using System.Management.Automation;
 using Microsoft.Azure.Commands.DataFactories.Models;
 using Microsoft.Azure.Commands.DataFactories.Properties;
+using System.Globalization;
+using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DataFactories
 {
@@ -39,6 +38,7 @@ HelpMessage = "The data factory object.")]
 
         public override void ExecuteCmdlet()
         {
+            WriteWarning("This cmdlet is deprecated and you should use New-AzureRmDataFactoryGatewayAuthKey instead.");
             if (ParameterSetName == ByFactoryObject)
             {
                 if (DataFactory == null)

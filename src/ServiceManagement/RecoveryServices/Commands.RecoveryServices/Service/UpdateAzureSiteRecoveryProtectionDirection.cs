@@ -13,11 +13,9 @@
 // ----------------------------------------------------------------------------------
 
 using System;
-using System.Diagnostics;
 using System.Management.Automation;
-using System.Threading;
 using Microsoft.Azure.Commands.RecoveryServices.SiteRecovery;
-using Microsoft.WindowsAzure;
+using Microsoft.Azure.Portal.RecoveryServices.Models.Common;
 using Microsoft.WindowsAzure.Management.SiteRecovery.Models;
 
 namespace Microsoft.Azure.Commands.RecoveryServices
@@ -27,6 +25,9 @@ namespace Microsoft.Azure.Commands.RecoveryServices
     /// </summary>
     [Cmdlet(VerbsData.Update, "AzureSiteRecoveryProtectionDirection", DefaultParameterSetName = ASRParameterSets.ByRPObject)]
     [OutputType(typeof(ASRJob))]
+    [Obsolete("This cmdlet has been marked for deprecation in an upcoming release. Please use the " +
+        "equivalent cmdlet from the AzureRm.RecoveryServices.SiteRecovery module instead.",
+        false)]
     public class UpdateAzureSiteRecoveryProtection : RecoveryServicesCmdletBase
     {
         #region Parameters
@@ -40,50 +41,50 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// </summary>
         [Parameter(ParameterSetName = ASRParameterSets.ByRPId, Mandatory = true)]
         [ValidateNotNullOrEmpty]
-        public string RPId {get; set;}
+        public string RPId { get; set; }
 
         /// <summary>
         /// Gets or sets ID of the PE.
         /// </summary>
         [Parameter(ParameterSetName = ASRParameterSets.ByPEId, Mandatory = true)]
         [ValidateNotNullOrEmpty]
-        public string ProtectionEntityId {get; set;}
+        public string ProtectionEntityId { get; set; }
 
         /// <summary>
         /// Gets or sets ID of the Recovery Plan.
         /// </summary>
         [Parameter(ParameterSetName = ASRParameterSets.ByPEId, Mandatory = true)]
         [ValidateNotNullOrEmpty]
-        public string ProtectionContainerId {get; set;}
+        public string ProtectionContainerId { get; set; }
 
         /// <summary>
         /// Gets or sets Recovery Plan object.
         /// </summary>
         [Parameter(ParameterSetName = ASRParameterSets.ByRPObject, Mandatory = true, ValueFromPipeline = true)]
         [ValidateNotNullOrEmpty]
-        public ASRRecoveryPlan RecoveryPlan {get; set;}
+        public ASRRecoveryPlan RecoveryPlan { get; set; }
 
         /// <summary>
         /// Gets or sets Protection Entity object.
         /// </summary>
         [Parameter(ParameterSetName = ASRParameterSets.ByPEObject, Mandatory = true, ValueFromPipeline = true)]
         [ValidateNotNullOrEmpty]
-        public ASRProtectionEntity ProtectionEntity {get; set;}
+        public ASRProtectionEntity ProtectionEntity { get; set; }
 
         /// <summary>
         /// Gets or sets Failover direction for the recovery plan.
         /// </summary>
         [Parameter(Mandatory = true)]
         [ValidateSet(
-            PSRecoveryServicesClient.PrimaryToRecovery,
-            PSRecoveryServicesClient.RecoveryToPrimary)]
-        public string Direction {get; set;}
+            Constants.PrimaryToRecovery,
+            Constants.RecoveryToPrimary)]
+        public string Direction { get; set; }
 
         /// <summary>
         /// Gets or sets switch parameter. This is required to wait for job completion.
         /// </summary>
         [Parameter]
-        public SwitchParameter WaitForCompletion {get; set;}
+        public SwitchParameter WaitForCompletion { get; set; }
         #endregion Parameters
 
         /// <summary>
@@ -93,6 +94,11 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         {
             try
             {
+                this.WriteWarningWithTimestamp(
+                    string.Format(
+                        Properties.Resources.CmdletWillBeDeprecatedSoon,
+                        this.MyInvocation.MyCommand.Name));
+
                 switch (this.ParameterSetName)
                 {
                     case ASRParameterSets.ByRPObject:
@@ -123,6 +129,24 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// </summary>
         private void SetRpReprotect()
         {
+            var request = new ReprotectRequest();
+
+            if (this.RecoveryPlan == null)
+            {
+                var rp = RecoveryServicesClient.GetAzureSiteRecoveryRecoveryPlan(
+                    this.RPId);
+                this.RecoveryPlan = new ASRRecoveryPlan(rp.RecoveryPlan);
+
+                this.ValidateUsageById(
+                    this.RecoveryPlan.ReplicationProvider,
+                    Constants.RPId);
+            }
+
+            request.ReplicationProvider = this.RecoveryPlan.ReplicationProvider;
+            request.ReplicationProviderSettings = string.Empty;
+
+            request.FailoverDirection = this.Direction; 
+            
             this.jobResponse = RecoveryServicesClient.UpdateAzureSiteRecoveryProtection(
                 this.RPId);
 
@@ -139,27 +163,52 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// </summary>
         private void SetPEReprotect()
         {
-            if (this.ProtectionEntity == null)
-            {
-                ProtectionEntityResponse protectionEntityResponse =
-                    RecoveryServicesClient.GetAzureSiteRecoveryProtectionEntity(
-                    this.ProtectionContainerId,
-                    this.ProtectionEntityId);
-                this.ProtectionEntity = new ASRProtectionEntity(protectionEntityResponse.ProtectionEntity);
-            }
-
-            // Until RR is done active location remains same from where FO was initiated.
-            if ((this.Direction == PSRecoveryServicesClient.PrimaryToRecovery &&
-                    this.ProtectionEntity.ActiveLocation != PSRecoveryServicesClient.RecoveryLocation) ||
-                (this.Direction == PSRecoveryServicesClient.RecoveryToPrimary &&
-                    this.ProtectionEntity.ActiveLocation != PSRecoveryServicesClient.PrimaryLocation))
+            if ((this.Direction == Constants.PrimaryToRecovery &&
+                    this.ProtectionEntity.ActiveLocation == Constants.RecoveryLocation) ||
+                (this.Direction == Constants.RecoveryToPrimary &&
+                    this.ProtectionEntity.ActiveLocation == Constants.PrimaryLocation))
             {
                 throw new ArgumentException("Parameter value is not correct.", "Direction");
             }
 
+            var request = new ReprotectRequest();
+
+            if (this.ProtectionEntity == null)
+            {
+                var pe = RecoveryServicesClient.GetAzureSiteRecoveryProtectionEntity(
+                    this.ProtectionContainerId,
+                    this.ProtectionEntityId);
+                this.ProtectionEntity = new ASRProtectionEntity(pe.ProtectionEntity);
+
+                this.ValidateUsageById(
+                    this.ProtectionEntity.ReplicationProvider,
+                    this.ProtectionEntityId);
+            }
+
+            request.ReplicationProviderSettings = string.Empty;
+
+            if (this.ProtectionEntity.ReplicationProvider == Constants.HyperVReplicaAzure)
+            {
+                if (this.Direction == Constants.PrimaryToRecovery)
+                {
+                    var blob = new AzureReProtectionInput();
+                    blob.HvHostVmId = this.ProtectionEntity.FabricObjectId;
+                    blob.VmName = this.ProtectionEntity.Name;
+
+                    blob.OSType = this.ProtectionEntity.OS;
+                    blob.VHDId = this.ProtectionEntity.OSDiskId;
+
+                    request.ReplicationProviderSettings = DataContractUtils.Serialize<AzureReProtectionInput>(blob);
+                }
+            }
+
+            request.ReplicationProvider = this.ProtectionEntity.ReplicationProvider;
+            request.FailoverDirection = this.Direction;
+
             this.jobResponse = RecoveryServicesClient.StartAzureSiteRecoveryReprotection(
                 this.ProtectionContainerId,
-                this.ProtectionEntityId);
+                this.ProtectionEntityId,
+                request);
 
             this.WriteJob(this.jobResponse.Job);
 

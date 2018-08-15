@@ -21,7 +21,6 @@ using System.Runtime.Serialization;
 using System.Xml;
 using Microsoft.Azure.Commands.RecoveryServices.SiteRecovery;
 using Microsoft.Azure.Portal.RecoveryServices.Models.Common;
-using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 
 namespace Microsoft.Azure.Commands.RecoveryServices
@@ -31,6 +30,9 @@ namespace Microsoft.Azure.Commands.RecoveryServices
     /// </summary>
     [Cmdlet(VerbsData.Import, "AzureSiteRecoveryVaultSettingsFile")]
     [OutputType(typeof(ASRVaultSettings))]
+    [Obsolete("This cmdlet has been marked for deprecation in an upcoming release. Please use the " +
+        "equivalent cmdlet from the AzureRm.RecoveryServices.SiteRecovery module instead.",
+        false)]
     public class ImportAzureSiteRecoveryVaultSettingsFile : RecoveryServicesCmdletBase
     {
         #region Parameters
@@ -44,7 +46,7 @@ namespace Microsoft.Azure.Commands.RecoveryServices
             HelpMessage = "AzureSiteRecovery vault settings file path", 
             ValueFromPipelineByPropertyName = true)]
         [ValidateNotNullOrEmpty]
-        public string Path {get; set;}
+        public string Path { get; set; }
         #endregion Parameters
 
         /// <summary>
@@ -59,6 +61,11 @@ namespace Microsoft.Azure.Commands.RecoveryServices
             {
                 try
                 {
+                    this.WriteWarningWithTimestamp(
+                        string.Format(
+                            Properties.Resources.CmdletWillBeDeprecatedSoon,
+                            this.MyInvocation.MyCommand.Name));
+
                     var serializer = new DataContractSerializer(typeof(ASRVaultCreds));
                     using (var s = new FileStream(
                         this.Path,
@@ -108,7 +115,7 @@ namespace Microsoft.Azure.Commands.RecoveryServices
                     asrVaultCreds.ResourceName,
                     asrVaultCreds.CloudServiceName);
 
-                this.ImportAzureSiteRecoveryVaultSettings(asrVaultCreds);
+                Utilities.UpdateVaultSettings(asrVaultCreds);
                 this.WriteObject(new ASRVaultSettings(
                     asrVaultCreds.ResourceName,
                     asrVaultCreds.CloudServiceName));
@@ -116,24 +123,6 @@ namespace Microsoft.Azure.Commands.RecoveryServices
             catch (Exception exception)
             {
                 this.HandleException(exception);
-            }
-        }
-
-        /// <summary>
-        /// Imports Azure Site Recovery Vault settings.
-        /// </summary>
-        /// <param name="asrVaultCreds">ASR Vault credentials</param>
-        public void ImportAzureSiteRecoveryVaultSettings(ASRVaultCreds asrVaultCreds)
-        {
-            object updateVaultSettingsOneAtATime = new object();
-            lock (updateVaultSettingsOneAtATime)
-            {
-                PSRecoveryServicesClient.asrVaultCreds.ResourceName =
-                    asrVaultCreds.ResourceName;
-                PSRecoveryServicesClient.asrVaultCreds.CloudServiceName =
-                    asrVaultCreds.CloudServiceName;
-                PSRecoveryServicesClient.asrVaultCreds.ChannelIntegrityKey =
-                    asrVaultCreds.ChannelIntegrityKey;
             }
         }
     }

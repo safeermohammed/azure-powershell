@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Configuration>
   <ViewDefinitions>
     <View>
@@ -43,8 +43,8 @@
                 <PropertyName>SslPort</PropertyName>
               </ListItem>
               <ListItem>
-                <Label>MaxMemoryPolicy</Label>
-                <PropertyName>MaxMemoryPolicy</PropertyName>
+                <Label>RedisConfiguration</Label>
+                <PropertyName>RedisConfiguration</PropertyName>
               </ListItem>
               <ListItem>
                 <Label>EnableNonSslPort</Label>
@@ -65,6 +65,30 @@
               <ListItem>
                 <Label>ResourceGroupName</Label>
                 <PropertyName>ResourceGroupName</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>SubnetId</Label>
+                <PropertyName>SubnetId</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>StaticIP</Label>
+                <PropertyName>StaticIP</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>TenantSettings</Label>
+                <PropertyName>TenantSettings</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>ShardCount</Label>
+                <PropertyName>ShardCount</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>Tag</Label>
+                <PropertyName>Tag</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>Zone</Label>
+                <PropertyName>Zone</PropertyName>
               </ListItem>
             </ListItems>
           </ListEntry>
@@ -113,8 +137,8 @@
                 <PropertyName>SslPort</PropertyName>
               </ListItem>
               <ListItem>
-                <Label>MaxMemoryPolicy</Label>
-                <PropertyName>MaxMemoryPolicy</PropertyName>
+                <Label>RedisConfiguration</Label>
+                <PropertyName>RedisConfiguration</PropertyName>
               </ListItem>
               <ListItem>
                 <Label>EnableNonSslPort</Label>
@@ -144,6 +168,30 @@
                 <Label>SecondaryKey</Label>
                 <PropertyName>SecondaryKey</PropertyName>
               </ListItem>
+              <ListItem>
+                <Label>SubnetId</Label>
+                <PropertyName>SubnetId</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>StaticIP</Label>
+                <PropertyName>StaticIP</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>TenantSettings</Label>
+                <PropertyName>TenantSettings</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>ShardCount</Label>
+                <PropertyName>ShardCount</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>Tag</Label>
+                <PropertyName>Tag</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>Zone</Label>
+                <PropertyName>Zone</PropertyName>
+              </ListItem>
             </ListItems>
           </ListEntry>
         </ListEntries>
@@ -165,6 +213,100 @@
               <ListItem>
                 <Label>SecondaryKey</Label>
                 <PropertyName>SecondaryKey</PropertyName>
+              </ListItem>
+            </ListItems>
+          </ListEntry>
+        </ListEntries>
+      </ListControl>
+    </View>
+    <View>
+      <Name>Microsoft.Azure.Commands.RedisCache.Models.PSRedisFirewallRule</Name>
+      <ViewSelectedBy>
+        <TypeName>Microsoft.Azure.Commands.RedisCache.Models.PSRedisFirewallRule</TypeName>
+      </ViewSelectedBy>
+      <ListControl>
+        <ListEntries>
+          <ListEntry>
+            <ListItems>
+              <ListItem>
+                <Label>ResourceGroupName</Label>
+                <PropertyName>ResourceGroupName</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>Name</Label>
+                <PropertyName>Name</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>FirewallRuleId</Label>
+                <PropertyName>FirewallRuleId</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>RuleName</Label>
+                <PropertyName>RuleName</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>Type</Label>
+                <PropertyName>Type</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>StartIP</Label>
+                <PropertyName>StartIP</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>EndIP</Label>
+                <PropertyName>EndIP</PropertyName>
+              </ListItem>
+            </ListItems>
+          </ListEntry>
+        </ListEntries>
+      </ListControl>
+    </View>
+    <View>
+      <Name>Microsoft.Azure.Commands.RedisCache.Models.PSRedisLinkedServer</Name>
+      <ViewSelectedBy>
+        <TypeName>Microsoft.Azure.Commands.RedisCache.Models.PSRedisLinkedServer</TypeName>
+      </ViewSelectedBy>
+      <ListControl>
+        <ListEntries>
+          <ListEntry>
+            <ListItems>
+              <ListItem>
+                <Label>PrimaryServerName</Label>
+                <PropertyName>PrimaryServerName</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>SecondaryServerName</Label>
+                <PropertyName>SecondaryServerName</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>ProvisioningState</Label>
+                <PropertyName>ProvisioningState</PropertyName>
+              </ListItem>
+            </ListItems>
+          </ListEntry>
+        </ListEntries>
+      </ListControl>
+    </View>
+    <View>
+      <Name>Microsoft.Azure.Commands.RedisCache.Models.PSScheduleEntry</Name>
+      <ViewSelectedBy>
+        <TypeName>Microsoft.Azure.Commands.RedisCache.Models.PSScheduleEntry</TypeName>
+      </ViewSelectedBy>
+      <ListControl>
+        <ListEntries>
+          <ListEntry>
+            <ListItems>
+              <ListItem>
+                <Label>DayOfWeek</Label>
+                <PropertyName>DayOfWeek</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>StartHourUtc</Label>
+                <PropertyName>StartHourUtc</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>MaintenanceWindow</Label>
+                <PropertyName>MaintenanceWindow</PropertyName>
               </ListItem>
             </ListItems>
           </ListEntry>

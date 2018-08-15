@@ -12,15 +12,33 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.Resources.Models.ActiveDirectory;
+using Hyak.Common;
+using Microsoft.Azure.Graph.RBAC.Version1_6.ActiveDirectory;
 using Microsoft.Azure.Management.Authorization.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using ProjectResources = Microsoft.Azure.Commands.Resources.Properties.Resources;
 
 namespace Microsoft.Azure.Commands.Resources.Models.Authorization
 {
     internal static class AuthorizationClientExtensions
     {
+        public const string CustomRole = "CustomRole";
+        public const string AuthorizationDeniedException = "Authorization_RequestDenied";
+        public const string DeletedObject = "Unknown";
+
+        public static IEnumerable<RoleAssignment> FilterRoleAssignmentsOnRoleId(this IEnumerable<RoleAssignment> assignments, string roleId)
+        {
+            if (!string.IsNullOrEmpty(roleId))
+            {
+                return assignments.Where(a => a.RoleDefinitionId.GuidFromFullyQualifiedId() == roleId.GuidFromFullyQualifiedId());
+            }
+
+            return assignments;
+        }
+
         public static PSRoleDefinition ToPSRoleDefinition(this RoleDefinition role)
         {
             PSRoleDefinition roleDefinition = null;
@@ -29,77 +47,189 @@ namespace Microsoft.Azure.Commands.Resources.Models.Authorization
             {
                 roleDefinition = new PSRoleDefinition
                 {
-                    Name = role.Properties.RoleName,
-                    Actions = new List<string>(role.Properties.Permissions.SelectMany(r => r.Actions)),
-                    NotActions = new List<string>(role.Properties.Permissions.SelectMany(r => r.NotActions)),
-                    Id = role.Id
+                    Name = role.RoleName,
+                    Actions = new List<string>(role.Permissions.SelectMany(r => r.Actions)),
+                    NotActions = new List<string>(role.Permissions.SelectMany(r => r.NotActions)),
+                    DataActions = new List<string>(role.Permissions.SelectMany(r => r.DataActions)),
+                    NotDataActions = new List<string>(role.Permissions.SelectMany(r => r.NotDataActions)),
+                    Id = role.Id.GuidFromFullyQualifiedId(),
+                    AssignableScopes = role.AssignableScopes.ToList(),
+                    Description = role.Description,
+                    IsCustom = role.RoleType == CustomRole ? true : false
                 };
             }
 
             return roleDefinition;
         }
 
-        public static PSRoleAssignment ToPSRoleAssignment(this RoleAssignment role, AuthorizationClient policyClient, ActiveDirectoryClient activeDirectoryClient)
+        public static PSRoleAssignment ToPSRoleAssignment(this RoleAssignment assignment, AuthorizationClient policyClient, ActiveDirectoryClient activeDirectoryClient, bool excludeAssignmentsForDeletedPrincipals = true)
         {
-            PSRoleDefinition roleDefinition = policyClient.GetRoleDefinition(role.Properties.RoleDefinitionId);
-            PSADObject adObject = activeDirectoryClient.GetADObject(new ADObjectFilterOptions { Id = role.Properties.PrincipalId.ToString() }) ?? new PSADObject() { Id = role.Properties.PrincipalId };
+            List<PSRoleDefinition> roleDefinitions = null;
 
-            if (adObject is PSADUser)
+            try
             {
-                return new PSUserRoleAssignment()
-                {
-                    RoleAssignmentId = role.Id,
-                    DisplayName = adObject.DisplayName,
-                    Actions = roleDefinition.Actions,
-                    NotActions = roleDefinition.NotActions,
-                    RoleDefinitionName = roleDefinition.Name,
-                    Scope = role.Properties.Scope,
-                    UserPrincipalName = ((PSADUser)adObject).UserPrincipalName,
-                    Mail = ((PSADUser)adObject).Mail,
-                    ObjectId = adObject.Id
-                };
+                roleDefinitions = new List<PSRoleDefinition> { policyClient.GetRoleDefinition(assignment.RoleDefinitionId) };
             }
-            else if (adObject is PSADGroup)
+            catch (CloudException ce)
             {
-                return new PSGroupRoleAssignment()
+                if (ce.Response.StatusCode == HttpStatusCode.Unauthorized)
                 {
-                    RoleAssignmentId = role.Id,
-                    DisplayName = adObject.DisplayName,
-                    Actions = roleDefinition.Actions,
-                    NotActions = roleDefinition.NotActions,
-                    RoleDefinitionName = roleDefinition.Name,
-                    Scope = role.Properties.Scope,
-                    Mail = ((PSADGroup)adObject).Mail,
-                    ObjectId = adObject.Id
-                };
+                    //Swallow unauthorized errors on RoleDefinition when displaying RoleAssignments
+                    roleDefinitions = new List<PSRoleDefinition>();
+                }
+                else
+                {
+                    throw;
+                }
             }
-            else if (adObject is PSADServicePrincipal)
+
+            IEnumerable<RoleAssignment> assignments = new List<RoleAssignment> { assignment };
+
+            return assignments.ToPSRoleAssignments(roleDefinitions, policyClient, activeDirectoryClient, excludeAssignmentsForDeletedPrincipals).SingleOrDefault();
+        }
+
+        public static IEnumerable<PSRoleAssignment> ToPSRoleAssignments(this IEnumerable<RoleAssignment> assignments, AuthorizationClient policyClient, ActiveDirectoryClient activeDirectoryClient, string scopeForRoleDefinitions, bool excludeAssignmentsForDeletedPrincipals = true)
+        {
+            IEnumerable<PSRoleDefinition> roleDefinitions = null;
+            try
             {
-                return new PSServiceRoleAssignment()
-                {
-                    RoleAssignmentId = role.Id,
-                    DisplayName = adObject.DisplayName,
-                    Actions = roleDefinition.Actions,
-                    NotActions = roleDefinition.NotActions,
-                    RoleDefinitionName = roleDefinition.Name,
-                    Scope = role.Properties.Scope,
-                    ServicePrincipalName = ((PSADServicePrincipal)adObject).ServicePrincipalName,
-                    ObjectId = adObject.Id
-                };
+                roleDefinitions = policyClient.GetAllRoleDefinitionsAtScopeAndBelow(scopeForRoleDefinitions);
             }
-            else
+            catch (CloudException ce)
             {
-                return new PSRoleAssignment()
+                if (ce.Response.StatusCode == HttpStatusCode.Unauthorized)
                 {
-                    RoleAssignmentId = role.Id,
-                    DisplayName = adObject.DisplayName,
-                    Actions = roleDefinition.Actions,
-                    NotActions = roleDefinition.NotActions,
-                    RoleDefinitionName = roleDefinition.Name,
-                    Scope = role.Properties.Scope,
-                    ObjectId = adObject.Id
-                };
+                    //Swallow unauthorized errors on RoleDefinition when displaying RoleAssignments
+                    roleDefinitions = new List<PSRoleDefinition>();
+                }
+                else
+                {
+                    throw;
+                }
             }
+
+            return assignments.ToPSRoleAssignments(roleDefinitions, policyClient, activeDirectoryClient, excludeAssignmentsForDeletedPrincipals);
+        }
+
+        private static IEnumerable<PSRoleAssignment> ToPSRoleAssignments(this IEnumerable<RoleAssignment> assignments, IEnumerable<PSRoleDefinition> roleDefinitions, AuthorizationClient policyClient, ActiveDirectoryClient activeDirectoryClient, bool excludeAssignmentsForDeletedPrincipals)
+        {
+            List<PSRoleAssignment> psAssignments = new List<PSRoleAssignment>();
+            if (assignments == null || !assignments.Any())
+            {
+                return psAssignments;
+            }
+
+            List<string> objectIds = new List<string>();
+            objectIds.AddRange(assignments.Select(r => r.PrincipalId.ToString()));
+            objectIds = objectIds.Distinct().ToList();
+            List<PSADObject> adObjects = null;
+            try
+            {
+                adObjects = activeDirectoryClient.GetObjectsByObjectId(objectIds);
+            }
+            catch (CloudException ce) when (IsAuthorizationDeniedException(ce))
+            {
+                throw new InvalidOperationException(ProjectResources.InSufficientGraphPermission);
+            }
+
+            foreach (RoleAssignment assignment in assignments)
+            {
+                assignment.RoleDefinitionId = assignment.RoleDefinitionId.GuidFromFullyQualifiedId();
+                PSADObject adObject = adObjects.SingleOrDefault(o => o.Id == Guid.Parse(assignment.PrincipalId)) ??
+                    new PSADObject() { Id = Guid.Parse(assignment.PrincipalId) };
+                PSRoleDefinition roleDefinition = roleDefinitions.SingleOrDefault(r => r.Id == assignment.RoleDefinitionId) ??
+                    new PSRoleDefinition() { Id = assignment.RoleDefinitionId };
+                bool delegationFlag = assignment.CanDelegate.HasValue ? (bool)assignment.CanDelegate : false;
+                if (adObject is PSADUser)
+                {
+                    psAssignments.Add(new PSRoleAssignment()
+                    {
+                        RoleAssignmentId = assignment.Id,
+                        DisplayName = adObject.DisplayName,
+                        RoleDefinitionId = roleDefinition.Id,
+                        RoleDefinitionName = roleDefinition.Name,
+                        Scope = assignment.Scope,
+                        SignInName = ((PSADUser)adObject).UserPrincipalName,
+                        ObjectId = adObject.Id,
+                        ObjectType = adObject.Type,
+                        CanDelegate = delegationFlag
+                    });
+                }
+                else if (adObject is PSADGroup)
+                {
+                    psAssignments.Add(new PSRoleAssignment()
+                    {
+                        RoleAssignmentId = assignment.Id,
+                        DisplayName = adObject.DisplayName,
+                        RoleDefinitionId = roleDefinition.Id,
+                        RoleDefinitionName = roleDefinition.Name,
+                        Scope = assignment.Scope,
+                        ObjectId = adObject.Id,
+                        ObjectType = adObject.Type,
+                        CanDelegate = delegationFlag
+                    });
+                }
+                else if (adObject is PSADServicePrincipal)
+                {
+                    psAssignments.Add(new PSRoleAssignment()
+                    {
+                        RoleAssignmentId = assignment.Id,
+                        DisplayName = adObject.DisplayName,
+                        RoleDefinitionId = roleDefinition.Id,
+                        RoleDefinitionName = roleDefinition.Name,
+                        Scope = assignment.Scope,
+                        ObjectId = adObject.Id,
+                        ObjectType = adObject.Type,
+                        CanDelegate = delegationFlag
+                    });
+                }
+                else if (!excludeAssignmentsForDeletedPrincipals)
+                {
+                    psAssignments.Add(new PSRoleAssignment()
+                    {
+                        RoleAssignmentId = assignment.Id,
+                        DisplayName = adObject.DisplayName,
+                        RoleDefinitionId = roleDefinition.Id,
+                        RoleDefinitionName = roleDefinition.Name,
+                        Scope = assignment.Scope,
+                        ObjectId = adObject.Id,
+                        CanDelegate = delegationFlag,
+                        ObjectType = DeletedObject
+                    });
+                }
+
+                // Ignore the assignment if principal does not exists and excludeAssignmentsForDeletedPrincipals is set to true
+            }
+
+            return psAssignments;
+        }
+
+        public static PSRoleAssignment ToPSRoleAssignment(this ClassicAdministrator classicAdministrator, string currentSubscriptionId)
+        {
+            return new PSRoleAssignment()
+            {
+                RoleDefinitionName = classicAdministrator.Role,
+                DisplayName = classicAdministrator.EmailAddress,
+                SignInName = classicAdministrator.EmailAddress,
+                Scope = AuthorizationHelper.GetSubscriptionScope(currentSubscriptionId),
+                ObjectType = "User"
+            };
+        }
+
+        private static string GuidFromFullyQualifiedId(this string Id)
+        {
+            return Id.TrimEnd('/').Substring(Id.LastIndexOf('/') + 1);
+        }
+
+        private static bool IsAuthorizationDeniedException(CloudException ce)
+        {
+            if (ce.Response != null && ce.Response.StatusCode == HttpStatusCode.Unauthorized &&
+                ce.Error != null && ce.Error.Code != null && string.Equals(ce.Error.Code, AuthorizationDeniedException, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -15,17 +15,21 @@
 using System;
 using System.IO;
 using System.Management.Automation;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.CloudService.Development.Scaffolding;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
 using Microsoft.WindowsAzure.Commands.Utilities.Properties;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.WindowsAzure.Commands.Common;
 
 namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Scaffolding.Cmdlet
 {
     
-    public class NewAzureServiceTests : TestBase
+    public class NewAzureServiceTests : SMTestBase
     {
         NewAzureServiceProjectCommand cmdlet;
 
@@ -36,9 +40,11 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Scaffold
             cmdlet = new NewAzureServiceProjectCommand();
             mockCommandRuntime = new MockCommandRuntime();
             cmdlet.CommandRuntime = mockCommandRuntime;
+            TestMockSupport.TestExecutionFolder = AppDomain.CurrentDomain.BaseDirectory;
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void NewAzureServiceSuccessfull()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))
@@ -64,6 +70,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.CloudService.Development.Scaffold
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void NewAzureServiceWithInvalidNames()
         {
             using (FileSystemHelper files = new FileSystemHelper(this))

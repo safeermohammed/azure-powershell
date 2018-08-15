@@ -16,40 +16,47 @@ using System;
 using System.Collections.Generic;
 using System.Management.Automation;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Profile;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Moq;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
+using System.IO;
+using Microsoft.Azure.ServiceManagemenet.Common;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Environment
 {
-    public class RemoveAzureEnvironmentTests : TestBase, IDisposable
+    public class RemoveAzureEnvironmentTests : SMTestBase, IDisposable
     {
-        private MockDataStore dataStore;
+        private MemoryDataStore dataStore;
 
         public RemoveAzureEnvironmentTests()
         {
-            dataStore = new MockDataStore();
-            ProfileClient.DataStore = dataStore;
+            dataStore = new MemoryDataStore();
+            AzureSession.Instance.DataStore = dataStore;
         }
 
         public void Cleanup()
         {
-            AzureSession.SetCurrentContext(null, null, null);
+            currentProfile = null;
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void RemovesAzureEnvironment()
         {
             var commandRuntimeMock = new Mock<ICommandRuntime>();
             commandRuntimeMock.Setup(f => f.ShouldProcess(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
 
             const string name = "test";
-            ProfileClient client = new ProfileClient();
+            var profile = new AzureSMProfile(Path.Combine(AzureSession.Instance.ProfileDirectory, AzureSession.Instance.ProfileFile));
+            AzureSMCmdlet.CurrentProfile = profile;
+            ProfileClient client = new ProfileClient(profile);
             client.AddOrSetEnvironment(new AzureEnvironment
             {
                 Name = name
@@ -67,11 +74,12 @@ namespace Microsoft.WindowsAzure.Commands.Test.Environment
             cmdlet.ExecuteCmdlet();
             cmdlet.InvokeEndProcessing();
 
-            client = new ProfileClient();
-            Assert.False(client.Profile.Environments.ContainsKey(name));
+            client = new ProfileClient(new AzureSMProfile(Path.Combine(AzureSession.Instance.ProfileDirectory, AzureSession.Instance.ProfileFile)));
+            Assert.False(client.Profile.EnvironmentTable.ContainsKey(name));
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ThrowsForUnknownEnvironment()
         {
             Mock<ICommandRuntime> commandRuntimeMock = new Mock<ICommandRuntime>();
@@ -89,6 +97,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Environment
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ThrowsForPublicEnvironment()
         {
             Mock<ICommandRuntime> commandRuntimeMock = new Mock<ICommandRuntime>();

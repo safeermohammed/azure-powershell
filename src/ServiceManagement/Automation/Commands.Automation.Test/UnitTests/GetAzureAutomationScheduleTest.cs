@@ -26,7 +26,7 @@ using Moq;
 namespace Microsoft.Azure.Commands.Automation.Test.UnitTests
 {
     [TestClass]
-    public class GetAzureAutomationScheduleTest : TestBase
+    public class GetAzureAutomationScheduleTest : SMTestBase
     {
         private Mock<IAutomationClient> mockAutomationClient;
 
@@ -70,8 +70,9 @@ namespace Microsoft.Azure.Commands.Automation.Test.UnitTests
         {
             // Setup
             string accountName = "automation";
+            string nextLink = string.Empty;
 
-            this.mockAutomationClient.Setup(f => f.ListSchedules(accountName)).Returns((string a) => new List<Schedule>());
+            this.mockAutomationClient.Setup(f => f.ListSchedules(accountName, ref nextLink)).Returns((string a, string b) => new List<Schedule>());
 
             // Test
             this.cmdlet.AutomationAccountName = accountName;
@@ -79,7 +80,7 @@ namespace Microsoft.Azure.Commands.Automation.Test.UnitTests
             this.cmdlet.ExecuteCmdlet();
 
             // Assert
-            this.mockAutomationClient.Verify(f => f.ListSchedules(accountName), Times.Once());
+            this.mockAutomationClient.Verify(f => f.ListSchedules(accountName, ref nextLink), Times.Once());
         }
     }
 }

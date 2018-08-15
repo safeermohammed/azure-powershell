@@ -19,21 +19,43 @@ namespace Microsoft.Azure.Commands.DataFactories.Test
 {
     public class DataFactoryGatewayTests : DataFactoriesScenarioTestsBase
     {
-        [Fact]
+        public DataFactoryGatewayTests(Xunit.Abstractions.ITestOutputHelper output)
+        {
+            Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
+        }
+
+        [Fact(Skip = "test takes too long (more than 5 sec)")]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestGetNonExistingDataFactoryGateway()
         {
             RunPowerShellTest("Test-GetNonExistingDataFactoryGateway");
         }
 
+#if NETSTANDARD
+        [Fact(Skip = "Management library needs NetCore republish")]
+        [Trait(Category.RunType, Category.DesktopOnly)]
+#else
         [Fact]
+#endif
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestCreateDataFactoryGateway()
         {
             RunPowerShellTest("Test-DataFactoryGateway");
         }
 
+#if NETSTANDARD
+        [Fact(Skip = "Management library needs NetCore republish")]
+        [Trait(Category.RunType, Category.DesktopOnly)]
+#else
         [Fact]
+#endif
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestDataFactoryGatewayAuthKey()
+        {
+            RunPowerShellTest("Test-DataFactoryGatewayAuthKey");
+        }
+
+        [Fact(Skip = "test takes too long (more than 5 sec)")]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestCreateDataFactoryGatewayWithDataFactoryParameter()
         {

@@ -15,41 +15,47 @@
 using System;
 using System.Collections.Generic;
 using System.Management.Automation;
+using Microsoft.WindowsAzure.Commands.Profile.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Profile;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Properties;
 using Moq;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
+using System.IO;
+using Microsoft.Azure.ServiceManagemenet.Common;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Environment
 {
     
-    public class SetAzureEnvironmentTests : TestBase, IDisposable
+    public class SetAzureEnvironmentTests : SMTestBase, IDisposable
     {
-        private MockDataStore dataStore;
+        private MemoryDataStore dataStore;
 
         public SetAzureEnvironmentTests()
         {
-            dataStore = new MockDataStore();
-            ProfileClient.DataStore = dataStore;
+            dataStore = new MemoryDataStore();
+            AzureSession.Instance.DataStore = dataStore;
         }
 
         public void Cleanup()
         {
-            AzureSession.SetCurrentContext(null, null, null);
+            currentProfile = null;
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void SetsAzureEnvironment()
         {
             Mock<ICommandRuntime> commandRuntimeMock = new Mock<ICommandRuntime>();
             string name = "Katal";
-            ProfileClient client = new ProfileClient();
+            ProfileClient client = new ProfileClient(new AzureSMProfile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AzureSession.Instance.ProfileFile)));
             client.AddOrSetEnvironment(new AzureEnvironment { Name = name });
 
             SetAzureEnvironmentCommand cmdlet = new SetAzureEnvironmentCommand()
@@ -63,21 +69,23 @@ namespace Microsoft.WindowsAzure.Commands.Test.Environment
                 GalleryEndpoint = "galleryendpoint"
             };
 
+            cmdlet.Profile = client.Profile;
             cmdlet.InvokeBeginProcessing();
             cmdlet.ExecuteCmdlet();
             cmdlet.InvokeEndProcessing();
 
-            commandRuntimeMock.Verify(f => f.WriteObject(It.IsAny<AzureEnvironment>()), Times.Once());
-            client = new ProfileClient();
-            AzureEnvironment env = client.Profile.Environments["KaTaL"];
+            commandRuntimeMock.Verify(f => f.WriteObject(It.IsAny<PSAzureEnvironment>()), Times.Once());
+            client = new ProfileClient(new AzureSMProfile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, AzureSession.Instance.ProfileFile)));
+            IAzureEnvironment env = client.Profile.EnvironmentTable["KaTaL"];
             Assert.Equal(env.Name.ToLower(), cmdlet.Name.ToLower());
-            Assert.Equal(env.Endpoints[AzureEnvironment.Endpoint.PublishSettingsFileUrl], cmdlet.PublishSettingsFileUrl);
-            Assert.Equal(env.Endpoints[AzureEnvironment.Endpoint.ServiceManagement], cmdlet.ServiceEndpoint);
-            Assert.Equal(env.Endpoints[AzureEnvironment.Endpoint.ManagementPortalUrl], cmdlet.ManagementPortalUrl);
-            Assert.Equal(env.Endpoints[AzureEnvironment.Endpoint.Gallery], "galleryendpoint");
+            Assert.Equal(env.PublishSettingsFileUrl, cmdlet.PublishSettingsFileUrl);
+            Assert.Equal(env.ServiceManagementUrl, cmdlet.ServiceEndpoint);
+            Assert.Equal(env.ManagementPortalUrl, cmdlet.ManagementPortalUrl);
+            Assert.Equal(env.GalleryUrl, "galleryendpoint");
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ThrowsWhenSettingPublicEnvironment()
         {
             Mock<ICommandRuntime> commandRuntimeMock = new Mock<ICommandRuntime>();
@@ -90,9 +98,12 @@ namespace Microsoft.WindowsAzure.Commands.Test.Environment
                     Name = name,
                     PublishSettingsFileUrl = "http://microsoft.com"
                 };
-
-                cmdlet.InvokeBeginProcessing();
-                Assert.Throws<ArgumentException>(() => cmdlet.ExecuteCmdlet());
+                var savedValue = AzureEnvironment.PublicEnvironments[name].GetEndpoint(AzureEnvironment.Endpoint.PublishSettingsFileUrl);
+               cmdlet.InvokeBeginProcessing();
+                Assert.Throws<InvalidOperationException>(() => cmdlet.ExecuteCmdlet());
+                var newValue = cmdlet.ProfileClient.Profile.EnvironmentTable[name].GetEndpoint(AzureEnvironment.Endpoint.PublishSettingsFileUrl);
+                Assert.Equal(savedValue, newValue);
+                Assert.NotEqual(cmdlet.PublishSettingsFileUrl, newValue);
             }
         }
 

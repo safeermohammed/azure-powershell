@@ -18,6 +18,7 @@ using System.Globalization;
 using System.Linq;
 using System.Management.Automation;
 using AutoMapper;
+using Microsoft.WindowsAzure.Commands.ServiceManagement.Common;
 using Microsoft.WindowsAzure.Commands.ServiceManagement.Helpers;
 using Microsoft.WindowsAzure.Commands.ServiceManagement.Properties;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
@@ -26,7 +27,7 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS
 {
     using PVM = Model;
 
-    [Cmdlet(VerbsData.Export, "AzureVM")]
+    [Cmdlet(VerbsData.Export, ProfileNouns.VirtualMachine)]
     public class ExportAzureVMCommand : IaaSDeploymentManagementCmdletBase
     {
         [Parameter(Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Service name.")]
@@ -96,20 +97,21 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS
                         ConfigurationSets = PersistentVMHelper.MapConfigurationSets(vm.ConfigurationSets),
                         DataVirtualHardDisks = new Collection<PVM.DataVirtualHardDisk>(),
                         Label = vm.Label,
-                        OSVirtualHardDisk = Mapper.Map(vm.OSVirtualHardDisk, new PVM.OSVirtualHardDisk()),
+                        OSVirtualHardDisk = ServiceManagementProfile.Mapper.Map(vm.OSVirtualHardDisk, new PVM.OSVirtualHardDisk()),
                         RoleName = vm.RoleName,
                         RoleSize = vm.RoleSize.ToString(),
                         RoleType = vm.RoleType,
                         DefaultWinRmCertificateThumbprint = vm.DefaultWinRmCertificateThumbprint,
                         ProvisionGuestAgent = vm.ProvisionGuestAgent,
-                        ResourceExtensionReferences = Mapper.Map<PVM.ResourceExtensionReferenceList>(vm.ResourceExtensionReferences)
+                        ResourceExtensionReferences = ServiceManagementProfile.Mapper.Map<PVM.ResourceExtensionReferenceList>(vm.ResourceExtensionReferences),
+                        DebugSettings = ServiceManagementProfile.Mapper.Map<PVM.DebugSettings>(vm.DebugSettings)
                     }
                 };
 
                 if (vm.DataVirtualHardDisks != null)
                 {
                     vm.DataVirtualHardDisks.ForEach(
-                        d => vmContext.VM.DataVirtualHardDisks.Add(Mapper.Map<PVM.DataVirtualHardDisk>(d)));
+                        d => vmContext.VM.DataVirtualHardDisks.Add(ServiceManagementProfile.Mapper.Map<PVM.DataVirtualHardDisk>(d)));
                 }
                 else
                 {

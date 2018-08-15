@@ -14,7 +14,6 @@
 
 using Microsoft.Azure.Commands.DataFactories.Models;
 using Microsoft.Azure.Commands.DataFactories.Properties;
-using Microsoft.WindowsAzure.Storage.Auth;
 using System;
 using System.Globalization;
 using System.IO;
@@ -61,7 +60,7 @@ namespace Microsoft.Azure.Commands.DataFactories
                 ResourceGroupName = DataFactory.ResourceGroupName;
             }
 
-            PSRunLogInfo runLog =
+            Uri runLogUri =
                 DataFactoryClient.GetDataSliceRunLogsSharedAccessSignature(
                     ResourceGroupName, DataFactoryName, Id);
             if (DownloadLogs.IsPresent)
@@ -80,11 +79,10 @@ namespace Microsoft.Azure.Commands.DataFactories
                     DataFactoryClient.DownloadFileToBlob(new BlobDownloadParameters()
                     {
                         Directory = directory,
-                        SasUri = new Uri(runLog.SasUri),
-                        Credentials = new StorageCredentials(runLog.SasToken)
+                        SasUri = runLogUri,
                     });
                 }
-                catch 
+                catch
                 {
                     throw new Exception(string.Format(CultureInfo.InvariantCulture, Resources.DownloadFailed, directory));
                 }
@@ -92,7 +90,7 @@ namespace Microsoft.Azure.Commands.DataFactories
                 WriteWarning(string.Format(CultureInfo.InvariantCulture, Resources.DownloadLogCompleted, directory));
             }
 
-            WriteObject(runLog);
+            WriteObject(new PSRunLogInfo(runLogUri));
         }
 
         private bool HaveWriteAccess(string directory)
@@ -101,7 +99,12 @@ namespace Microsoft.Azure.Commands.DataFactories
             bool writeDeny = false;
             try
             {
+#if NETSTANDARD
+                //https://stackoverflow.com/a/41019841/294804
+                var accessControlList = new DirectorySecurity(directory, AccessControlSections.All);
+#else
                 DirectorySecurity accessControlList = Directory.GetAccessControl(directory);
+#endif
                 if (accessControlList == null)
                 {
                     return false;
@@ -138,8 +141,6 @@ namespace Microsoft.Azure.Commands.DataFactories
             {
                 return false;
             }
-
-            
         }
     }
 }

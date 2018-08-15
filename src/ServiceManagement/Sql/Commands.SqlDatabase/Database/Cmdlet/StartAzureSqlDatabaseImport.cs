@@ -13,16 +13,16 @@
 
 using System;
 using System.Management.Automation;
-using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common.Storage;
+using Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Common;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services.ImportExport;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server;
-using Microsoft.WindowsAzure.Commands.Storage.Model.ResourceModel;
 using Microsoft.WindowsAzure.Management.Sql;
 using Microsoft.WindowsAzure.Management.Sql.Models;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+using Microsoft.WindowsAzure.Commands.Storage.Adapters;
 
 namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
 {
@@ -51,12 +51,13 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
         #region Parameters
 
         /// <summary>
-        /// Gets or sets the context for connecting to the server
+        /// Gets or sets the connection information for connecting to the server
         /// </summary>
         [Parameter(Mandatory = true, Position = 0,
-            HelpMessage = "The context for connecting to the server")]
+            HelpMessage = "The connection information for connecting to a server. " +
+            "This can be an Azure SQL Server connection context that uses username with password.")]
         [ValidateNotNullOrEmpty]
-        public ServerDataServiceSqlAuth SqlConnectionContext { get; set; }
+        public ISqlServerConnectionInformation SqlConnectionContext { get; set; }
 
         /// <summary>
         /// Gets or sets the storage container object containing the blob
@@ -74,7 +75,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
             ParameterSetName = ByContainerNameParameterSet,
             HelpMessage = "The storage connection context")]
         [ValidateNotNull]
-        public AzureStorageContext StorageContext { get; set; }
+        public IStorageContext StorageContext { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the storage container to use.
@@ -208,7 +209,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
                     case ByContainerNameParameterSet:
                         accessKey =
                             System.Convert.ToBase64String(
-                                this.StorageContext.StorageAccount.Credentials.ExportKey());
+                                this.StorageContext.GetCloudStorageAccount().Credentials.ExportKey());
 
                         blobUri =
                             this.StorageContext.BlobEndPoint +
@@ -233,7 +234,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
 
                 // Retrieve the fully qualified server name
                 string fullyQualifiedServerName =
-                    this.SqlConnectionContext.ServerName + AzureSession.CurrentContext.Environment.GetEndpoint(AzureEnvironment.Endpoint.SqlDatabaseDnsSuffix);
+                    this.SqlConnectionContext.ServerName + Profile.Context.Environment.GetEndpoint(AzureEnvironment.Endpoint.SqlDatabaseDnsSuffix);
                 
                 // Issue the request
                 ImportExportRequest context = this.ImportSqlAzureDatabaseProcess(

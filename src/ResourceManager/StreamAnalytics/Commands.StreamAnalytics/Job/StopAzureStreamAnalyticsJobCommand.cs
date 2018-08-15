@@ -12,13 +12,12 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
+using Microsoft.Azure.Commands.StreamAnalytics.Models;
+using Microsoft.Azure.Commands.StreamAnalytics.Properties;
 using System.Globalization;
 using System.Management.Automation;
 using System.Net;
 using System.Security.Permissions;
-using Microsoft.Azure.Commands.StreamAnalytics.Models;
-using Microsoft.Azure.Commands.StreamAnalytics.Properties;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics
 {
@@ -45,19 +44,8 @@ namespace Microsoft.Azure.Commands.StreamAnalytics
 
             try
             {
-                HttpStatusCode statusCode = StreamAnalyticsClient.StopPSJob(parameter);
-                if (statusCode == HttpStatusCode.OK)
-                {
-                    WriteObject(true);
-                }
-                else if (statusCode == HttpStatusCode.NoContent)
-                {
-                    WriteWarning(string.Format(CultureInfo.InvariantCulture, Resources.JobNotFound, Name, ResourceGroupName));
-                }
-                else
-                {
-                    WriteObject(false);
-                }
+                StreamAnalyticsClient.StopPSJob(parameter);
+                WriteObject(true);
             }
             catch
             {

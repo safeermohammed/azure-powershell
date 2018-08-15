@@ -18,7 +18,10 @@ using System.IO;
 using Microsoft.WindowsAzure.Commands.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.ServiceManagemenet.Common;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Common
 {
@@ -43,19 +46,13 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Common
         /// Gets a reference to the test class using the FileSystemHelper to
         /// provide access to its logging.
         /// </summary>
-        public TestBase TestInstance { get; private set; }
+        public SMTestBase TestInstance { get; private set; }
 
         /// <summary>
         /// Monitors changes to the file system.
         /// </summary>
         private FileSystemWatcher _watcher = null;
-
-        /// <summary>
-        /// The previous Environment.CurrentDirectory which is cached so it can
-        /// be restored on disposal.
-        /// </summary>
-        private string _previousDirectory = null;
-
+        
         /// <summary>
         /// Gets or sets a value indicating whether to enable monitoring on
         /// the portion of the file system being managed by FileSystemHelper.
@@ -92,7 +89,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Common
         /// <param name="testInstance">
         /// Reference to the test class (to access its logging).
         /// </param>
-        public FileSystemHelper(TestBase testInstance)
+        public FileSystemHelper(SMTestBase testInstance)
             : this(testInstance, GetTemporaryDirectoryName())
         {
         }
@@ -104,7 +101,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Common
         /// Reference to the test class (to access its logging).
         /// </param>
         /// <param name="rootPath">The rootPath directory.</param>
-        public FileSystemHelper(TestBase testInstance, string rootPath)
+        public FileSystemHelper(SMTestBase testInstance, string rootPath)
         {
             Debug.Assert(testInstance != null);
             Debug.Assert(!string.IsNullOrEmpty(rootPath));
@@ -143,15 +140,13 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Common
                         
                         AzureSdkPath = null;
                     }
-
-                    // Restore the previous CurrentDirectory
-                    if (_previousDirectory != null)
-                    {
-                        Environment.CurrentDirectory = _previousDirectory;
-                    }
-
+                    
                     Log("Deleting directory {0}", RootPath);
-                    FileUtilities.DataStore.DeleteDirectory(RootPath);
+                    try
+                    {
+                        FileUtilities.DataStore.DeleteDirectory(RootPath);
+                    }
+                    catch { }
 
                     DisposeWatcher();
 
@@ -214,7 +209,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Common
         /// <summary>
         /// Create a random directory name that doesn't yet exist on disk.
         /// </summary>
-        /// <returns>A random, non-existant directory name.</returns>
+        /// <returns>A random, non-existent directory name.</returns>
         public static string GetTemporaryDirectoryName()
         {
             string path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
@@ -287,8 +282,8 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Common
             Debug.Assert(string.IsNullOrEmpty(AzureSdkPath));
 
             AzureSdkPath = CreateDirectory("AzureSdk");
-            ProfileClient client = new ProfileClient();
-            ProfileClient.DataStore.WriteFile(publishSettingsPath, File.ReadAllText(publishSettingsPath));
+            ProfileClient client = new ProfileClient(new AzureSMProfile(Path.Combine(AzureSession.Instance.ProfileDirectory, AzureSession.Instance.ProfileFile)));
+            AzureSession.Instance.DataStore.WriteFile(publishSettingsPath, File.ReadAllText(publishSettingsPath));
             client.ImportPublishSettings(publishSettingsPath, null);
             client.Profile.Save();
 
@@ -303,11 +298,9 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Common
         /// <returns>Directory created for the service.</returns>
         public string CreateNewService(string serviceName)
         {
-            CloudServiceProject newService = new CloudServiceProject(RootPath, serviceName, FileUtilities.GetContentFilePath("Services"));
+            CloudServiceProject newService = new CloudServiceProject(RootPath, serviceName, FileUtilities.GetContentFilePath(@"..\..\..\..\..\Package\Debug\ServiceManagement\Azure\Services"));
             string path = Path.Combine(RootPath, serviceName);
-            _previousDirectory = Environment.CurrentDirectory;
-            Environment.CurrentDirectory = path;
-
+            TestMockSupport.TestExecutionFolder = path;
             return path;
         }
 
@@ -323,8 +316,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Utilities.Common
                 + "xmlns=\"http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration\" " 
                 + "osFamily=\"2\" osVersion=\"*\" />";
             FileUtilities.DataStore.WriteFile(configuration, template);
-            _previousDirectory = Environment.CurrentDirectory;
-            Environment.CurrentDirectory = RootPath;
+            TestMockSupport.TestExecutionFolder = RootPath;
         }
     }
 }

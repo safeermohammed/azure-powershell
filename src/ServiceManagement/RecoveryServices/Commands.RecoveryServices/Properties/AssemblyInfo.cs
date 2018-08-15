@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,6 @@ using System.Runtime.InteropServices;
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
-[assembly: AssemblyVersion("0.8.3")]
-[assembly: AssemblyFileVersion("0.8.3")]
+[assembly: AssemblyVersion("5.3.0")]
+[assembly: AssemblyFileVersion("5.3.0")]
 [assembly: CLSCompliant(false)]

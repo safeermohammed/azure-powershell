@@ -1,4 +1,4 @@
-﻿﻿// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,20 @@
 
 using System.IO;
 using System.Management.Automation;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.CloudService;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.ServiceBus;
 using Microsoft.WindowsAzure.Commands.Utilities.Websites;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
+using System.Reflection;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+using Microsoft.WindowsAzure.Commands.Common;
 
 namespace Microsoft.WindowsAzure.Commands.CloudService
 {
     [Cmdlet(VerbsDiagnostic.Test, "AzureName"), OutputType(typeof(bool))]
-    public class TestAzureNameCommand : AzurePSCmdlet, IModuleAssemblyInitializer
+    public class TestAzureNameCommand : AzureSMCmdlet, IModuleAssemblyInitializer
     {
         internal ServiceBusClientExtensions ServiceBusClient { get; set; }
         internal ICloudServiceClient CloudServiceClient { get; set; }
@@ -49,7 +52,7 @@ namespace Microsoft.WindowsAzure.Commands.CloudService
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
-        public bool IsDNSAvailable(AzureSubscription subscription, string name)
+        public bool IsDNSAvailable(IAzureSubscription subscription, string name)
         {
             EnsureCloudServiceClientInitialized(subscription);
             bool available = this.CloudServiceClient.CheckHostedServiceNameAvailability(name);
@@ -57,7 +60,7 @@ namespace Microsoft.WindowsAzure.Commands.CloudService
             return available;
         }
 
-        public bool IsStorageServiceAvailable(AzureSubscription subscription, string name)
+        public bool IsStorageServiceAvailable(IAzureSubscription subscription, string name)
         {
             EnsureCloudServiceClientInitialized(subscription);
             bool available = this.CloudServiceClient.CheckStorageServiceAvailability(name);
@@ -74,9 +77,10 @@ namespace Microsoft.WindowsAzure.Commands.CloudService
             return result;
         }
 
-        private void EnsureCloudServiceClientInitialized(AzureSubscription subscription)
+        private void EnsureCloudServiceClientInitialized(IAzureSubscription subscription)
         {
             this.CloudServiceClient = this.CloudServiceClient ?? new CloudServiceClient(
+                Profile,
                 subscription,
                 SessionState.Path.CurrentLocation.Path,
                 WriteDebug,
@@ -97,30 +101,41 @@ namespace Microsoft.WindowsAzure.Commands.CloudService
 
             if (Service.IsPresent)
             {
-                IsDNSAvailable(CurrentContext.Subscription, Name);
+                IsDNSAvailable(Profile.Context.Subscription, Name);
             }
             else if (Storage.IsPresent)
             {
-                IsStorageServiceAvailable(CurrentContext.Subscription, Name);
+                IsStorageServiceAvailable(Profile.Context.Subscription, Name);
             }
             else if (Website.IsPresent)
             {
-                WebsitesClient = WebsitesClient ?? new WebsitesClient(CurrentContext.Subscription, WriteDebug);
+                WebsitesClient = WebsitesClient ?? new WebsitesClient(Profile, Profile.Context.Subscription, WriteDebug);
                 IsWebsiteAvailable(Name);
             }
             else
             {
-                ServiceBusClient = ServiceBusClient ?? new ServiceBusClientExtensions(CurrentContext.Subscription);
-                IsServiceBusNamespaceAvailable(CurrentContext.Subscription.Id.ToString(), Name);
+                ServiceBusClient = ServiceBusClient ?? new ServiceBusClientExtensions(Profile);
+                IsServiceBusNamespaceAvailable(Profile.Context.Subscription.Id.ToString(), Name);
             }
         }
 
         public void OnImport()
         {
-            System.Management.Automation.PowerShell invoker = null;
-            invoker = System.Management.Automation.PowerShell.Create(RunspaceMode.CurrentRunspace);
-            invoker.AddScript(File.ReadAllText(FileUtilities.GetContentFilePath("ServiceManagementStartup.ps1")));
-            invoker.Invoke();
+            try
+            {
+                AzureSessionInitializer.InitializeAzureSession();
+                ServiceManagementProfileProvider.InitializeServiceManagementProfile();
+                System.Management.Automation.PowerShell invoker = null;
+                invoker = System.Management.Automation.PowerShell.Create(RunspaceMode.CurrentRunspace);
+                invoker.AddScript(File.ReadAllText(FileUtilities.GetContentFilePath(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    "ServiceManagementStartup.ps1")));
+                invoker.Invoke();
+            }
+            catch
+            {
+                // This will throw exception for tests, ignore.
+            }
         }
     }
 }

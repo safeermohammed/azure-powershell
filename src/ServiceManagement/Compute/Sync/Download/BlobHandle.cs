@@ -12,16 +12,16 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Microsoft.WindowsAzure.Commands.Sync.Upload;
 using Microsoft.WindowsAzure.Commands.Tools.Vhd.Model;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace Microsoft.WindowsAzure.Commands.Sync.Download
 {
@@ -41,21 +41,21 @@ namespace Microsoft.WindowsAzure.Commands.Sync.Download
             this.storageAccountKey = storageAccountKey;
             var blobClient = new CloudBlobClient(new Uri(this.blobUri.BaseUri), new StorageCredentials(this.blobUri.StorageAccountName, this.storageAccountKey));
             this.container = blobClient.GetContainerReference(this.blobUri.BlobContainerName);
-            this.container.FetchAttributes();
+            this.container.FetchAttributesAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             this.pageBlob = this.container.GetPageBlobReference(blobUri.BlobName);
             this.blobRequestOptions = new BlobRequestOptions
-                                          {
-                                              ServerTimeout = TimeSpan.FromMinutes(5),
-                                              RetryPolicy = new LinearRetry(TimeSpan.FromMinutes(1), 3)
-                                          };
-            this.pageBlob.FetchAttributes(new AccessCondition(), blobRequestOptions);
+            {
+                ServerTimeout = TimeSpan.FromMinutes(5),
+                RetryPolicy = new LinearRetry(TimeSpan.FromMinutes(1), 3)
+            };
+            this.pageBlob.FetchAttributesAsync(new AccessCondition(), blobRequestOptions, operationContext: null).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         public CloudPageBlob Blob { get { return this.pageBlob; } }
 
         public IEnumerable<IndexRange> GetEmptyRanges()
         {
-            var blobRange = new List<IndexRange> {IndexRange.FromLength(0, this.Length)};
+            var blobRange = new List<IndexRange> { IndexRange.FromLength(0, this.Length) };
             return IndexRange.SubstractRanges(blobRange, GetPageRanges());
         }
 
@@ -68,15 +68,18 @@ namespace Microsoft.WindowsAzure.Commands.Sync.Download
 
         private IEnumerable<IndexRange> GetPageRanges()
         {
-            pageBlob.FetchAttributes(new AccessCondition(), blobRequestOptions);
-            IEnumerable<PageRange> pageRanges = pageBlob.GetPageRanges(null, null, new AccessCondition(), blobRequestOptions);
-            pageRanges.OrderBy(range => range.StartOffset);
+            pageBlob.FetchAttributesAsync(new AccessCondition(), blobRequestOptions, operationContext: null)
+                    .ConfigureAwait(false).GetAwaiter().GetResult();
+            IEnumerable<PageRange> pageRanges = pageBlob.GetPageRangesAsync(null, null, new AccessCondition(), blobRequestOptions, operationContext: null)
+                    .ConfigureAwait(false).GetAwaiter().GetResult();
+            pageRanges = pageRanges.OrderBy(range => range.StartOffset);
             return pageRanges.Select(pr => new IndexRange(pr.StartOffset, pr.EndOffset));
         }
 
         public Stream OpenStream()
         {
-            return this.container.GetPageBlobReference(blobUri.BlobName).OpenRead(new AccessCondition(), blobRequestOptions);
+            return this.container.GetPageBlobReference(blobUri.BlobName).OpenReadAsync(new AccessCondition(), blobRequestOptions, operationContext: null)
+                    .ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         public long Length

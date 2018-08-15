@@ -18,12 +18,15 @@ using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Properties;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Common;
 using Microsoft.WindowsAzure.Commands.SqlDatabase.Services.Server;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
+using System.IO;
+using Microsoft.Azure.ServiceManagemenet.Common;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
 {
@@ -32,7 +35,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
     /// </summary>
     [Cmdlet(VerbsCommon.New, "AzureSqlDatabaseServerContext", ConfirmImpact = ConfirmImpact.None,
         DefaultParameterSetName = ServerNameWithSqlAuthParamSet)]
-    public class NewAzureSqlDatabaseServerContext : AzurePSCmdlet
+    public class NewAzureSqlDatabaseServerContext : AzureSMCmdlet
     {
         #region ParameterSet Names
 
@@ -145,18 +148,18 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
 
         #region Current Subscription Management
 
-        private AzureSubscription CurrentSubscription
+        private IAzureSubscription CurrentSubscription
         {
             get
             {
                 if (string.IsNullOrEmpty(SubscriptionName))
                 {
-                    return AzureSession.CurrentContext.Subscription;
+                    return Profile.Context.Subscription;
                 }
 
-                ProfileClient client = new ProfileClient();
+                ProfileClient client = new ProfileClient(new AzureSMProfile(Path.Combine(AzureSession.Instance.ProfileDirectory, AzureSession.Instance.ProfileFile)));
 
-                return client.Profile.Subscriptions.Values.First(
+                return client.Profile.Subscriptions.First(
                         s => SubscriptionName == s.Name);
             }
         }
@@ -209,14 +212,14 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
         /// or <c>null</c> if an error occurred.</returns>
         internal ServerDataServiceCertAuth GetServerDataServiceByCertAuth(
             string serverName,
-            AzureSubscription subscription)
+            IAzureSubscription subscription)
         {
             ServerDataServiceCertAuth context = null;
             SqlDatabaseCmdletBase.ValidateSubscription(subscription);
 
             try
             {
-                context = ServerDataServiceCertAuth.Create(serverName, subscription);
+                context = ServerDataServiceCertAuth.Create(serverName, Profile, subscription);
             }
             catch (ArgumentException e)
             {
@@ -255,7 +258,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
                 case FullyQualifiedServerNameWithCertAuthParamSet:
                 case ServerNameWithCertAuthParamSet:
                     // Get the current subscription data.
-                    AzureSubscription subscription = CurrentSubscription;
+                    IAzureSubscription subscription = CurrentSubscription;
 
                     // Create a context using the subscription datat
                     return this.GetServerDataServiceByCertAuth(
@@ -311,7 +314,7 @@ namespace Microsoft.WindowsAzure.Commands.SqlDatabase.Database.Cmdlet
                     // and append the azure database DNS suffix.
                     return new Uri(
                         Uri.UriSchemeHttps + Uri.SchemeDelimiter +
-                        this.ServerName + AzureSession.CurrentContext.Environment.GetEndpoint(AzureEnvironment.Endpoint.SqlDatabaseDnsSuffix));
+                        this.ServerName + Profile.Context.Environment.GetEndpoint(AzureEnvironment.Endpoint.SqlDatabaseDnsSuffix));
                 case FullyQualifiedServerNameWithSqlAuthParamSet:
                 case FullyQualifiedServerNameWithCertAuthParamSet:
                     // The fully qualified server name was specified, 

@@ -13,15 +13,18 @@
 // ----------------------------------------------------------------------------------
 
 using System;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Microsoft.WindowsAzure.Commands.Common;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.WindowsAzure.Commands.Common.Test.Mocks;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Websites;
 using Microsoft.WindowsAzure.Commands.Utilities.Websites;
 using Microsoft.WindowsAzure.Commands.Websites;
 using Moq;
-using Microsoft.Azure.Common.Extensions;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Websites
 {
@@ -29,6 +32,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
     public class RestartAzureWebsiteTests : WebsitesTestBase
     {
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ProcessRestartWebsiteTest()
         {
             // Setup
@@ -43,7 +47,11 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
                 Name = websiteName,
                 WebsitesClient = websitesClientMock.Object
             };
-            AzureSession.SetCurrentContext(new AzureSubscription { Id = new Guid(base.subscriptionId) }, null, null);
+
+            currentProfile = new AzureSMProfile();
+            var subscription = new AzureSubscription{Id = base.subscriptionId };
+            subscription.SetDefault();
+            currentProfile.SubscriptionTable[new Guid(base.subscriptionId)] = subscription;
 
             restartAzureWebsiteCommand.ExecuteCmdlet();
 
@@ -51,6 +59,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void RestartsWebsiteSlot()
         {
             // Setup
@@ -68,7 +77,10 @@ namespace Microsoft.WindowsAzure.Commands.Test.Websites
                 WebsitesClient = websitesClientMock.Object,
                 Slot = slot
             };
-            AzureSession.SetCurrentContext(new AzureSubscription { Id = new Guid(base.subscriptionId) }, null, null);
+            currentProfile = new AzureSMProfile();
+            var subscription = new AzureSubscription{Id = base.subscriptionId };
+            subscription.SetDefault();
+            currentProfile.SubscriptionTable[new Guid(base.subscriptionId)] = subscription;
 
             restartAzureWebsiteCommand.ExecuteCmdlet();
 

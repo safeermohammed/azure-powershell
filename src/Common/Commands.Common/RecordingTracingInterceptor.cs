@@ -13,20 +13,20 @@
 // ----------------------------------------------------------------------------------
 
 using Hyak.Common;
-using Microsoft.WindowsAzure;
+using Microsoft.WindowsAzure.Commands.Common;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Http;
 
-namespace Microsoft.Azure.Common.Extensions.Models
+namespace Microsoft.Azure.ServiceManagemenet.Common.Models
 {
     public class RecordingTracingInterceptor : Hyak.Common.ICloudTracingInterceptor
     {
-        public RecordingTracingInterceptor()
+        public RecordingTracingInterceptor(ConcurrentQueue<string> queue)
         {
-            MessageQueue = new ConcurrentQueue<string>();
+            MessageQueue = queue;
         }
 
         public ConcurrentQueue<string> MessageQueue { get; private set; }
@@ -35,17 +35,17 @@ namespace Microsoft.Azure.Common.Extensions.Models
         {
             if (arguments == null || arguments.Length == 0)
             {
-                MessageQueue.Enqueue(message);
+                MessageQueue.CheckAndEnqueue(message);
             }
             else
             {
-                MessageQueue.Enqueue(string.Format(message, arguments));
+                MessageQueue.CheckAndEnqueue(string.Format(message, arguments));
             }
         }
 
         public void Information(string message)
         {
-            // Ignore    
+            MessageQueue.CheckAndEnqueue(message);
         }
 
         public void Configuration(string source, string name, string value)

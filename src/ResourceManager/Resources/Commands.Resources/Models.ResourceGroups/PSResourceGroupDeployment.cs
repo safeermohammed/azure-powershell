@@ -14,7 +14,8 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Azure.Management.Resources.Models;
+
+using Microsoft.Azure.Management.ResourceManager.Models;
 
 namespace Microsoft.Azure.Commands.Resources.Models
 {
@@ -35,6 +36,8 @@ namespace Microsoft.Azure.Commands.Resources.Models
         public TemplateLink TemplateLink { get; set; }
 
         public string TemplateLinkString { get; set; }
+
+        public string DeploymentDebugLogLevel { get; set; }
 
         public Dictionary<string, DeploymentVariable> Parameters { get; set; }
 

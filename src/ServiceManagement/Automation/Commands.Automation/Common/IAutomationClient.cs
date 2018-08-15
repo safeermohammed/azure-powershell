@@ -17,17 +17,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Security;
 using Microsoft.Azure.Commands.Automation.Model;
-using Microsoft.Azure.Common.Extensions.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.Azure.Commands.Automation.Common
 {
     public interface IAutomationClient
     {
-        AzureSubscription Subscription { get; }
+        IAzureSubscription Subscription { get; }
 
         #region JobStreams
 
-        IEnumerable<JobStream> GetJobStream(string automationAccountname, Guid jobId, DateTimeOffset? time, string streamType);
+        IEnumerable<JobStream> GetJobStream(string automationAccountname, Guid jobId, DateTimeOffset? time, string streamType, ref string nextLink);
 
         #endregion
 
@@ -35,7 +36,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         Variable GetVariable(string automationAccountName, string variableName);
 
-        IEnumerable<Variable> ListVariables(string automationAccountName);
+        IEnumerable<Variable> ListVariables(string automationAccountName, ref string nextLink);
 
         Variable CreateVariable(Variable variable);
 
@@ -45,7 +46,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         #endregion
 
-        #region Scedules
+        #region Schedules
 
         Schedule CreateSchedule(string automationAccountName, Schedule schedule);
 
@@ -53,7 +54,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         Schedule GetSchedule(string automationAccountName, string scheduleName);
 
-        IEnumerable<Schedule> ListSchedules(string automationAccountName);
+        IEnumerable<Schedule> ListSchedules(string automationAccountName, ref string nextLink);
 
         Schedule UpdateSchedule(string automationAccountName, string scheduleName, bool? isEnabled, string description);
 
@@ -63,7 +64,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         Runbook GetRunbook(string automationAccountName, string runbookName);
 
-        IEnumerable<Runbook> ListRunbooks(string automationAccountName);
+        IEnumerable<Runbook> ListRunbooks(string automationAccountName, ref string nextLink);
 
         Runbook CreateRunbookByName(string automationAccountName, string runbookName, string description, string[] tags);
 
@@ -79,7 +80,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         IEnumerable<RunbookDefinition> ListRunbookDefinitionsByRunbookName(string automationAccountName, string runbookName, bool? isDraft);
 
-        Job StartRunbook(string automationAccountName, string runbookName, IDictionary parameters);
+        Job StartRunbook(string automationAccountName, string runbookName, IDictionary parameters, string runOn);
 
         #endregion
 
@@ -91,7 +92,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         CredentialInfo GetCredential(string automationAccountName, string name);
 
-        IEnumerable<CredentialInfo> ListCredentials(string automationAccountName);
+        IEnumerable<CredentialInfo> ListCredentials(string automationAccountName, ref string nextLink);
 
         void DeleteCredential(string automationAccountName, string name);
 
@@ -105,7 +106,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         Module UpdateModule(string automationAccountName, IDictionary tags, string name, Uri contentLink, string contentLinkVersion);
 
-        IEnumerable<Module> ListModules(string automationAccountName);
+        IEnumerable<Module> ListModules(string automationAccountName, ref string nextLink);
 
         void DeleteModule(string automationAccountName, string name);
         
@@ -115,9 +116,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         Job GetJob(string automationAccountName, Guid id);
 
-        IEnumerable<Job> ListJobsByRunbookName(string automationAccountName, string runbookName, DateTimeOffset? startTime, DateTimeOffset? endTime, string jobStatus);
+        IEnumerable<Job> ListJobsByRunbookName(string automationAccountName, string runbookName, DateTimeOffset? startTime, DateTimeOffset? endTime, string jobStatus, ref string nextLink);
 
-        IEnumerable<Job> ListJobs(string automationAccountName, DateTimeOffset? startTime, DateTimeOffset? endTime, string jobStatus);
+        IEnumerable<Job> ListJobs(string automationAccountName, DateTimeOffset? startTime, DateTimeOffset? endTime, string jobStatus, ref string nextLink);
 
         void ResumeJob(string automationAccountName, Guid id);
 
@@ -145,7 +146,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         CertificateInfo GetCertificate(string automationAccountName, string name);
 
-        IEnumerable<CertificateInfo> ListCertificates(string automationAccountName);
+        IEnumerable<CertificateInfo> ListCertificates(string automationAccountName, ref string nextLink);
 
         void DeleteCertificate(string automationAccountName, string name);
 
@@ -161,7 +162,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         IEnumerable<Connection> ListConnectionsByType(string automationAccountName, string name);
 
-        IEnumerable<Connection> ListConnections(string automationAccountName);
+        IEnumerable<Connection> ListConnections(string automationAccountName, ref string nextLink);
 
         void DeleteConnection(string automationAccountName, string name);
 
@@ -173,7 +174,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         JobSchedule GetJobSchedule(string automationAccountName, string runbookName, string scheduleName);
 
-        IEnumerable<JobSchedule> ListJobSchedules(string automationAccountName);
+        IEnumerable<JobSchedule> ListJobSchedules(string automationAccountName, ref string nextLink);
 
         IEnumerable<JobSchedule> ListJobSchedulesByRunbookName(string automationAccountName, string runbookName);
 
@@ -185,6 +186,12 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         void UnregisterScheduledRunbook(string automationAccountName, string runbookName, string scheduleName);
 
+
+        #endregion
+
+        #region ConnectionType
+
+        void DeleteConnectionType(string automationAccountName, string name);
 
         #endregion
     }

@@ -19,35 +19,41 @@ namespace Microsoft.Azure.Commands.DataFactories.Test
 {
     public class LinkedServiceTests : DataFactoriesScenarioTestsBase
     {
+        public LinkedServiceTests(Xunit.Abstractions.ITestOutputHelper output)
+        {
+            Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new Azure.ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
+        }
+
+#if NETSTANDARD
+        [Fact(Skip = "Management library needs NetCore republish")]
+        [Trait(Category.RunType, Category.DesktopOnly)]
+#else
         [Fact]
+#endif
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestLinkedService()
         {
             RunPowerShellTest("Test-LinkedService");
         }
 
+#if NETSTANDARD
+        [Fact(Skip = "Management library needs NetCore republish")]
+        [Trait(Category.RunType, Category.DesktopOnly)]
+#else
         [Fact]
+#endif
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestLinkedServiceWithDataFactoryParameter()
         {
             RunPowerShellTest("Test-LinkedServiceWithDataFactoryParameter");
         }
 
+#if NETSTANDARD
+        [Fact(Skip = "Management library needs NetCore republish")]
+        [Trait(Category.RunType, Category.DesktopOnly)]
+#else
         [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestGetLinkedServiceWithEmptyName()
-        {
-            RunPowerShellTest("Test-GetLinkedServiceWithEmptyName");
-        }
-
-        [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestGetLinkedServiceWithWhiteSpaceName()
-        {
-            RunPowerShellTest("Test-GetLinkedServiceWithWhiteSpaceName");
-        }
-
-        [Fact]
+#endif
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestLinkedServicePiping()
         {

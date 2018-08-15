@@ -12,13 +12,10 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.KeyVault.Client;
-using Microsoft.Azure.Commands.KeyVault.Cmdlets;
-using Cmdlet = Microsoft.Azure.Commands.KeyVault.Models;
+using Microsoft.Azure.Commands.KeyVault.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Moq;
 using System;
-using System.Management.Automation;
 using System.Security;
 using Xunit;
 
@@ -45,7 +42,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Test.UnitTests
         public void CanRemoveSecretWithPassThruTest()
         {
             SecureString secureSecretValue = SecretValue.ConvertToSecureString();
-            Cmdlet.Secret expected = new Cmdlet.Secret() { Name = SecretName, VaultName = VaultName, SecretValue = secureSecretValue };
+            PSDeletedKeyVaultSecret expected = new PSDeletedKeyVaultSecret() { Name = SecretName, VaultName = VaultName, SecretValue = secureSecretValue };
             keyVaultClientMock.Setup(kv => kv.DeleteSecret(VaultName, SecretName)).Returns(expected).Verifiable();
 
             // Mock the should process to return true
@@ -74,7 +71,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Test.UnitTests
         public void CanRemoveSecretWithNoPassThruTest()
         {
             SecureString secureSecretValue = SecretValue.ConvertToSecureString();
-            Cmdlet.Secret expected = new Cmdlet.Secret() { Name = SecretName, VaultName = VaultName, SecretValue = secureSecretValue };
+            PSDeletedKeyVaultSecret expected = new PSDeletedKeyVaultSecret() { Name = SecretName, VaultName = VaultName, SecretValue = secureSecretValue };
             keyVaultClientMock.Setup(kv => kv.DeleteSecret(VaultName, SecretName)).Returns(expected).Verifiable();
 
             // Mock the should process to return true
@@ -93,7 +90,10 @@ namespace Microsoft.Azure.Commands.KeyVault.Test.UnitTests
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void CannotRemoveSecretWithoutShouldProcessOrForceConfirmationTest()
         {
-            Cmdlet.Secret expected = null;
+            // Should process but without force
+            commandRuntimeMock.Setup(cr => cr.ShouldProcess(SecretName, It.IsAny<string>())).Returns(true);
+
+            PSKeyVaultSecret expected = null;
 
             cmdlet.Name = SecretName;
             cmdlet.PassThru = true;
@@ -101,9 +101,6 @@ namespace Microsoft.Azure.Commands.KeyVault.Test.UnitTests
 
             // Write object should be called with null input
             commandRuntimeMock.Verify(f => f.WriteObject(expected), Times.Once());
-
-            // Should process but without force
-            commandRuntimeMock.Setup(cr => cr.ShouldProcess(SecretName, It.IsAny<string>())).Returns(true);
             cmdlet.ExecuteCmdlet();
 
             // Write object should be called with null input
@@ -128,7 +125,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Test.UnitTests
             catch { }
 
             keyVaultClientMock.VerifyAll();
-            commandRuntimeMock.Verify(f => f.WriteObject(It.IsAny<Cmdlet.Secret>()), Times.Never());
+            commandRuntimeMock.Verify(f => f.WriteObject(It.IsAny<PSKeyVaultSecret>()), Times.Never());
         }
     }
 }
