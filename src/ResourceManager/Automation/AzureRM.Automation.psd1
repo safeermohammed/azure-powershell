@@ -63,7 +63,7 @@ RequiredAssemblies = '.\Microsoft.Azure.Management.Automation.dll'
 # TypesToProcess = @()
 
 # Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+FormatsToProcess = @(".\AzureRM.Automation.format.ps1xml")
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 NestedModules = @('.\Microsoft.Azure.Commands.ResourceManager.Automation.dll')
@@ -135,7 +135,14 @@ CmdletsToExport = 'Get-AzureRMAutomationHybridWorkerGroup',
                'Get-AzureRmAutomationSoftwareUpdateConfiguration',
                'Remove-AzureRmAutomationSoftwareUpdateConfiguration',
                'Get-AzureRmAutomationSoftwareUpdateRun',
-               'Get-AzureRmAutomationSoftwareUpdateMachineRun'
+               'Get-AzureRmAutomationSoftwareUpdateMachineRun',
+               'New-AzureRmAutomationSourceControl',
+               'Get-AzureRmAutomationSourceControl',
+               'Remove-AzureRmAutomationSourceControl',
+               'Update-AzureRmAutomationSourceControl',
+               'Start-AzureRmAutomationSourceControlSyncJob',
+               'Get-AzureRmAutomationSourceControlSyncJob',
+               'Get-AzureRmAutomationSourceControlSyncJobOutput'
 
 # Variables to export from this module
 # VariablesToExport = @()

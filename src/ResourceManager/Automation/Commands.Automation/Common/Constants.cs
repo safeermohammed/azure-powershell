@@ -97,5 +97,12 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
             public const string Python = ".py";
         }
+
+        internal static class SupportedSourceType
+        {
+            public const string GitHub = "GitHub";
+            public const string VsoGit = "VsoGit";
+            public const string VsoTfvc = "VsoTfvc";
+        }
     }
 }
