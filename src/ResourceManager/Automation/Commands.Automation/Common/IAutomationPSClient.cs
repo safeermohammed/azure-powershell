@@ -367,5 +367,85 @@ namespace Microsoft.Azure.Commands.Automation.Common
         #endregion
 
         #endregion
+
+        #region SourceControl
+        SourceControl GetSourceControl(
+            string resourceGroupName,
+            string automationAccountName,
+            string name);
+
+        IEnumerable<SourceControl> ListSourceControl(
+            string resourceGroupName,
+            string automationAccountName,
+            string sourceType,
+            ref string nextLink);
+
+        SourceControl CreateSourceControl(
+            string resourceGroupName,
+            string automationAccountName,
+            string name,
+            string description,
+            SecureString accessToken,
+            string repoUrl,
+            string sourceType,
+            string branch,
+            string folderPath,
+            bool publishRunbook,
+            bool autoSync);
+
+        void DeleteSourceControl(
+            string resourceGroupName,
+            string automationAccountName,
+            string sourceControlName);
+
+        SourceControl UpdateSourceControl(
+            string resourceGroupName,
+            string automationAccountName,
+            string name,
+            string description,
+            SecureString accessToken,
+            string branch,
+            string folderPath,
+            bool? publishRunbook,
+            bool? autoSync);
+
+        #endregion
+
+        #region SourceControlSyncJobs
+
+        SourceControlSyncJob StartSourceControlSyncJob(
+            string resourceGroupName,
+            string automationAccountName,
+            string sourceControlName,
+            Guid syncJobId);
+
+        SourceControlSyncJobRecord GetSourceControlSyncJob(
+            string resourceGroupName,
+            string automationAccountName,
+            string sourceControlName,
+            Guid syncJobId);
+
+        IEnumerable<SourceControlSyncJob> ListSourceControlSyncJobs(
+            string resourceGroupName,
+            string automationAccountName,
+            string sourceControlName,
+            ref string nextLink);
+
+        SourceControlSyncJobStreamRecord GetSourceControlSyncJobStreamRecord(
+            string resourceGroupName,
+            string automationAccountName,
+            string sourceControlName,
+            Guid jobId,
+            string jobStreamId);
+
+        IEnumerable<SourceControlSyncJobStream> GetSourceControlSyncJobStream(
+            string resourceGroupName,
+            string automationAccountName,
+            string sourceControlName,
+            Guid jobId,
+            string streamType,
+            ref string nextLink);
+
+        #endregion
     }
 }
