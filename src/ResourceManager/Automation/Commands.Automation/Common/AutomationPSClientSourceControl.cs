@@ -12,26 +12,18 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Hyak.Common;
 using Microsoft.Azure.Commands.Automation.Model;
 using Microsoft.Azure.Commands.Automation.Properties;
 using Microsoft.Azure.Management.Automation;
 using Microsoft.Azure.Management.Automation.Models;
 using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
-using System.Net;
 using System.Security;
-using System.Text.RegularExpressions;
 using AutomationManagement = Microsoft.Azure.Management.Automation;
-using SourceControl        = Microsoft.Azure.Management.Automation.Models.SourceControl;
+using SourceControl = Microsoft.Azure.Management.Automation.Models.SourceControl;
 using SourceControlSyncJob = Microsoft.Azure.Management.Automation.Models.SourceControlSyncJob;
 
 namespace Microsoft.Azure.Commands.Automation.Common
@@ -84,23 +76,31 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     string.Format(CultureInfo.CurrentCulture, Resources.SourceControlAlreadyExists, name));
             }
 
-            var decryptedAccessToken = Utils.GetStringFromSecureString(accessToken);
+            SourceControl sdkSourceControl = null;
+            try
+            {
+                var decryptedAccessToken = Utils.GetStringFromSecureString(accessToken);
 
-            var createParams = new SourceControlCreateOrUpdateParameters(
-                                    repoUrl,
-                                    branch,
-                                    folderPath,
-                                    autoSync,
-                                    publishRunbook,
-                                    sourceType,
-                                    GetAccessTokenProperties(decryptedAccessToken),
-                                    description);
+                var createParams = new SourceControlCreateOrUpdateParameters(
+                                        repoUrl,
+                                        branch,
+                                        folderPath,
+                                        autoSync,
+                                        publishRunbook,
+                                        sourceType,
+                                        GetAccessTokenProperties(decryptedAccessToken),
+                                        description);
 
-            var sdkSourceControl = this.automationManagementClient.SourceControl.CreateOrUpdate(
-                                        resourceGroupName,
-                                        automationAccountName,
-                                        name,
-                                        createParams);
+                sdkSourceControl = this.automationManagementClient.SourceControl.CreateOrUpdate(
+                                            resourceGroupName,
+                                            automationAccountName,
+                                            name,
+                                            createParams);
+            }
+            catch (ErrorResponseException ex)
+            {
+                ProcessErrorResponseException<SourceControl>(ex);
+            }
 
             return new Model.SourceControl(sdkSourceControl, automationAccountName, resourceGroupName);
         }
@@ -120,17 +120,8 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("AutomationAccountName", automationAccountName).NotNullOrEmpty();
             Requires.Argument("name", name).NotNullOrEmpty();
 
-            Model.SourceControl existingSourceControl = null;
-            try
-            {
-                existingSourceControl = this.GetSourceControl(resourceGroupName, automationAccountName, name);
-            }
-            catch (ResourceNotFoundException)
-            {
-                throw new AzureAutomationOperationException(
-                    string.Format(CultureInfo.CurrentCulture, Resources.SourceControlNotFound, name));
-            }
-            
+            Model.SourceControl existingSourceControl = this.GetSourceControl(resourceGroupName, automationAccountName, name);
+
             var updateParams = new AutomationManagement.Models.SourceControlUpdateParameters();
 
             if (autoSync.HasValue)
@@ -164,11 +155,19 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 updateParams.SecurityToken = GetAccessTokenProperties(decryptedAccessToken);
             }
 
-            var sdkSourceControl = this.automationManagementClient.SourceControl.Update(
+            SourceControl sdkSourceControl = null;
+            try
+            {
+                sdkSourceControl = this.automationManagementClient.SourceControl.Update(
                                         resourceGroupName,
                                         automationAccountName,
                                         name,
                                         updateParams);
+            }
+            catch (ErrorResponseException ex)
+            {
+                ProcessErrorResponseException<SourceControl>(ex);
+            }
 
             return new Model.SourceControl(sdkSourceControl, automationAccountName, resourceGroupName);
         }
@@ -186,15 +185,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 this.automationManagementClient.SourceControl.Delete(resourceGroupName, automationAccountName, name);
             }
-            catch (CloudException cloudException)
+            catch (ErrorResponseException ex)
             {
-                if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
-                {
-                    throw new ResourceNotFoundException(typeof(SourceControl),
-                        string.Format(CultureInfo.CurrentCulture, Resources.SourceControlNotFound, name));
-                }
-
-                throw;
+                ProcessErrorResponseException<SourceControl>(ex);
             }
         }
 
@@ -208,7 +201,6 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("name", name).NotNullOrEmpty();
 
             Model.SourceControl result = null;
-            bool throwException = false;
 
             try
             {
@@ -221,25 +213,10 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 {
                     result = new Model.SourceControl(existingSourceControl, automationAccountName, resourceGroupName);
                 }
-                else
-                {
-                    throwException = true;
-                }
             }
-            catch (Exception ex)
+            catch (ErrorResponseException ex)
             {
-                if (ex is CloudException || ex is ErrorResponseException)
-                {
-                    throwException = true;
-                }
-                else
-                    throw;
-            }
-
-            if (throwException)
-            {
-                throw new ResourceNotFoundException(typeof(SourceControl),
-                                                    string.Format(CultureInfo.CurrentCulture, Resources.SourceControlNotFound, name));
+                ProcessErrorResponseException<SourceControl>(ex);
             }
 
             return result;
@@ -251,14 +228,21 @@ namespace Microsoft.Azure.Commands.Automation.Common
             string sourceType,
             ref string nextLink)
         {
-            Rest.Azure.IPage<AutomationManagement.Models.SourceControl> response;
+            Rest.Azure.IPage<AutomationManagement.Models.SourceControl> response = null;
 
             if (string.IsNullOrEmpty(nextLink))
             {
-                response = this.automationManagementClient.SourceControl.ListByAutomationAccount(
-                                    resourceGroupName,
-                                    automationAccountName,
-                                    GetSourceControlTypeFilterString(sourceType));
+                try
+                {
+                    response = this.automationManagementClient.SourceControl.ListByAutomationAccount(
+                                        resourceGroupName,
+                                        automationAccountName,
+                                        GetSourceControlTypeFilterString(sourceType));
+                }
+                catch (ErrorResponseException ex)
+                {
+                    ProcessErrorResponseException<SourceControl>(ex);
+                }
             }
             else
             {
@@ -299,12 +283,20 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     string.Format(CultureInfo.CurrentCulture, Resources.SourceControlSyncJobAlreadyExist, syncJobId.ToString()));
             }
 
-            var sdkSyncJob = this.automationManagementClient.SourceControlSyncJob.Create(
-                                resourceGroupName,
-                                automationAccountName,
-                                sourceControlName,
-                                syncJobId,
-                                new SourceControlSyncJobCreateParameters(""));
+            SourceControlSyncJob sdkSyncJob = null;
+            try
+            {
+                sdkSyncJob = this.automationManagementClient.SourceControlSyncJob.Create(
+                                    resourceGroupName,
+                                    automationAccountName,
+                                    sourceControlName,
+                                    syncJobId,
+                                    new SourceControlSyncJobCreateParameters(""));
+            }
+            catch (ErrorResponseException ex)
+            {
+                ProcessErrorResponseException<SourceControlSyncJob>(ex);
+            }
 
             return new Model.SourceControlSyncJob(resourceGroupName, automationAccountName, sourceControlName, sdkSyncJob);
         }
@@ -335,10 +327,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     result = new Model.SourceControlSyncJobRecord(resourceGroupName, automationAccountName, sourceControlName, existingSyncJob);
                 }
             }
-            catch (ErrorResponseException)
+            catch (ErrorResponseException ex)
             {
-                throw new ResourceNotFoundException(typeof(SourceControl),
-                    string.Format(CultureInfo.CurrentCulture, Resources.SourceControlSyncJobNotFound, syncJobId.ToString()));
+                ProcessErrorResponseException<SourceControlSyncJob>(ex);
             }
 
             return result;
@@ -354,15 +345,21 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("automationAccountName", automationAccountName).NotNullOrEmpty();
             Requires.Argument("sourceControlName", sourceControlName).NotNullOrEmpty();
 
-            // SourceControlListResponse comes from metadata.
-            Rest.Azure.IPage<AutomationManagement.Models.SourceControlSyncJob> response;
+            Rest.Azure.IPage<AutomationManagement.Models.SourceControlSyncJob> response = null;
 
             if (string.IsNullOrEmpty(nextLink))
             {
-                response = this.automationManagementClient.SourceControlSyncJob.ListByAutomationAccount(
-                                resourceGroupName,
-                                automationAccountName,
-                                sourceControlName);
+                try
+                {
+                    response = this.automationManagementClient.SourceControlSyncJob.ListByAutomationAccount(
+                                    resourceGroupName,
+                                    automationAccountName,
+                                    sourceControlName);
+                }
+                catch (ErrorResponseException ex)
+                {
+                    ProcessErrorResponseException<SourceControlSyncJob>(ex);
+                }
             }
             else
             {
@@ -388,16 +385,23 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("syncJobId", syncJobId).NotNullOrEmpty();
             Requires.Argument("streamType", streamType).NotNullOrEmpty();
 
-            Rest.Azure.IPage<AutomationManagement.Models.SourceControlSyncJobStream> response;
+            Rest.Azure.IPage<AutomationManagement.Models.SourceControlSyncJobStream> response = null;
 
             if (string.IsNullOrEmpty(nextLink))
             {
-                response = this.automationManagementClient.SourceControlSyncJobStreams.ListBySyncJob(
-                                resourceGroupName,
-                                automationAccountName,
-                                sourceControlName,
-                                syncJobId,
-                                this.GetSyncJobStreamFilterString(streamType));
+                try
+                {
+                    response = this.automationManagementClient.SourceControlSyncJobStreams.ListBySyncJob(
+                                    resourceGroupName,
+                                    automationAccountName,
+                                    sourceControlName,
+                                    syncJobId,
+                                    this.GetSyncJobStreamFilterString(streamType));
+                }
+                catch (ErrorResponseException ex)
+                {
+                    ProcessErrorResponseException<SourceControlSyncJob>(ex);
+                }
             }
             else
             {
@@ -406,8 +410,8 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
             nextLink = response.NextPageLink;
 
-             return response.Select(
-                        stream => new Model.SourceControlSyncJobStream(stream, resourceGroupName, automationAccountName, sourceControlName, syncJobId));
+            return response.Select(
+                       stream => new Model.SourceControlSyncJobStream(stream, resourceGroupName, automationAccountName, sourceControlName, syncJobId));
         }
 
         public SourceControlSyncJobStreamRecord GetSourceControlSyncJobStreamRecord(
@@ -423,12 +427,20 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("syncJobId", syncJobId).NotNullOrEmpty();
             Requires.Argument("syncJobStreamId", syncJobStreamId).NotNullOrEmpty();
 
-            var response = this.automationManagementClient.SourceControlSyncJobStreams.Get(
-                                resourceGroupName,
-                                automationAccountName,
-                                sourceControlName,
-                                syncJobId,
-                                syncJobStreamId);
+            SourceControlSyncJobStreamById response = null;
+            try
+            {
+                response = this.automationManagementClient.SourceControlSyncJobStreams.Get(
+                                    resourceGroupName,
+                                    automationAccountName,
+                                    sourceControlName,
+                                    syncJobId,
+                                    syncJobStreamId);
+            }
+            catch (ErrorResponseException ex)
+            {
+                ProcessErrorResponseException<SourceControlSyncJobStreamById>(ex);
+            }
 
             return new SourceControlSyncJobStreamRecord(
                         response, resourceGroupName, automationAccountName, sourceControlName, syncJobId);
@@ -484,6 +496,48 @@ namespace Microsoft.Azure.Commands.Automation.Common
             securityTokenProperties.TokenType = "PersonalAccessToken";
 
             return securityTokenProperties;
+        }
+
+        // Check for ResourceNotFoundException.
+        private void ProcessErrorResponseException<T>(ErrorResponseException exception)
+        {
+            bool isResourceNotFoundException = false;
+
+            if (!string.IsNullOrEmpty(exception.Body.Code) && !string.IsNullOrEmpty(exception.Body.Message))
+            {
+                if (exception.Body.Code.Equals(System.Net.HttpStatusCode.NotFound.ToString(), StringComparison.InvariantCultureIgnoreCase))
+                {
+                    throw new ResourceNotFoundException(typeof(T), exception.Body.Message);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(exception.Response.Content))
+            {
+                AzureErrorResponseMessage responseContent = null;
+                try
+                {
+                    responseContent = JsonConvert.DeserializeObject<AzureErrorResponseMessage>(exception.Response.Content);
+                }
+                catch
+                {
+                    // swallow the exception as we could not parse the error message
+                }
+
+                if (responseContent != null)
+                {
+                    if (responseContent.Error.Code.Equals("ResourceGroupNotFound", StringComparison.InvariantCultureIgnoreCase) || 
+                        responseContent.Error.Code.Equals("ResourceNotFound", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        isResourceNotFoundException = true;
+                        throw new ResourceNotFoundException(typeof(T), responseContent.Error.Message);
+                    }
+                }
+            }
+
+            if (!isResourceNotFoundException)
+            {
+                throw exception;
+            }
         }
 
         #endregion

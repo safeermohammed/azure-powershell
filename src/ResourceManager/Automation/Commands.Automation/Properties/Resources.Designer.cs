@@ -793,11 +793,12 @@ namespace Microsoft.Azure.Commands.Automation.Properties {
         ///   Looks up a localized string similar to Software update configuration has no target computers..
         /// </summary>
         internal static string SoftwareUpdateConfigurationHasNoTargetComputers {
-            get
-            {
+            get {
                 return ResourceManager.GetString("SoftwareUpdateConfigurationHasNoTargetComputers", resourceCulture);
             }
         }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SourceControl &apos;{0}&apos; already exists..
         /// </summary>
         internal static string SourceControlAlreadyExists {
@@ -812,15 +813,6 @@ namespace Microsoft.Azure.Commands.Automation.Properties {
         internal static string SourceControlCreateAction {
             get {
                 return ResourceManager.GetString("SourceControlCreateAction", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SourceControl &apos;{0}&apos; not found..
-        /// </summary>
-        internal static string SourceControlNotFound {
-            get {
-                return ResourceManager.GetString("SourceControlNotFound", resourceCulture);
             }
         }
         
@@ -857,15 +849,6 @@ namespace Microsoft.Azure.Commands.Automation.Properties {
         internal static string SourceControlSyncJobAlreadyExist {
             get {
                 return ResourceManager.GetString("SourceControlSyncJobAlreadyExist", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SourceControl Sync Job with id: &apos;{0}&apos; not found..
-        /// </summary>
-        internal static string SourceControlSyncJobNotFound {
-            get {
-                return ResourceManager.GetString("SourceControlSyncJobNotFound", resourceCulture);
             }
         }
         

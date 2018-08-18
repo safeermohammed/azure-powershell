@@ -18,9 +18,12 @@ using Microsoft.Azure.Management.Automation.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Microsoft.Rest.Azure.OData;
 
 namespace Microsoft.Azure.Commands.Automation.Common
 {
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using System.Collections;
     using System.Linq;
 
@@ -111,19 +114,51 @@ namespace Microsoft.Azure.Commands.Automation.Common
             {
                 if (string.IsNullOrEmpty(nextLink))
                 {
-                    if (runbookName == null)
+                    try
                     {
-                        response = this.automationManagementClient.Webhook.ListByAutomationAccount(
-                            resourceGroupName,
-                            automationAccountName,
-                            null);
+                        if (runbookName == null)
+                        {
+                            response = this.automationManagementClient.Webhook.ListByAutomationAccount(
+                                resourceGroupName,
+                                automationAccountName,
+                                null);
+                        }
+                        else
+                        {
+                            var filter = GetRunbookNameFilterString(runbookName);
+                            response = this.automationManagementClient.Webhook.ListByAutomationAccount(
+                                           resourceGroupName,
+                                           automationAccountName,
+                                           new ODataQuery<Webhook>(filter));
+                        }
                     }
-                    else
+                    catch (ErrorResponseException ex)
                     {
-                        response = this.automationManagementClient.Webhook.ListByAutomationAccount(
-                            resourceGroupName,
-                            automationAccountName,
-                            runbookName);
+                        if (!string.IsNullOrEmpty(ex.Response.Content))
+                        {
+                            AzureErrorResponseMessage responseContent;
+                            try
+                            {
+                                responseContent = JsonConvert.DeserializeObject<AzureErrorResponseMessage>(ex.Response.Content);
+                            }
+                            catch
+                            {
+                                throw ex;
+                            }
+
+                            if (responseContent.Error.Code.Equals("ResourceGroupNotFound", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                throw new ResourceNotFoundException(typeof(Webhook), responseContent.Error.Message);
+                            }
+                            else
+                            {
+                                throw new ResourceNotFoundException(typeof(Webhook), String.Format(CultureInfo.CurrentCulture, Resources.AutomationAccountNotFound, automationAccountName));
+                            }
+                        }
+                        else
+                        {
+                            throw ex;
+                        }
                     }
                 }
                 else
@@ -132,9 +167,9 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 }
 
                 nextLink = response.NextPageLink;
-                return
-                    response.Select(w => new Model.Webhook(resourceGroupName, automationAccountName, w))
-                        .ToList();
+                return response
+                    .Select(w => new Model.Webhook(resourceGroupName, automationAccountName, w))
+                    .ToList();
             }
         }
 
@@ -200,6 +235,24 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     throw;
                 }
             }
+        }
+
+        private string GetRunbookNameFilterString(string runbookName)
+        {
+            string filter = null;
+            List<string> odataFilter = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(runbookName))
+            {
+                odataFilter.Add("properties/runbook/name eq '" + Uri.EscapeDataString(runbookName) + "'");
+            }
+
+            if (odataFilter.Count > 0)
+            {
+                filter = string.Join(" and ", odataFilter);
+            }
+
+            return filter;
         }
     }
 }
