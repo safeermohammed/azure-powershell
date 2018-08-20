@@ -42,7 +42,7 @@ namespace Microsoft.Azure.Commands.Automation.Model
             Requires.Argument("jobSchedule", jobSchedule).NotNull();
             this.ResourceGroupName = resourceGroupName;
             this.AutomationAccountName = automationAccountName;
-            this.JobScheduleId = jobSchedule.Id.ToString();
+            this.JobScheduleId = jobSchedule.JobScheduleId.ToString();
             this.RunbookName = jobSchedule.Runbook.Name;
             this.ScheduleName = jobSchedule.Schedule.Name;
             this.Parameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
