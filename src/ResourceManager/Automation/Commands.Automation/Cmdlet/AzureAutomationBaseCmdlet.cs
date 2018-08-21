@@ -25,6 +25,8 @@ using System.Net;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Xml.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.Commands.Automation.Cmdlet
 {
@@ -86,15 +88,50 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
             {
                 if (string.IsNullOrEmpty(ErrorResponseException.Body.Code) && string.IsNullOrEmpty(ErrorResponseException.Body.Message))
                 {
-                    string message = this.ParseErrorMessage(ErrorResponseException.Response.Content);
-                    if (!string.IsNullOrEmpty(message))
+                    if (!string.IsNullOrEmpty(ErrorResponseException.Response.Content))
                     {
-                        throw new ErrorResponseException(message, ErrorResponseException);
+                        if (IsValidJsonObject(ErrorResponseException.Response.Content))
+                        {
+                            var message = ParseJson(ErrorResponseException.Response.Content);
+                            if (!string.IsNullOrEmpty(message))
+                            {
+                                throw new ErrorResponseException(message, ErrorResponseException);
+                            }
+                        }
                     }
                 }
 
                 throw new ErrorResponseException(ErrorResponseException.Body.Message, ErrorResponseException);
             }
+        }
+
+        // This function parses two type of Json contents:
+        // 1) "{\"error\":{\"code\":\"ResourceGroupNotFound\",\"message\":\"Resource group 'foobar' could not be found.\"}}"
+        // 2)            "{\"code\":\"ResourceGroupNotFound\",\"message\":\"Resource group 'foobar' could not be found.\"}"
+        private string ParseJson(string value)
+        {
+            value = value.Trim();
+            try
+            {
+                var nestedError = JsonConvert.DeserializeObject<AzureAutomationNestedErrorResponseMessage>(value);
+                return nestedError.Error.Message;
+            }
+            catch
+            {
+                // Ignore the parsing error.
+            }
+
+            try
+            {
+                var error = JsonConvert.DeserializeObject<AzureAutomationErrorResponseMessage>(value);
+                return error.Message;
+            }
+            catch
+            {
+                // Ignore the parsing error.
+            }
+
+            return null;
         }
 
         protected bool GenerateCmdletOutput(object result)
@@ -131,29 +168,24 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
             return ret;
         }
 
-        private string ParseErrorMessage(string errorMessage)
+        // This function determines if the given value is a Json object.
+        private bool IsValidJsonObject(string value)
         {
-            // The errorMessage is expected to be the error details in JSON format.
-            // e.g. <string xmlns="http://schemas.microsoft.com/2003/10/Serialization/">{"code":"NotFound","message":"Certificate not found."}</string>
-            try
+            value = value.Trim();
+            if (value.StartsWith("{") && value.EndsWith("}"))
             {
-                using (var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(XDocument.Load(new StringReader(errorMessage)).Root.Value)))
+                try
                 {
-                    var serializer = new DataContractJsonSerializer(typeof(ErrorResponseException));
-                    var errorResponse = (ErrorResponseException)serializer.ReadObject(memoryStream);
-
-                    if (!string.IsNullOrWhiteSpace(errorResponse.Message))
-                    {
-                        return errorResponse.Message;
-                    }
+                    var result = JObject.Parse(value);
+                    return true;
+                }
+                catch
+                {
+                    // ignore the failure
+                    return false;
                 }
             }
-            catch (Exception)
-            {
-                // swallow the exception as we cannot parse the error message
-            }
-
-            return null;
+            return false;
         }
     }
 }

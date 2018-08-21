@@ -37,7 +37,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         public string SourceControlName { get; set; }
 
         /// <summary> 
-        /// Gets or sets the source contorl sync job id. 
+        /// Gets or sets the source control sync job id.
         /// </summary> 
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true,
                    HelpMessage = "The source control sync job id.")]
