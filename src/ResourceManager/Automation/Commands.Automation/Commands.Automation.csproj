@@ -148,9 +148,9 @@
     <Compile Include="Common\AutomationPSClientSourceControl.cs" />
     <Compile Include="Common\AutomationPSClientWebhook.cs" />
     <Compile Include="Common\AutomationCmdletParameterSet.cs" />
-    <Compile Include="Common\AzureAutomationNestedErrorResponseMessage.cs" />
-    <Compile Include="Common\AzureAutomationOperationException.cs" />
+    <Compile Include="Common\AzureAutomationErrorInfo.cs" />
     <Compile Include="Common\AzureAutomationErrorResponseMessage.cs" />
+    <Compile Include="Common\AzureAutomationOperationException.cs" />
     <Compile Include="Common\Constants.cs" />
     <Compile Include="Common\DscNodeStatus.cs" />
     <Compile Include="Common\IAutomationPSClient.cs" />

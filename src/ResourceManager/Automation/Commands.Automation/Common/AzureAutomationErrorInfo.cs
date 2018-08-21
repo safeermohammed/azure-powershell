@@ -19,28 +19,21 @@ namespace Microsoft.Azure.Commands.Automation.Common
     /// <summary>
     /// The error response message.
     /// </summary>
-    public class AzureAutomationNestedErrorResponseMessage
+    public class AzureAutomationErrorInfo
     {
-        // Gets or sets the extended error info.
+        // Gets or sets the error code.
         [JsonProperty(Required = Required.Default)]
-        public AzureAutomationErrorInfo Error { get; set; }
+        public string Code { get; set; }
+
+        // Gets or sets the error message.
+        [JsonProperty(Required = Required.Default)]
+        public string Message { get; set; }
 
         // Initializes a new instance of the class.
-        public AzureAutomationNestedErrorResponseMessage(string code, string message)
+        public AzureAutomationErrorInfo(string code, string message)
         {
-            this.Error = new AzureAutomationErrorInfo { Code = code, Message = message };
-        }
-
-        /// The error information.
-        public class AzureAutomationErrorInfo
-        {
-            // Gets or sets the error code.
-            [JsonProperty(Required = Required.Default)]
-            public string Code { get; set; }
-
-            // Gets or sets the error message.
-            [JsonProperty(Required = Required.Default)]
-            public string Message { get; set; }
+            this.Code = code;
+            this.Message = message;
         }
     }
 }

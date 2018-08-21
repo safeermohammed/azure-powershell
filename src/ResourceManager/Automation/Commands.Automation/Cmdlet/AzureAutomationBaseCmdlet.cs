@@ -90,13 +90,10 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                 {
                     if (!string.IsNullOrEmpty(ErrorResponseException.Response.Content))
                     {
-                        if (IsValidJsonObject(ErrorResponseException.Response.Content))
+                        var message = ParseJson(ErrorResponseException.Response.Content);
+                        if (!string.IsNullOrEmpty(message))
                         {
-                            var message = ParseJson(ErrorResponseException.Response.Content);
-                            if (!string.IsNullOrEmpty(message))
-                            {
-                                throw new ErrorResponseException(message, ErrorResponseException);
-                            }
+                            throw new ErrorResponseException(message, ErrorResponseException);
                         }
                     }
                 }
@@ -113,7 +110,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
             value = value.Trim();
             try
             {
-                var nestedError = JsonConvert.DeserializeObject<AzureAutomationNestedErrorResponseMessage>(value);
+                var nestedError = JsonConvert.DeserializeObject<AzureAutomationErrorResponseMessage>(value);
                 return nestedError.Error.Message;
             }
             catch
@@ -123,7 +120,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
 
             try
             {
-                var error = JsonConvert.DeserializeObject<AzureAutomationErrorResponseMessage>(value);
+                var error = JsonConvert.DeserializeObject<AzureAutomationErrorInfo>(value);
                 return error.Message;
             }
             catch
@@ -166,26 +163,6 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
             }
 
             return ret;
-        }
-
-        // This function determines if the given value is a Json object.
-        private bool IsValidJsonObject(string value)
-        {
-            value = value.Trim();
-            if (value.StartsWith("{") && value.EndsWith("}"))
-            {
-                try
-                {
-                    var result = JObject.Parse(value);
-                    return true;
-                }
-                catch
-                {
-                    // ignore the failure
-                    return false;
-                }
-            }
-            return false;
         }
     }
 }
