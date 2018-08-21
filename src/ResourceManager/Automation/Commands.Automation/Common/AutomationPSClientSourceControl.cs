@@ -67,23 +67,6 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 Requires.Argument("branch", branch).NotNullOrEmpty();
             }
 
-            bool sourceControlExists = true;
-
-            try
-            {
-                this.GetSourceControl(resourceGroupName, automationAccountName, name);
-            }
-            catch (ResourceNotFoundException)
-            {
-                sourceControlExists = false;
-            }
-
-            if (sourceControlExists)
-            {
-                throw new AzureAutomationOperationException(
-                    string.Format(CultureInfo.CurrentCulture, Resources.SourceControlAlreadyExists, name));
-            }
-
             var decryptedAccessToken = Utils.GetStringFromSecureString(accessToken);
 
             var createParams = new SourceControlCreateOrUpdateParameters(
@@ -102,7 +85,14 @@ namespace Microsoft.Azure.Commands.Automation.Common
                                         name,
                                         createParams);
 
-            return new Model.SourceControl(sdkSourceControl, automationAccountName, resourceGroupName);
+            Model.SourceControl result = null;
+
+            if (sdkSourceControl != null)
+            {
+                result = new Model.SourceControl(sdkSourceControl, automationAccountName, resourceGroupName);
+            }
+
+            return result;
         }
 
         public Model.SourceControl UpdateSourceControl(
@@ -119,17 +109,6 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("ResourceGroupName", resourceGroupName).NotNullOrEmpty();
             Requires.Argument("AutomationAccountName", automationAccountName).NotNullOrEmpty();
             Requires.Argument("name", name).NotNullOrEmpty();
-
-            Model.SourceControl existingSourceControl = null;
-            try
-            {
-                existingSourceControl = this.GetSourceControl(resourceGroupName, automationAccountName, name);
-            }
-            catch (ResourceNotFoundException)
-            {
-                throw new AzureAutomationOperationException(
-                    string.Format(CultureInfo.CurrentCulture, Resources.SourceControlNotFound, name));
-            }
             
             var updateParams = new AutomationManagement.Models.SourceControlUpdateParameters();
 
@@ -170,7 +149,14 @@ namespace Microsoft.Azure.Commands.Automation.Common
                                         name,
                                         updateParams);
 
-            return new Model.SourceControl(sdkSourceControl, automationAccountName, resourceGroupName);
+            Model.SourceControl result = null;
+
+            if (sdkSourceControl != null)
+            {
+                result = new Model.SourceControl(sdkSourceControl, automationAccountName, resourceGroupName);
+            }
+
+            return result;
         }
 
         public void DeleteSourceControl(
@@ -182,20 +168,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("automationAccountName", automationAccountName).NotNullOrEmpty();
             Requires.Argument("name", name).NotNullOrEmpty();
 
-            try
-            {
-                this.automationManagementClient.SourceControl.Delete(resourceGroupName, automationAccountName, name);
-            }
-            catch (CloudException cloudException)
-            {
-                if (cloudException.Response.StatusCode == System.Net.HttpStatusCode.NoContent)
-                {
-                    throw new ResourceNotFoundException(typeof(SourceControl),
-                        string.Format(CultureInfo.CurrentCulture, Resources.SourceControlNotFound, name));
-                }
-
-                throw;
-            }
+            this.automationManagementClient.SourceControl.Delete(resourceGroupName, automationAccountName, name);
         }
 
         public Model.SourceControl GetSourceControl(
@@ -207,39 +180,16 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("automationAccountName", automationAccountName).NotNullOrEmpty();
             Requires.Argument("name", name).NotNullOrEmpty();
 
+            var existingSourceControl = this.automationManagementClient.SourceControl.Get(
+                                            resourceGroupName,
+                                            automationAccountName,
+                                            name);
+
             Model.SourceControl result = null;
-            bool throwException = false;
 
-            try
+            if (existingSourceControl != null)
             {
-                var existingSourceControl = this.automationManagementClient.SourceControl.Get(
-                                                resourceGroupName,
-                                                automationAccountName,
-                                                name);
-
-                if (existingSourceControl != null)
-                {
-                    result = new Model.SourceControl(existingSourceControl, automationAccountName, resourceGroupName);
-                }
-                else
-                {
-                    throwException = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex is CloudException || ex is ErrorResponseException)
-                {
-                    throwException = true;
-                }
-                else
-                    throw;
-            }
-
-            if (throwException)
-            {
-                throw new ResourceNotFoundException(typeof(SourceControl),
-                                                    string.Format(CultureInfo.CurrentCulture, Resources.SourceControlNotFound, name));
+                result = new Model.SourceControl(existingSourceControl, automationAccountName, resourceGroupName);
             }
 
             return result;
@@ -283,22 +233,6 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("sourceControlName", sourceControlName).NotNullOrEmpty();
             Requires.Argument("syncJobId", syncJobId).NotNullOrEmpty();
 
-            bool syncJobExists = true;
-            try
-            {
-                this.GetSourceControlSyncJob(resourceGroupName, automationAccountName, sourceControlName, syncJobId);
-            }
-            catch (ResourceNotFoundException)
-            {
-                syncJobExists = false;
-            }
-
-            if (syncJobExists)
-            {
-                throw new AzureAutomationOperationException(
-                    string.Format(CultureInfo.CurrentCulture, Resources.SourceControlSyncJobAlreadyExist, syncJobId.ToString()));
-            }
-
             var sdkSyncJob = this.automationManagementClient.SourceControlSyncJob.Create(
                                 resourceGroupName,
                                 automationAccountName,
@@ -306,7 +240,14 @@ namespace Microsoft.Azure.Commands.Automation.Common
                                 syncJobId,
                                 new SourceControlSyncJobCreateParameters(""));
 
-            return new Model.SourceControlSyncJob(resourceGroupName, automationAccountName, sourceControlName, sdkSyncJob);
+            Model.SourceControlSyncJob result = null;
+
+            if (sdkSyncJob != null)
+            {
+                result = new Model.SourceControlSyncJob(resourceGroupName, automationAccountName, sourceControlName, sdkSyncJob);
+            }
+
+            return result; 
         }
 
         public Model.SourceControlSyncJobRecord GetSourceControlSyncJob(
@@ -320,25 +261,17 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("sourceControlName", sourceControlName).NotNullOrEmpty();
             Requires.Argument("syncJobId", syncJobId).NotNullOrEmpty();
 
-            Model.SourceControlSyncJobRecord result = null;
-
-            try
-            {
-                var existingSyncJob = this.automationManagementClient.SourceControlSyncJob.Get(
+            var existingSyncJob = this.automationManagementClient.SourceControlSyncJob.Get(
                                             resourceGroupName,
                                             automationAccountName,
                                             sourceControlName,
                                             syncJobId);
 
-                if (existingSyncJob != null)
-                {
-                    result = new Model.SourceControlSyncJobRecord(resourceGroupName, automationAccountName, sourceControlName, existingSyncJob);
-                }
-            }
-            catch (ErrorResponseException)
+            Model.SourceControlSyncJobRecord result = null;
+
+            if (existingSyncJob != null)
             {
-                throw new ResourceNotFoundException(typeof(SourceControl),
-                    string.Format(CultureInfo.CurrentCulture, Resources.SourceControlSyncJobNotFound, syncJobId.ToString()));
+                result = new Model.SourceControlSyncJobRecord(resourceGroupName, automationAccountName, sourceControlName, existingSyncJob);
             }
 
             return result;
@@ -354,7 +287,6 @@ namespace Microsoft.Azure.Commands.Automation.Common
             Requires.Argument("automationAccountName", automationAccountName).NotNullOrEmpty();
             Requires.Argument("sourceControlName", sourceControlName).NotNullOrEmpty();
 
-            // SourceControlListResponse comes from metadata.
             Rest.Azure.IPage<AutomationManagement.Models.SourceControlSyncJob> response;
 
             if (string.IsNullOrEmpty(nextLink))
@@ -406,7 +338,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
             nextLink = response.NextPageLink;
 
-             return response.Select(
+            return response.Select(
                         stream => new Model.SourceControlSyncJobStream(stream, resourceGroupName, automationAccountName, sourceControlName, syncJobId));
         }
 
@@ -430,8 +362,15 @@ namespace Microsoft.Azure.Commands.Automation.Common
                                 syncJobId,
                                 syncJobStreamId);
 
-            return new SourceControlSyncJobStreamRecord(
-                        response, resourceGroupName, automationAccountName, sourceControlName, syncJobId);
+            SourceControlSyncJobStreamRecord result = null;
+
+            if (response != null)
+            {
+                result = new SourceControlSyncJobStreamRecord(
+                            response, resourceGroupName, automationAccountName, sourceControlName, syncJobId);
+            }
+
+            return result;
         }
 
         #region private helper functions

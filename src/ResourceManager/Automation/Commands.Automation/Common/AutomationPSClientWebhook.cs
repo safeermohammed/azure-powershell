@@ -18,6 +18,7 @@ using Microsoft.Azure.Management.Automation.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Microsoft.Rest.Azure.OData;
 
 namespace Microsoft.Azure.Commands.Automation.Common
 {
@@ -120,10 +121,11 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     }
                     else
                     {
+                        var filter = GetRunbookNameFilterString(runbookName);
                         response = this.automationManagementClient.Webhook.ListByAutomationAccount(
                             resourceGroupName,
                             automationAccountName,
-                            runbookName);
+                            new ODataQuery<Webhook>(filter));
                     }
                 }
                 else
@@ -200,6 +202,24 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     throw;
                 }
             }
+        }
+
+        private string GetRunbookNameFilterString(string runbookName)
+        {
+            string filter = null;
+            List<string> odataFilter = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(runbookName))
+            {
+                odataFilter.Add("properties/runbook/name eq '" + Uri.EscapeDataString(runbookName) + "'");
+            }
+
+            if (odataFilter.Count > 0)
+            {
+                filter = string.Join(" and ", odataFilter);
+            }
+
+            return filter;
         }
     }
 }
