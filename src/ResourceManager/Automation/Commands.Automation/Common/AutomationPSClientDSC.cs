@@ -16,6 +16,7 @@ using Microsoft.Azure.Commands.Automation.Model;
 using Microsoft.Azure.Commands.Automation.Properties;
 using Microsoft.Azure.Management.Automation;
 using Microsoft.Azure.Management.Automation.Models;
+using Microsoft.Rest.Azure.OData;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -273,7 +274,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
            string configrationName,
            string nodeName)
         {
-            string configurationContent = "DSCConfiguration #configrationName# { Node #nodeName# { } } ";
+            string configurationContent = "Configuration #configrationName# { Node #nodeName# { } } ";
             configurationContent = configurationContent.Replace("#configrationName#", configrationName);
             configurationContent = configurationContent.Replace("#nodeName#", nodeName);
 
@@ -789,7 +790,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 azureVmResourceGroup = resourceGroupName;
             }
 
-            string deploymentName = System.DateTimeOffset.Now.LocalDateTime.ToString("yyyyMMddhhmmss");
+            var deploymentName = Guid.NewGuid().ToString();
 
             // get the endpoint and keys
             Model.AgentRegistration agentRegistrationInfo = this.GetAgentRegistration(
@@ -919,7 +920,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                           Name = configurationName
                      },
                      Parameters = this.ProcessConfigurationParameters(parameters, configurationData),
-                    NewNodeConfigurationBuildVersionRequired = incrementNodeConfigurationBuild
+                    IncrementNodeConfigurationBuild = incrementNodeConfigurationBuild
                 };
 
                 var job = this.automationManagementClient.DscCompilationJob.Create(resourceGroupName, automationAccountName, Guid.NewGuid().ToString(), createJobParameters);
@@ -968,7 +969,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                 {
                     var nodeConfiguration = this.automationManagementClient.DscNodeConfiguration.Get(resourceGroupName, automationAccountName, nodeConfigurationName);
 
-                    string computedRollupStatus = GetRollupStatus(resourceGroupName, automationAccountName, null);
+                    string computedRollupStatus = GetRollupStatus(resourceGroupName, automationAccountName, nodeConfigurationName);
 
                     if (string.IsNullOrEmpty(rollupStatus) || (rollupStatus != null && computedRollupStatus.Equals(rollupStatus)))
                     {
@@ -1122,7 +1123,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
                     this.automationManagementClient.DscNodeConfiguration.CreateOrUpdate(
                         resourceGroupName,
                         automationAccountName,
-                        configurationName,
+                        nodeConfigurationName,
                         nodeConfigurationCreateParameters);
 
 
@@ -1513,7 +1514,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
 
         private string FormatDateTime(DateTimeOffset dateTime)
         {
-            return string.Format(CultureInfo.InvariantCulture, "{0:O}", dateTime.ToUniversalTime());
+            return string.Format(CultureInfo.InvariantCulture, "{0:O}", dateTime.DateTime.ToUniversalTime());
         }
 
         private IDictionary<string, string> ProcessConfigurationParameters(IDictionary parameters, IDictionary configurationData)
@@ -1691,24 +1692,34 @@ namespace Microsoft.Azure.Commands.Automation.Common
             return filter;
         }
 
-        private string GetNodeListFilterString(string status, string nodeName)
+        private string GetNodeListFilterString(string status, string nodeConfigurationName)
         {
+            var filter = new ODataQuery<DscNodeConfiguration>(node => node.Name == nodeConfigurationName)
+            {
+                Top = 20,
+                Skip = 0
+            };
+
+            return filter.ToString();
+            /*
+             * 
             string filter = null;
             List<string> odataFilter = new List<string>();
             if (!string.IsNullOrWhiteSpace(status))
             {
                 odataFilter.Add("properties/status eq '" + Uri.EscapeDataString(status) + "'");
             }
-            if (!string.IsNullOrWhiteSpace(nodeName))
+            if (!string.IsNullOrWhiteSpace(nodeConfigurationName))
             {
-                odataFilter.Add("properties/nodeName eq '" + Uri.EscapeDataString(nodeName) + "'");
+                odataFilter.Add("properties/nodeConfiguration/name eq '" + Uri.EscapeDataString(nodeConfigurationName) + "'");
             }
             if (odataFilter.Count > 0)
-            {
+            {// $skip=0&$top=20&$inlinecount=allpages&
                 filter = string.Join(" and ", odataFilter);
             }
 
             return filter;
+             */
         }
 
         private string GetNodeReportListFilterString(string type, DateTimeOffset? startTime, DateTimeOffset? endTime, DateTimeOffset? lastModifiedTime)
