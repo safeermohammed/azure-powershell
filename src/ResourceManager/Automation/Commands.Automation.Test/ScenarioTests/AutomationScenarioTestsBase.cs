@@ -42,7 +42,7 @@ namespace Microsoft.Azure.Commands.Automation.Test
             helper.SetupManagementClients(automationManagementClient);
         }
 
-        protected void RunPowerShellTest(params string[] scripts)
+        protected void RunPowerShellTest(XunitTracingInterceptor logger, params string[] scripts)
         {
             const string RootNamespace = "ScenarioTests";
 
